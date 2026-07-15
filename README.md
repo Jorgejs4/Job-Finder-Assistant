@@ -56,23 +56,57 @@ python main.py
 docker-compose up --build
 ```
 
-### Dashboard
+---
+
+## Dashboard
+
+El dashboard es una aplicación local con **Streamlit** que visualiza los resultados de las ejecuciones.
+
+### Cómo lanzarlo
+
 ```bash
 streamlit run dashboard.py
-# Abrir http://localhost:8501
 ```
 
-El dashboard muestra:
-- KPIs de la última ejecución (ofertas, scrapers OK/fallidos)
-- Gráficos de historial de ejecuciones
-- Filtros por fuente, match mínimo y modalidad
-- Exportación a CSV
+Abrir **http://localhost:8501** en el navegador.
 
-### Tests de scrapers
+### Qué muestra
+
+- **KPIs:** Ofertas encontradas, añadidas a Notion, analizadas por IA, scrapers OK/fallidos
+- **Gráficos:** Evolución de ofertas por ejecución, scrapers OK vs fallidos
+- **Tabla de scrapers:** Estado de cada plataforma (OK, vacío, fallido) y número de ofertas
+- **Ofertas:** Tabla con todos los resultados, filtrable por fuente, match mínimo y modalidad
+- **Exportación:** Botón para descargar el CSV filtrado
+
+### Cómo alimentar el dashboard con datos de GitHub Actions
+
+1. Ve a **Actions** en tu repositorio de GitHub
+2. Clic en la ejecución que quieras visualizar
+3. Baja hasta **Artifacts** (al final de la página)
+4. Descarga `scraper-results-XXXX`
+5. Descomprime y copia la carpeta `results/` a la raíz de tu proyecto local
+6. Lanza el dashboard: `streamlit run dashboard.py`
+
+---
+
+## Tests automatizados
+
+Los tests verifican que los 8 scrapers responden correctamente. Se ejecutan automáticamente en GitHub Actions antes de cada run del scraper.
+
+### Ejecutar tests localmente
+
 ```bash
-# Ejecuta los tests con Gemini en modo mock
+# Ejecuta los tests con Gemini en modo mock (sin gastar cuota)
 MOCK_GEMINI=true python tests/test_scrapers.py
 ```
+
+### Qué verifican
+
+- Cada scraper puede conectarse y devolver ofertas
+- Detección de scrapers caídos o bloqueados
+- Límite de 50 ofertas por plataforma
+- Detección de duplicados dentro de un mismo scraper
+- Genera `results/test_report.json` con el reporte completo
 
 ---
 
@@ -99,15 +133,36 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 
 1. Activa **Verificación en 2 pasos** en https://myaccount.google.com/security
 2. Ve a https://myaccount.google.com/apppasswords
-3. Crea una contraseña para "Otra (nombre personalizado)" → "Job Scraper"
-4. Copia los 16 caracteres y guárdalos como `SMTP_GMAIL_PASSWORD`
+3. Selecciona **Otra (nombre personalizado)** → escribe "Job Scraper"
+4. Click en **Crear**
+5. Google te dará un código de 16 caracteres tipo: `abcd efgh ijkl mnop`
+6. Ese código es tu `SMTP_GMAIL_PASSWORD` (guárdalo sin espacios)
+
+> **Nota:** La contraseña de aplicación es distinta a tu contraseña normal de Gmail. Es una clave especial que permite enviar emails sin exponer tu contraseña principal.
+
+### Probar que el email funciona
+
+1. Ve a **Actions** > **Job Scraper and Notion Sync** > **Run workflow**
+2. Asegúrate de que los 3 secrets de email están configurados
+3. Espera a que termine la ejecución (3-5 minutos)
+4. Revisa tu bandeja de entrada (y spam) por un email con asunto "[Job Scraper] Resumen ..."
+
+### Cómo ver los resultados de cada ejecución
+
+1. Ve a la pestaña **Actions** de tu repositorio
+2. Haz clic en la ejecución que quieras revisar
+3. En la sección **Artifacts** (abajo) encontrarás:
+   - `scraper-results-XXXX` — JSON, CSV e histórico de la ejecución
+   - `scraper-test-report` — Reporte de tests de scrapers
+4. Haz clic en el artifact para descargarlo (formato .zip)
+5. Descomprime y abre el CSV en Excel/Google Sheets o el JSON en un visor de texto
 
 ### Flujo de ejecución
 
 El workflow se ejecuta **dos veces al día (8:00 y 20:00 UTC)**:
 
 1. **Tests** → Verifica que los scrapers responden (con Gemini mock)
-2. **Scraper** → Ejecuta el pipeline completo
+2. **Scraper** → Ejecuta el pipeline completo (scraping → IA → Notion → email)
 3. **Artifacts** → Guarda resultados JSON/CSV por 90 días
 
 También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion Sync > Run workflow**.
@@ -117,26 +172,10 @@ También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion 
 ## Resultados
 
 Cada ejecución genera en `results/`:
-- `run_YYYYMMDD_HHMMSS.json` — Datos completos de la ejecución
-- `run_YYYYMMDD_HHMMSS.csv` — Ofertas en formato tabular
-- `history.csv` — Histórico aggregate de todas las ejecuciones
-- `test_report.json` — Último reporte de tests de scrapers
 
-### Cómo ver los resultados en GitHub Actions
-
-1. Ve a la pestaña **Actions** de tu repositorio
-2. Haz clic en la ejecución que quieras revisar
-3. En la sección **Artifacts** (abajo) descarga:
-   - `scraper-results-XXXX` — Contiene el JSON, CSV e historial
-   - `scraper-test-report` — Reporte de tests de scrapers
-4. Descomprime y abre el CSV en Excel o el JSON en un visor de texto
-
-### Cómo ver el dashboard con los resultados
-
-1. Descarga el artifact `scraper-results-XXXX` desde GitHub Actions
-2. Descomprime la carpeta `results/` en la raíz de tu proyecto local
-3. Ejecuta:
-   ```bash
-   streamlit run dashboard.py
-   ```
-4. Abre http://localhost:8501 en tu navegador
+| Archivo | Descripción |
+|---------|-------------|
+| `run_YYYYMMDD_HHMMSS.json` | Datos completos de la ejecución (scrapers, ofertas, errores) |
+| `run_YYYYMMDD_HHMMSS.csv` | Ofertas en formato tabular (title, company, source, match_score...) |
+| `history.csv` | Histórico aggregate: una fila por ejecución con métricas |
+| `test_report.json` | Último reporte de tests de scrapers |
