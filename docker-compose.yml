@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  job_scraper:
+    build: .
+    container_name: job_scraper_container
+    volumes:
+      # Montar el archivo de configuración local y el currículum
+      - ./.env:/app/.env
+      - ./cv.pdf:/app/cv.pdf
+    restart: "no"
