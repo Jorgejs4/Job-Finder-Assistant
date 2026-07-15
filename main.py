@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from pathlib import Path
 import config
 from utils.cv_parser import parse_cv
@@ -107,6 +108,10 @@ def main():
     jobs_to_process = list(unique_jobs.values())
     print(f"\n[Procesamiento] Total de ofertas únicas iniciales: {len(jobs_to_process)}")
 
+    # Ordenar por prioridad de fuente: fuentes locales primero (InfoJobs, LinkedIn), luego internacionales
+    source_priority = {"InfoJobs": 0, "LinkedIn": 1, "Indeed": 2, "RemoteOK": 3, "Remotive": 4, "API Fallback": 5}
+    jobs_to_process.sort(key=lambda j: source_priority.get(j.get("source", ""), 99))
+
     # Filtrar por ubicación especificada o remoto (filtro preliminar)
     desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
     print(f"[Filtro] Ciudades deseadas para puestos presenciales: {desired_cities}")
@@ -152,9 +157,9 @@ def main():
             print(f"[{idx}/{len(jobs_to_process)}] Saltando oferta existente: {job['title']} en {job['company']}")
             continue
             
-        # Limitar a un máximo de 15 ofertas nuevas analizadas por ejecución para respetar cuotas
-        if analyzed_count >= 15:
-            print(f"\n[{idx}/{len(jobs_to_process)}] Límite de 15 nuevas ofertas analizadas alcanzado. Posponiendo el resto para el siguiente cron job.")
+        # Limitar a un máximo de 25 ofertas nuevas analizadas por ejecución para respetar cuotas
+        if analyzed_count >= 25:
+            print(f"\n[{idx}/{len(jobs_to_process)}] Límite de 25 nuevas ofertas analizadas alcanzado. Posponiendo el resto para el siguiente cron job.")
             break
             
         print(f"\n[{idx}/{len(jobs_to_process)}] Analizando nueva oferta:")
@@ -173,10 +178,9 @@ def main():
                 offer_description=desc_for_match
             )
             
-            # Filtrar empleos no relacionados
-            if match_result.match_score < 50:
+            # Filtrar empleos no relacionados (umbral 35% para no perder ofertas relevantes)
+            if match_result.match_score < 35:
                 print(f"  - [IA] Saltando oferta por baja compatibilidad ({match_result.match_score}%)")
-                import time
                 time.sleep(6)
                 continue
                 
@@ -196,7 +200,6 @@ def main():
                         break
                 if not matches_city:
                     print(f"  - [Filtro Ubicación Final] Saltando oferta clasificada como '{work_mode}' en '{job.get('location')}' por no coincidir con las ciudades deseadas ({desired_cities})")
-                    import time
                     time.sleep(6)
                     continue
             
@@ -216,12 +219,10 @@ def main():
                 analyzed_count += 1
                 
             # Retraso de 6 segundos para no superar el límite de 15 RPM de la API de Gemini (cuota gratis)
-            import time
             time.sleep(6)
                 
         except Exception as e:
             print(f"  - [Error] No se pudo analizar la oferta con IA/Notion: {e}")
-            import time
             time.sleep(6)
 
     print("\n" + "=" * 60)

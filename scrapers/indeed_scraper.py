@@ -7,13 +7,19 @@ import config
 
 class IndeedScraper(BaseScraper):
     def _fetch_with_cffi(self, url: str, params: dict = None) -> str:
-        """Fetch usando curl_cffi para evadir Cloudflare."""
+        """Fetch usando curl_cffi para evadir Cloudflare. Prueba múltiples impersonations."""
         try:
             from curl_cffi import requests as cffi_requests
-            resp = cffi_requests.get(url, params=params, impersonate="chrome131", timeout=20)
-            if resp.status_code == 200:
-                return resp.text
-            print(f"[Indeed] curl_cffi devolvió status {resp.status_code}")
+            for impersonation in ["chrome131", "chrome120", "safari17_0"]:
+                try:
+                    resp = cffi_requests.get(url, params=params, impersonate=impersonation, timeout=20)
+                    if resp.status_code == 200:
+                        return resp.text
+                    if resp.status_code == 403:
+                        continue
+                    print(f"[Indeed] curl_cffi ({impersonation}) status {resp.status_code}")
+                except Exception:
+                    continue
         except ImportError:
             print("[Indeed] curl_cffi no disponible")
         except Exception as e:
