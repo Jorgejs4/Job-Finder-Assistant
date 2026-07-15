@@ -7,8 +7,8 @@ from utils.gemini_client import GeminiClient
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
-from scrapers.computrabajo_scraper import ComputrabajoScraper
-from scrapers.tecnolabs_scraper import TecnoJobsScraper
+from scrapers.remoteok_scraper import RemoteOKScraper
+from scrapers.remotive_scraper import RemotiveScraper
 from scrapers.fallback_api import FallbackJobsAPI
 from notion_sync import NotionSync
 
@@ -68,8 +68,8 @@ def main():
         InfoJobsScraper(),
         LinkedInScraper(),
         IndeedScraper(),
-        ComputrabajoScraper(),
-        TecnoJobsScraper()
+        RemoteOKScraper(),
+        RemotiveScraper()
     ]
     
     # Buscaremos para cada puesto recomendado por la IA
