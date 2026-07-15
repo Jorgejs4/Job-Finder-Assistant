@@ -121,3 +121,22 @@ Cada ejecución genera en `results/`:
 - `run_YYYYMMDD_HHMMSS.csv` — Ofertas en formato tabular
 - `history.csv` — Histórico aggregate de todas las ejecuciones
 - `test_report.json` — Último reporte de tests de scrapers
+
+### Cómo ver los resultados en GitHub Actions
+
+1. Ve a la pestaña **Actions** de tu repositorio
+2. Haz clic en la ejecución que quieras revisar
+3. En la sección **Artifacts** (abajo) descarga:
+   - `scraper-results-XXXX` — Contiene el JSON, CSV e historial
+   - `scraper-test-report` — Reporte de tests de scrapers
+4. Descomprime y abre el CSV en Excel o el JSON en un visor de texto
+
+### Cómo ver el dashboard con los resultados
+
+1. Descarga el artifact `scraper-results-XXXX` desde GitHub Actions
+2. Descomprime la carpeta `results/` en la raíz de tu proyecto local
+3. Ejecuta:
+   ```bash
+   streamlit run dashboard.py
+   ```
+4. Abre http://localhost:8501 en tu navegador

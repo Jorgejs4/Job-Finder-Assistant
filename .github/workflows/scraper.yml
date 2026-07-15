@@ -95,7 +95,9 @@ jobs:
         MIN_SALARY: ${{ github.event.inputs.min_salary || secrets.MIN_SALARY || '20000' }}
         CV_PATH: 'cv.pdf'
       run: |
+        mkdir -p results
         docker run --rm \
+          -v "$(pwd)/results:/app/results" \
           -e GEMINI_API_KEY="$GEMINI_API_KEY" \
           -e NOTION_TOKEN="$NOTION_TOKEN" \
           -e NOTION_DATABASE_ID="$NOTION_DATABASE_ID" \
@@ -108,13 +110,6 @@ jobs:
           -e MIN_SALARY="$MIN_SALARY" \
           -e CV_PATH="$CV_PATH" \
           job-scraper:latest
-
-    - name: Copy results from container
-      if: always()
-      run: |
-        docker create --name temp-container job-scraper:latest || true
-        docker cp temp-container:/app/results ./results || true
-        docker rm temp-container || true
 
     - name: Upload run results
       if: always()
