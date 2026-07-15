@@ -1,68 +1,123 @@
 # Asistente Inteligente de Empleo con IA y Notion
 
-Este proyecto recopila automáticamente ofertas de empleo de **InfoJobs**, **LinkedIn** e **Indeed** (con fallback a API externa), analiza la compatibilidad (Match Score) de cada oferta respecto a tu currículum usando la **API de Gemini (Gratuita)**, te ofrece consejos específicos para adaptar tu CV, y sincroniza todo en una base de datos de **Notion**.
+Recopila automáticamente ofertas de empleo de **8 plataformas**, analiza la compatibilidad con tu currículum usando **Gemini IA**, y sincroniza todo en **Notion** con un resumen por email.
 
-Se ejecuta de forma **100% gratuita** utilizando **GitHub Actions** sin necesidad de tener tu ordenador encendido, o de manera local mediante **Docker**.
+Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma local con Docker.
+
+---
+
+## Plataformas activas
+
+| Plataforma | Tipo | Modalidad |
+|------------|------|-----------|
+| InfoJobs | Scraping HTML | España |
+| LinkedIn | API pública guest | Global |
+| Indeed | Scraping HTML | España |
+| RemoteOK | API JSON | Remoto |
+| Remotive | API JSON | Remoto |
+| TecnoEmpleo | Scraping HTML | España |
+| Jobfluent | Scraping HTML | Global |
+| Glassdoor | Scraping HTML | Global |
 
 ---
 
 ## Características
 
-1. **Análisis de Perfil:** Lee tu CV (PDF, DOCX, TXT o JSON) y extrae de forma inteligente tus habilidades y los mejores roles a buscar.
-2. **Scraping Híbrido:** Scrapea InfoJobs (RSS), LinkedIn (Guest API) e Indeed, y cuenta con un fallback a la API consolidada de **JSearch** (RapidAPI) si hay bloqueos.
-3. **Scoring y Consejos:** Para cada oferta, Gemini calcula un porcentaje de coincidencia y redacta sugerencias de optimización para tu CV.
-4. **Base de Datos en Notion:** Sincroniza ofertas en tiempo real evitando duplicadas.
-5. **Borrado Automático integrado:** Si marcas la casilla **"Eliminar"** de una fila en Notion, el script la borrará en la siguiente ejecución.
+1. **Análisis de Perfil:** Lee tu CV (PDF, DOCX, TXT o JSON) y extrae roles recomendados y habilidades clave.
+2. **Scraping en 8 fuentes:** Con curl_cffi para evadir anti-bot (Cloudflare, Distil Networks).
+3. **Scoring IA:** Gemini calcula match %, stack tecnológico, salario estimado y consejos personalizados.
+4. **Notion Sync:** Sube ofertas evitando duplicadas, con borrado automático si marcas "Eliminar".
+5. **Email de resumen:** Recibe un email HTML con estadísticas por plataforma, top ofertas y errores.
+6. **Resultados persistentes:** Cada ejecución guarda JSON + CSV con métricas por scraper.
+7. **Dashboard interactivo:** Streamlit con KPIs, gráficos, filtros y exportación CSV.
+8. **Tests automatizados:** Verifican que todos los scrapers responden correctamente.
 
 ---
 
-## 🛠️ Configuración de Credenciales (Gemini y Notion)
+## Configuración de credenciales
 
-Sigue los pasos detallados en la guía de configuración del artefacto para crear tu base de datos de Notion y obtener la API key de Gemini.
-
----
-
-## 💻 Ejecución Local
-
-### Opción A: Con Python nativo
-1. Instala las dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Copia `.env.example` como `.env` y rellena tus claves:
-   ```bash
-   cp .env.example .env
-   ```
-3. Guarda tu currículum como `cv.pdf` en la raíz del proyecto.
-4. Ejecuta el script principal:
-   ```bash
-   python main.py
-   ```
-
-### Opción B: Con Docker
-1. Rellena tu archivo `.env` local.
-2. Asegúrate de tener tu archivo `cv.pdf` en la raíz del proyecto.
-3. Construye y ejecuta el contenedor:
-   ```bash
-   docker-compose up --build
-   ```
+Sigue la guía en `configuracion_credenciales.md` para crear tu base de datos de Notion y obtener la API key de Gemini.
 
 ---
 
-## 🚀 Despliegue en la Nube 100% Gratis (GitHub Actions)
+## Ejecución local
 
-Para que el script funcione automáticamente en la nube sin tu ordenador encendido:
+### Python nativo
+```bash
+pip install -r requirements.txt
+cp .env.example .env  # Rellena tus claves
+# Guarda tu CV como cv.pdf en la raíz
+python main.py
+```
 
-1. **Crea un repositorio privado** en GitHub.
-2. Sube todos los archivos del proyecto a tu repositorio (incluyendo tu `cv.pdf` en la raíz).
-3. En tu repositorio de GitHub, ve a **Settings > Secrets and variables > Actions**.
-4. Haz clic en **New repository secret** y añade las siguientes claves:
-   * `GEMINI_API_KEY`: Tu API Key de Google AI Studio.
-   * `NOTION_TOKEN`: Tu token secreto de integración.
-   * `NOTION_DATABASE_ID`: El ID de tu base de datos de Notion.
-   * `RAPIDAPI_KEY` *(Opcional)*: Clave de RapidAPI para el fallback de JSearch.
-   * `DESIRED_LOCATIONS` *(Opcional)*: Ubicaciones de búsqueda (ej: `Madrid,Remoto`).
-   * `YEARS_OF_EXPERIENCE` *(Opcional)*: Tus años de experiencia (ej: `3`).
-   * `MIN_SALARY` *(Opcional)*: Salario mínimo anual (ej: `35000`).
+### Docker
+```bash
+# Rellena .env y coloca cv.pdf
+docker-compose up --build
+```
 
-El flujo de trabajo se ejecutará automáticamente **dos veces al día (a las 8:00 y las 20:00 UTC)**. También puedes iniciarlo manualmente desde la pestaña **Actions** en GitHub seleccionando *"Job Scraper and Notion Sync"* y haciendo clic en **Run workflow**.
+### Dashboard
+```bash
+streamlit run dashboard.py
+# Abrir http://localhost:8501
+```
+
+El dashboard muestra:
+- KPIs de la última ejecución (ofertas, scrapers OK/fallidos)
+- Gráficos de historial de ejecuciones
+- Filtros por fuente, match mínimo y modalidad
+- Exportación a CSV
+
+### Tests de scrapers
+```bash
+# Ejecuta los tests con Gemini en modo mock
+MOCK_GEMINI=true python tests/test_scrapers.py
+```
+
+---
+
+## GitHub Actions
+
+### Secrets a configurar
+
+En **Settings > Secrets and variables > Actions** de tu repositorio:
+
+| Secret | Requerido | Descripción |
+|--------|-----------|-------------|
+| `GEMINI_API_KEY` | Sí | API Key de Google AI Studio |
+| `NOTION_TOKEN` | Sí | Token de integración de Notion |
+| `NOTION_DATABASE_ID` | Sí | ID de la base de datos de Notion |
+| `RAPIDAPI_KEY` | No | Fallback JSearch (solo resultados US/UK) |
+| `DESIRED_LOCATIONS` | No | Ubicaciones por defecto (ej: `Sevilla,Remoto`) |
+| `YEARS_OF_EXPERIENCE` | No | Años de experiencia (ej: `3`) |
+| `MIN_SALARY` | No | Salario mínimo anual (ej: `35000`) |
+| `SMTP_GMAIL_USER` | No | Email de Gmail para notificaciones |
+| `SMTP_GMAIL_PASSWORD` | No | Contraseña de aplicación de Gmail |
+| `NOTIFY_EMAIL` | No | Email destino del resumen |
+
+### Configurar email (Gmail)
+
+1. Activa **Verificación en 2 pasos** en https://myaccount.google.com/security
+2. Ve a https://myaccount.google.com/apppasswords
+3. Crea una contraseña para "Otra (nombre personalizado)" → "Job Scraper"
+4. Copia los 16 caracteres y guárdalos como `SMTP_GMAIL_PASSWORD`
+
+### Flujo de ejecución
+
+El workflow se ejecuta **dos veces al día (8:00 y 20:00 UTC)**:
+
+1. **Tests** → Verifica que los scrapers responden (con Gemini mock)
+2. **Scraper** → Ejecuta el pipeline completo
+3. **Artifacts** → Guarda resultados JSON/CSV por 90 días
+
+También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion Sync > Run workflow**.
+
+---
+
+## Resultados
+
+Cada ejecución genera en `results/`:
+- `run_YYYYMMDD_HHMMSS.json` — Datos completos de la ejecución
+- `run_YYYYMMDD_HHMMSS.csv` — Ofertas en formato tabular
+- `history.csv` — Histórico aggregate de todas las ejecuciones
+- `test_report.json` — Último reporte de tests de scrapers
