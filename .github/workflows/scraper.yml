@@ -2,12 +2,11 @@ name: Job Scraper and Notion Sync
 
 on:
   schedule:
-    # Se ejecuta cada 12 horas: 8:00 y 20:00 UTC
     - cron: '0 8,20 * * *'
   workflow_dispatch:
     inputs:
       desired_locations:
-        description: 'Ubicaciones de búsqueda (separadas por comas, ej: Sevilla,Remoto)'
+        description: 'Ubicaciones de búsqueda (separadas por comas)'
         required: true
         default: 'Sevilla,Remoto'
       years_of_experience:
@@ -15,7 +14,7 @@ on:
         required: false
         default: '0'
       min_salary:
-        description: 'Salario mínimo deseado (vacío para omitir)'
+        description: 'Salario mínimo deseado'
         required: false
         default: '20000'
 
@@ -24,7 +23,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test-scrapers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run scraper tests
+      env:
+        MOCK_GEMINI: 'true'
+        GEMINI_API_KEY: 'test-mock-key'
+        DESIRED_LOCATIONS: 'Remoto'
+      run: python tests/test_scrapers.py
+
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scraper-test-report
+        path: results/test_report.json
+        retention-days: 30
+
   run-scraper:
+    needs: test-scrapers
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -58,6 +87,9 @@ jobs:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        SMTP_GMAIL_USER: ${{ secrets.SMTP_GMAIL_USER }}
+        SMTP_GMAIL_PASSWORD: ${{ secrets.SMTP_GMAIL_PASSWORD }}
+        NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
         DESIRED_LOCATIONS: ${{ github.event.inputs.desired_locations || secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
         YEARS_OF_EXPERIENCE: ${{ github.event.inputs.years_of_experience || secrets.YEARS_OF_EXPERIENCE || '0' }}
         MIN_SALARY: ${{ github.event.inputs.min_salary || secrets.MIN_SALARY || '20000' }}
@@ -68,15 +100,32 @@ jobs:
           -e NOTION_TOKEN="$NOTION_TOKEN" \
           -e NOTION_DATABASE_ID="$NOTION_DATABASE_ID" \
           -e RAPIDAPI_KEY="$RAPIDAPI_KEY" \
+          -e SMTP_GMAIL_USER="$SMTP_GMAIL_USER" \
+          -e SMTP_GMAIL_PASSWORD="$SMTP_GMAIL_PASSWORD" \
+          -e NOTIFY_EMAIL="$NOTIFY_EMAIL" \
           -e DESIRED_LOCATIONS="$DESIRED_LOCATIONS" \
           -e YEARS_OF_EXPERIENCE="$YEARS_OF_EXPERIENCE" \
           -e MIN_SALARY="$MIN_SALARY" \
           -e CV_PATH="$CV_PATH" \
           job-scraper:latest
 
-    - name: Post-run cleanup
+    - name: Copy results from container
       if: always()
       run: |
-        # Limpiar caché de Docker antiguo
+        docker create --name temp-container job-scraper:latest || true
+        docker cp temp-container:/app/results ./results || true
+        docker rm temp-container || true
+
+    - name: Upload run results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scraper-results-${{ github.run_id }}
+        path: results/
+        retention-days: 90
+
+    - name: Cleanup Docker cache
+      if: always()
+      run: |
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true

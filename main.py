@@ -5,205 +5,185 @@ from pathlib import Path
 import config
 from utils.cv_parser import parse_cv
 from utils.gemini_client import GeminiClient
+from utils.results import ResultsManager
+from utils.notifications import EmailNotifier
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
 from scrapers.remoteok_scraper import RemoteOKScraper
 from scrapers.remotive_scraper import RemotiveScraper
+from scrapers.tecnobs_scraper import TecnoJobsScraper
+from scrapers.jobfluent_scraper import JobfluentScraper
+from scrapers.wttj_scraper import WelcomeToTheJungleScraper
 from scrapers.fallback_api import FallbackJobsAPI
 from notion_sync import NotionSync
+
 
 def main():
     print("=" * 60)
     print("   INICIANDO ASISTENTE DE BÚSQUEDA DE EMPLEO CON IA & NOTION")
     print("=" * 60)
 
-    # 1. Validar configuración básica e inicializar preferencias
+    results = ResultsManager()
+    notifier = EmailNotifier()
+
     try:
         config.validate_config()
         config.load_preferences()
     except ValueError as e:
         print(f"[Error de Configuración] {e}")
-        print("Asegúrate de configurar las variables de entorno necesarias.")
+        results.record_error(f"Configuración: {e}")
+        results.save()
         sys.exit(1)
 
-    # 2. Inicializar conectores
     notion_sync = NotionSync()
     gemini = GeminiClient()
 
-    # 3. Limpiar base de datos (procesar casillas "Eliminar")
     deleted_count = notion_sync.clean_deleted_items()
 
-    # 4. Cargar y parsear CV
     cv_path = Path(config.CV_PATH)
     if not cv_path.exists():
-        print(f"[Error] No se encontró el CV en la ruta: {cv_path}")
-        print("Por favor, guarda tu CV (en formato PDF, DOCX, TXT o JSON) en esa ubicación")
-        print("o configura la variable de entorno 'CV_PATH' con la ruta correcta.")
+        msg = f"No se encontró el CV en: {cv_path}"
+        print(f"[Error] {msg}")
+        results.record_error(msg)
+        results.save()
         sys.exit(1)
 
-    print(f"[CV] Leyendo y procesando currículum: {cv_path.name}...")
+    print(f"[CV] Leyendo currículum: {cv_path.name}...")
     try:
         cv_text = parse_cv(str(cv_path))
-        print(f"[CV] CV leído correctamente. Longitud de caracteres: {len(cv_text)}")
+        print(f"[CV] OK. Longitud: {len(cv_text)} caracteres")
     except Exception as e:
-        print(f"[CV] Error al parsear el CV: {e}")
+        print(f"[CV] Error al parsear: {e}")
+        results.record_error(f"CV parse: {e}")
+        results.save()
         sys.exit(1)
 
-    # 5. Analizar el perfil usando Gemini
-    print("[IA] Analizando perfil del CV con Gemini...")
+    print("[IA] Analizando perfil con Gemini...")
     try:
         profile = gemini.analyze_cv(cv_text)
-        print(f"[IA] Análisis completado.")
-        print(f"  - Puestos recomendados: {', '.join(profile.recommended_roles)}")
-        print(f"  - Habilidades detectadas: {', '.join(profile.key_skills[:8])}...")
-        print(f"  - Años de experiencia: {profile.years_of_experience}")
+        print(f"  - Roles: {', '.join(profile.recommended_roles)}")
+        print(f"  - Skills: {', '.join(profile.key_skills[:8])}...")
+        print(f"  - Experiencia: {profile.years_of_experience} años")
     except Exception as e:
-        print(f"[IA] Error al analizar el CV con Gemini: {e}")
+        print(f"[IA] Error: {e}")
+        results.record_error(f"Gemini analyze_cv: {e}")
+        results.save()
         sys.exit(1)
 
-    # 6. Recopilar ofertas de trabajo
-    all_jobs = []
-    # Instanciar nuestros scrapers propios
     scrapers = [
         InfoJobsScraper(),
         LinkedInScraper(),
         IndeedScraper(),
         RemoteOKScraper(),
-        RemotiveScraper()
+        RemotiveScraper(),
+        TecnoJobsScraper(),
+        JobfluentScraper(),
+        WelcomeToTheJungleScraper(),
     ]
-    
-    # Buscaremos para cada puesto recomendado por la IA
-    # Para evitar saturar las APIs o el scraping, limitamos a los 4 primeros puestos más fuertes
-    roles_to_search = profile.recommended_roles[:4]
-    print(f"[Buscador] Buscando ofertas para los roles: {roles_to_search}")
 
+    roles_to_search = profile.recommended_roles[:4]
+    print(f"[Buscador] Roles: {roles_to_search}")
+    print(f"[Buscador] Límite: {config.MAX_JOBS_PER_SCRAPER} ofertas/plataforma")
+
+    all_jobs = []
     for role in roles_to_search:
         for scraper in scrapers:
+            scraper_name = scraper.__class__.__name__
             try:
-                scraper_name = scraper.__class__.__name__
                 jobs_found = scraper.scrape_jobs(role, config.DESIRED_LOCATIONS)
+                jobs_found = jobs_found[:config.MAX_JOBS_PER_SCRAPER]
                 all_jobs.extend(jobs_found)
+                results.record_scraper_result(scraper_name, jobs_found)
             except Exception as e:
-                print(f"[{scraper_name}] Error ejecutando scraping: {e}")
+                error_msg = f"{type(e).__name__}: {e}"
+                print(f"[{scraper_name}] Error: {error_msg}")
+                results.record_scraper_result(scraper_name, [], failed=True, error_msg=error_msg)
 
-    # 7. Ejecutar Fallback API si es necesario
-    # Si nuestros scrapers no encontraron suficientes ofertas (ej: menos de 30) o fallaron
     if len(all_jobs) < 30 and config.RAPIDAPI_KEY:
-        print(f"[Buscador] Pocas ofertas encontradas ({len(all_jobs)}). Activando API de Fallback...")
+        print(f"[Buscador] Pocas ofertas ({len(all_jobs)}). Activando Fallback API...")
         fallback = FallbackJobsAPI()
         for role in roles_to_search:
             try:
                 fallback_jobs = fallback.fetch_jobs(role, config.DESIRED_LOCATIONS)
                 all_jobs.extend(fallback_jobs)
             except Exception as e:
-                print(f"[Fallback API] Error llamando a la API: {e}")
+                print(f"[Fallback] Error: {e}")
 
-    # Eliminar duplicados locales que tengan el mismo link
     unique_jobs = {}
     for job in all_jobs:
-        if job["link"]:
+        if job.get("link"):
             unique_jobs[job["link"]] = job
-    
     jobs_to_process = list(unique_jobs.values())
-    print(f"\n[Procesamiento] Total de ofertas únicas iniciales: {len(jobs_to_process)}")
+    print(f"\n[Procesamiento] Ofertas únicas: {len(jobs_to_process)}")
 
-    # Ordenar por prioridad de fuente: fuentes locales primero (InfoJobs, LinkedIn), luego internacionales
-    source_priority = {"InfoJobs": 0, "LinkedIn": 1, "Indeed": 2, "RemoteOK": 3, "Remotive": 4, "API Fallback": 5}
+    source_priority = {
+        "InfoJobs": 0, "LinkedIn": 1, "Indeed": 2,
+        "RemoteOK": 3, "Remotive": 4, "TecnoEmpleo": 5,
+        "Jobfluent": 6, "Glassdoor": 7, "API Fallback": 8,
+    }
     jobs_to_process.sort(key=lambda j: source_priority.get(j.get("source", ""), 99))
 
-    # Filtrar por ubicación especificada o remoto (filtro preliminar)
     desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
-    print(f"[Filtro] Ciudades deseadas para puestos presenciales: {desired_cities}")
-    
+    print(f"[Filtro] Ciudades: {desired_cities}")
+
+    remote_kw = ["remoto", "remote", "teletrabajo", "distancia", "virtual", "home office"]
     filtered_jobs = []
     for job in jobs_to_process:
         job_loc = job.get("location", "").lower()
         job_title = job.get("title", "").lower()
         job_desc = job.get("description", "").lower()
-        
-        # Comprobar si tiene indicios de ser remoto en ubicación, título o descripción
-        remote_keywords = ["remoto", "remote", "teletrabajo", "distancia", "virtual", "home office", "home-office"]
-        is_potentially_remote = (
-            any(kw in job_loc for kw in remote_keywords) or
-            any(kw in job_title for kw in remote_keywords) or
-            any(kw in job_desc for kw in remote_keywords)
+        is_remote = (
+            any(kw in job_loc for kw in remote_kw) or
+            any(kw in job_title for kw in remote_kw) or
+            any(kw in job_desc for kw in remote_kw)
         )
-        
-        # Verificar si coincide con alguna de las ciudades especificadas
-        matches_city = False
-        for city in desired_cities:
-            if city in job_loc:
-                matches_city = True
-                break
-                
-        if is_potentially_remote or matches_city:
+        matches_city = any(city in job_loc for city in desired_cities)
+        if is_remote or matches_city:
             filtered_jobs.append(job)
-        else:
-            print(f"  - [Filtro Preliminar] Saltando oferta en '{job.get('location')}' por ser presencial y no coincidir con las ciudades deseadas ({desired_cities})")
 
     jobs_to_process = filtered_jobs
-    print(f"[Procesamiento] Ofertas que pasaron el filtro preliminar: {len(jobs_to_process)}")
+    print(f"[Procesamiento] Tras filtro preliminar: {len(jobs_to_process)}")
 
-    # 8. Analizar compatibilidad y subir a Notion
     new_jobs_added = 0
     analyzed_count = 0
-    
-    for idx, job in enumerate(jobs_to_process, 1):
-        link = job["link"]
-        
-        # Verificar duplicados en la base de datos de Notion
-        if notion_sync.check_if_job_exists(link):
-            print(f"[{idx}/{len(jobs_to_process)}] Saltando oferta existente: {job['title']} en {job['company']}")
-            continue
-            
-        # Limitar a un máximo de 25 ofertas nuevas analizadas por ejecución para respetar cuotas
-        if analyzed_count >= 25:
-            print(f"\n[{idx}/{len(jobs_to_process)}] Límite de 25 nuevas ofertas analizadas alcanzado. Posponiendo el resto para el siguiente cron job.")
-            break
-            
-        print(f"\n[{idx}/{len(jobs_to_process)}] Analizando nueva oferta:")
-        print(f"  - Puesto: {job['title']}")
-        print(f"  - Empresa: {job['company']}")
-        print(f"  - Ubicación: {job['location']}")
-        print(f"  - Fuente: {job['source']}")
 
-        # Enviar oferta e IA para scoring y consejos
+    for idx, job in enumerate(jobs_to_process, 1):
+        link = job.get("link", "")
+
+        if notion_sync.check_if_job_exists(link):
+            print(f"[{idx}/{len(jobs_to_process)}] Duplicado: {job['title']}")
+            continue
+
+        if analyzed_count >= 25:
+            print(f"\nLímite de 25 nuevas ofertas alcanzado.")
+            break
+
+        print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']}")
+        print(f"  Fuente: {job.get('source')} | Ubicación: {job.get('location')}")
+
         try:
-            # Si no tenemos descripción de la oferta, usamos el título
-            desc_for_match = job["description"] if job["description"] else job["title"]
+            desc_for_match = job.get("description") or job["title"]
             match_result = gemini.match_offer(
                 cv_text=cv_text,
                 offer_title=job["title"],
-                offer_description=desc_for_match
+                offer_description=desc_for_match,
             )
-            
-            # Filtrar empleos no relacionados (umbral 35% para no perder ofertas relevantes)
+
             if match_result.match_score < 35:
-                print(f"  - [IA] Saltando oferta por baja compatibilidad ({match_result.match_score}%)")
+                print(f"  - [IA] Baja compatibilidad ({match_result.match_score}%). Saltando.")
                 time.sleep(6)
                 continue
-                
-            # Filtro de ubicación estricto según la modalidad de trabajo determinada por la IA
-            work_mode = match_result.work_mode  # 'Presencial', 'Remoto', 'Híbrido'
-            
-            if work_mode == "Remoto":
-                # Si es remoto, puede ser de cualquier sitio
-                print(f"  - [Filtro Ubicación Final] Oferta remota aceptada desde cualquier origen ({job.get('location')})")
-            else:
-                # Si es presencial o híbrido, la ubicación debe coincidir con alguna ciudad deseada
+
+            work_mode = match_result.work_mode
+            if work_mode != "Remoto" and desired_cities:
                 job_loc = job.get("location", "").lower()
-                matches_city = False
-                for city in desired_cities:
-                    if city in job_loc:
-                        matches_city = True
-                        break
+                matches_city = any(city in job_loc for city in desired_cities)
                 if not matches_city:
-                    print(f"  - [Filtro Ubicación Final] Saltando oferta clasificada como '{work_mode}' en '{job.get('location')}' por no coincidir con las ciudades deseadas ({desired_cities})")
+                    print(f"  - [Filtro] {work_mode} fuera de ciudades deseadas. Saltando.")
                     time.sleep(6)
                     continue
-            
-            # Combinar datos de la oferta con el resultado del análisis de IA
+
             job["match_score"] = match_result.match_score
             job["tech_stack"] = match_result.tech_stack
             job["tailored_advice"] = match_result.tailored_advice
@@ -211,26 +191,42 @@ def main():
             job["work_mode"] = match_result.work_mode
             job["salary_is_estimate"] = match_result.salary_is_estimate
             job["required_experience"] = match_result.required_experience
-            
-            # Subir a Notion
+
             success = notion_sync.add_job_to_notion(job)
             if success:
                 new_jobs_added += 1
                 analyzed_count += 1
-                
-            # Retraso de 6 segundos para no superar el límite de 15 RPM de la API de Gemini (cuota gratis)
+
             time.sleep(6)
-                
+
         except Exception as e:
-            print(f"  - [Error] No se pudo analizar la oferta con IA/Notion: {e}")
+            print(f"  - [Error] {e}")
             time.sleep(6)
+
+    results.set_total_added(new_jobs_added)
+    results.set_analyzed_count(analyzed_count)
+    json_path = results.save()
 
     print("\n" + "=" * 60)
     print("                 EJECUCIÓN FINALIZADA")
     print("-" * 60)
-    print(f"  - Ofertas marcadas para borrar eliminadas: {deleted_count}")
-    print(f"  - Nuevas ofertas procesadas y añadidas a Notion: {new_jobs_added}")
+    print(f"  - Eliminadas de Notion: {deleted_count}")
+    print(f"  - Nuevas añadidas: {new_jobs_added}")
+    print(f"  - Analizadas por IA: {analyzed_count}")
     print("=" * 60)
+
+    scraper_stats = results.get_scraper_stats()
+    top_jobs = results.get_top_jobs(10)
+    email_errors = results.run_data.get("errors", [])
+
+    notifier.send_summary(
+        jobs_added=new_jobs_added,
+        jobs_analyzed=analyzed_count,
+        scraper_stats=scraper_stats,
+        top_jobs=top_jobs,
+        errors=email_errors,
+    )
+
 
 if __name__ == "__main__":
     main()

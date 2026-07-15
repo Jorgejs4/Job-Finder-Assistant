@@ -29,6 +29,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # API Keys para fallbacks (opcional)
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 
+# Configuración de email (opcional)
+SMTP_GMAIL_USER = os.getenv("SMTP_GMAIL_USER", "")
+SMTP_GMAIL_PASSWORD = os.getenv("SMTP_GMAIL_PASSWORD", "")
+NOTIFY_EMAIL = os.getenv("NOTIFY_EMAIL", SMTP_GMAIL_USER)
+
+# Límite de ofertas por plataforma por ejecución
+MAX_JOBS_PER_SCRAPER = int(os.getenv("MAX_JOBS_PER_SCRAPER", "50"))
+
 # Variables globales que se configurarán en la carga de preferencias
 DESIRED_LOCATIONS = []
 YEARS_OF_EXPERIENCE = 0
@@ -42,6 +50,9 @@ LOCATION_MAP = {
         "indeed": "Sevilla, España",
         "infojobs": "sevilla",
         "jsearch": "Sevilla Spain",
+        "tecnoempleo": "sevilla",
+        "jobfluent": "Sevilla",
+        "glassdoor": "sevilla",
         "display": "Sevilla, Andalucía, España",
     },
     "madrid": {
@@ -49,6 +60,9 @@ LOCATION_MAP = {
         "indeed": "Madrid, España",
         "infojobs": "madrid",
         "jsearch": "Madrid Spain",
+        "tecnoempleo": "madrid",
+        "jobfluent": "Madrid",
+        "glassdoor": "madrid",
         "display": "Madrid, España",
     },
     "barcelona": {
@@ -56,6 +70,9 @@ LOCATION_MAP = {
         "indeed": "Barcelona, España",
         "infojobs": "barcelona",
         "jsearch": "Barcelona Spain",
+        "tecnoempleo": "barcelona",
+        "jobfluent": "Barcelona",
+        "glassdoor": "barcelona",
         "display": "Barcelona, Cataluña, España",
     },
     "valencia": {
@@ -63,6 +80,9 @@ LOCATION_MAP = {
         "indeed": "Valencia, España",
         "infojobs": "valencia",
         "jsearch": "Valencia Spain",
+        "tecnoempleo": "valencia",
+        "jobfluent": "Valencia",
+        "glassdoor": "valencia",
         "display": "Valencia, España",
     },
     "remoto": {
@@ -70,6 +90,9 @@ LOCATION_MAP = {
         "indeed": "Remoto",
         "infojobs": "remoto",
         "jsearch": "Remote",
+        "tecnoempleo": "remoto",
+        "jobfluent": "Remote",
+        "glassdoor": "remoto",
         "display": "Remoto",
     },
     "remote": {
@@ -77,6 +100,9 @@ LOCATION_MAP = {
         "indeed": "Remote",
         "infojobs": "remoto",
         "jsearch": "Remote",
+        "tecnoempleo": "remoto",
+        "jobfluent": "Remote",
+        "glassdoor": "remote",
         "display": "Remote",
     },
 }

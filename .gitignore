@@ -32,3 +32,9 @@ build/
 
 # macOS archivos del sistema
 .DS_Store
+
+# Resultados de ejecuciones (generados automáticamente)
+results/
+
+# Streamlit
+.streamlit/
