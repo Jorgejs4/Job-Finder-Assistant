@@ -41,6 +41,9 @@ class OfferMatch(BaseModel):
     salary_is_estimate: bool = Field(
         description="True si el salario fue estimado por la IA porque la oferta original no mencionaba ningún salario ni rango salarial. False si la oferta original sí especificaba explícitamente un salario o rango."
     )
+    required_experience: int = Field(
+        description="Número de años de experiencia laboral que pide la empresa para el puesto. Si la oferta menciona explícitamente los años (ej: '3 años de experiencia'), devuelve ese número. Si solo pone 'junior' o no menciona experiencia, devuelve 0. Si pone 'senior' sin número concreto, devuelve 5. Máximo 20."
+    )
 
 class GeminiClient:
     def __init__(self):
@@ -185,7 +188,9 @@ class GeminiClient:
                 tech_stack=tech_stack,
                 tailored_advice=tailored_advice,
                 estimated_salary=estimated_salary,
-                work_mode=work_mode
+                work_mode=work_mode,
+                salary_is_estimate=len(re.findall(r'(\d{2})[\s.]?(\d{3})', offer_description)) == 0,
+                required_experience=0
             )
 
         prompt = f"""
@@ -197,6 +202,7 @@ class GeminiClient:
         3. Escribe consejos breves, personalizados y accionables para adaptar el currículum del candidato a esta oferta específica (por ejemplo, destacar sus proyectos relacionados, enfocar sus estudios de CFGS en las tecnologías demandadas, etc.). Los consejos DEBEN ser específicos para esta oferta y no repetitivos.
         4. Identifica o calcula el salario anual bruto estimado (estimated_salary) en euros. Si el texto no menciona el salario, la IA DEBE estimar un salario anual bruto realista para este puesto en España considerando las tecnologías requeridas, la modalidad y la experiencia solicitada (ej. 28000 para juniors, 35000 para mid, etc.).
         5. Determina la modalidad de trabajo (work_mode) de la oferta en una de estas opciones exactas: 'Presencial', 'Remoto' o 'Híbrido' (teletrabajo parcial).
+        6. Determina los años de experiencia requeridos (required_experience). Si la oferta dice explícitamente 'X años de experiencia', devuelve X. Si pone 'junior' devuelve 0, 'mid-level' o 'intermedio' devuelve 2, 'senior' devuelve 5. Si no menciona nada, devuelve 0.
 
         Currículum del candidato:
         ---

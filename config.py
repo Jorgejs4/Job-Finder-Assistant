@@ -42,6 +42,8 @@ LOCATION_MAP = {
         "indeed": "Sevilla, España",
         "infojobs": "sevilla",
         "jsearch": "Sevilla Spain",
+        "computrabajo": "sevilla",
+        "tecnolabs": "sevilla",
         "display": "Sevilla, Andalucía, España",
     },
     "madrid": {
@@ -49,6 +51,8 @@ LOCATION_MAP = {
         "indeed": "Madrid, España",
         "infojobs": "madrid",
         "jsearch": "Madrid Spain",
+        "computrabajo": "madrid",
+        "tecnolabs": "madrid",
         "display": "Madrid, España",
     },
     "barcelona": {
@@ -56,6 +60,8 @@ LOCATION_MAP = {
         "indeed": "Barcelona, España",
         "infojobs": "barcelona",
         "jsearch": "Barcelona Spain",
+        "computrabajo": "barcelona",
+        "tecnolabs": "barcelona",
         "display": "Barcelona, Cataluña, España",
     },
     "valencia": {
@@ -63,6 +69,8 @@ LOCATION_MAP = {
         "indeed": "Valencia, España",
         "infojobs": "valencia",
         "jsearch": "Valencia Spain",
+        "computrabajo": "valencia",
+        "tecnolabs": "valencia",
         "display": "Valencia, España",
     },
     "remoto": {
@@ -70,6 +78,8 @@ LOCATION_MAP = {
         "indeed": "Remoto",
         "infojobs": "remoto",
         "jsearch": "Remote",
+        "computrabajo": "remoto",
+        "tecnolabs": "remoto",
         "display": "Remoto",
     },
     "remote": {
@@ -77,6 +87,8 @@ LOCATION_MAP = {
         "indeed": "Remote",
         "infojobs": "remoto",
         "jsearch": "Remote",
+        "computrabajo": "remoto",
+        "tecnolabs": "remoto",
         "display": "Remote",
     },
 }

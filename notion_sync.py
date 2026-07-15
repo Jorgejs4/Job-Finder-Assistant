@@ -334,6 +334,13 @@ class NotionSync:
                             "rich_text": [{"text": {"content": prefix + existing}}]
                         }
 
+        # Años de experiencia requeridos (campo Exp)
+        required_exp = job_data.get("required_experience")
+        if required_exp is not None and "Exp" in self.schema_properties:
+            properties["Exp"] = {
+                "number": int(required_exp)
+            }
+
         # Filtrar las propiedades enviadas para incluir únicamente las que existen en el esquema de la base de datos
         if self.schema_properties:
             properties = {k: v for k, v in properties.items() if k in self.schema_properties}

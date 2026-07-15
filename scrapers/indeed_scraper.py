@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 from scrapers.base_scraper import BaseScraper
@@ -5,81 +6,148 @@ import config
 
 
 class IndeedScraper(BaseScraper):
+    def _fetch_with_cffi(self, url: str, params: dict = None) -> str:
+        """Fetch usando curl_cffi para evadir Cloudflare."""
+        try:
+            from curl_cffi import requests as cffi_requests
+            resp = cffi_requests.get(url, params=params, impersonate="chrome131", timeout=20)
+            if resp.status_code == 200:
+                return resp.text
+            print(f"[Indeed] curl_cffi devolvió status {resp.status_code}")
+        except ImportError:
+            print("[Indeed] curl_cffi no disponible")
+        except Exception as e:
+            print(f"[Indeed] Error con curl_cffi: {e}")
+        return ""
+
+    def _parse_job_card(self, card, source_url: str) -> dict:
+        """Parsea una tarjeta de empleo de Indeed."""
+        # Título y enlace
+        title_tag = card.find("h2", class_="jobTitle") or card.find("a", {"data-jk": True})
+        if not title_tag:
+            title_tag = card.find("a", id=re.compile(r"job_"))
+        if not title_tag:
+            return None
+
+        a_tag = title_tag.find("a") if title_tag.name == "h2" else title_tag
+        title = title_tag.text.strip() if title_tag else ""
+        if not title:
+            return None
+
+        link = ""
+        if a_tag and a_tag.get("href"):
+            href = a_tag["href"]
+            if href.startswith("/"):
+                link = "https://es.indeed.com" + href
+            elif href.startswith("http"):
+                link = href
+
+        # Empresa
+        company_tag = (card.find("span", {"data-testid": "company-name"}) or
+                       card.find("span", class_="companyName") or
+                       card.find("span", class_="company"))
+        company = company_tag.text.strip() if company_tag else "No especificada"
+
+        # Ubicación
+        loc_tag = (card.find("div", {"data-testid": "text-location"}) or
+                   card.find("div", class_="companyLocation"))
+        location = loc_tag.text.strip() if loc_tag else ""
+
+        # Descripción
+        desc_tag = (card.find("div", class_="job-snippet") or
+                    card.find("table", class_="jobCard_mainContent") or
+                    card.find("div", class_="yui-u first"))
+        description = desc_tag.text.strip() if desc_tag else ""
+
+        return {
+            "title": title,
+            "company": company,
+            "location": location,
+            "link": link,
+            "description": description,
+            "date_posted": "Reciente",
+            "source": "Indeed"
+        }
+
     def scrape_jobs(self, search_query: str, locations: List[str]) -> List[Dict[str, Any]]:
         """
-        Scraper para Indeed.
-        Nota: Indeed utiliza Cloudflare de manera muy agresiva y suele devolver 403 Forbidden 
-        cuando se ejecuta desde rangos de IP de servidores como GitHub Actions. 
-        Este scraper está diseñado como un intento de mejor esfuerzo, y fallará con gracia 
-        si es bloqueado para que actúe el fallback de la API.
+        Scraper para Indeed España. Usa curl_cffi para evadir Cloudflare.
         """
         print(f"[Indeed] Buscando ofertas para '{search_query}'...")
         jobs = []
-        
+
         search_locations = locations if locations else ["España"]
-        
+
         for loc in search_locations:
             api_loc = config.get_location_for("indeed", loc)
             print(f"[Indeed] Buscando en ubicación: {api_loc}")
-            
-            # Indeed España
+
             url = "https://es.indeed.com/jobs"
             params = {
                 "q": search_query,
                 "l": api_loc,
-                "fromage": 3 # ofertas de los últimos 3 días
+                "fromage": 7,
             }
-            
-            try:
-                # Intentamos obtener el HTML
-                response = self.client.get(url, params=params)
-                if response.status_code == 403:
-                    print(f"[Indeed] Petición bloqueada por Cloudflare (Código 403). Se activará el fallback.")
-                    return []
-                elif response.status_code != 200:
-                    print(f"[Indeed] Error en la petición ({response.status_code})")
-                    continue
-                
-                soup = BeautifulSoup(response.text, "html.parser")
-                # Intentar parsear las tarjetas de Indeed
-                # Históricamente usan divs con la clase 'job_seen_beacon' o similar
-                cards = soup.find_all("div", class_="job_seen_beacon")
-                print(f"[Indeed] Se encontraron {len(cards)} tarjetas de empleo.")
-                
-                for card in cards:
+
+            html = self._fetch_with_cffi(url, params=params)
+            if not html:
+                # Fallback a httpx normal
+                try:
+                    response = self.client.get(url, params=params)
+                    if response.status_code == 200:
+                        html = response.text
+                except Exception:
+                    pass
+
+            if not html:
+                print(f"[Indeed] No se pudo obtener HTML para {api_loc}")
+                continue
+
+            soup = BeautifulSoup(html, "html.parser")
+
+            # Buscar tarjetas de empleo con múltiples selectores
+            cards = soup.find_all("div", class_="job_seen_beacon")
+            if not cards:
+                cards = soup.find_all("div", class_=re.compile(r"jobsearch-ResultsList"))
+            if not cards:
+                cards = soup.select("div.job_seen_beacon, td.resultContent")
+
+            # Parsear cards
+            parsed = []
+            for card in cards:
+                result = self._parse_job_card(card, url)
+                if result and result["link"]:
+                    parsed.append(result)
+
+            print(f"[Indeed] {len(parsed)} ofertas encontradas para {api_loc}")
+
+            # Fallback: extraer del script JSON embebido
+            if not parsed:
+                scripts = soup.find_all("script", type="application/ld+json")
+                for script in scripts:
                     try:
-                        title_tag = card.find("h2", class_="jobTitle")
-                        if not title_tag:
-                            continue
-                        
-                        a_tag = title_tag.find("a")
-                        title = title_tag.text.strip()
-                        link = "https://es.indeed.com" + a_tag["href"] if a_tag else ""
-                        
-                        company_tag = card.find("span", class_="companyName") or card.find("span", {"data-testid": "company-name"})
-                        company = company_tag.text.strip() if company_tag else "No especificada"
-                        
-                        loc_tag = card.find("div", class_="companyLocation") or card.find("div", {"data-testid": "text-location"})
-                        location = loc_tag.text.strip() if loc_tag else api_loc
-                        
-                        # Snippet de descripción
-                        desc_tag = card.find("div", class_="job-snippet") or card.find("table", class_="jobCard_mainContent")
-                        description = desc_tag.text.strip() if desc_tag else ""
-                        
-                        jobs.append({
-                            "title": title,
-                            "company": company,
-                            "location": location,
-                            "link": link,
-                            "description": description,
-                            "date_posted": "Reciente",
-                            "source": "Indeed"
-                        })
-                    except Exception as e:
-                        print(f"[Indeed] Error al parsear tarjeta individual: {e}")
+                        import json
+                        data = json.loads(script.string or "")
+                        items = data if isinstance(data, list) else [data]
+                        for item in items:
+                            if item.get("@type") == "JobPosting":
+                                link = item.get("url", "")
+                                parsed.append({
+                                    "title": item.get("title", "No especificado"),
+                                    "company": item.get("hiringOrganization", {}).get("name", "No especificada"),
+                                    "location": item.get("jobLocation", {}).get("address", {}).get("addressLocality", api_loc),
+                                    "link": link,
+                                    "description": item.get("description", ""),
+                                    "date_posted": item.get("datePosted", "Reciente")[:10],
+                                    "source": "Indeed"
+                                })
+                    except Exception:
                         continue
-                        
-            except Exception as e:
-                print(f"[Indeed] Error en la conexión/scraping de Indeed: {e}")
-                
+
+                if parsed:
+                    print(f"[Indeed] {len(parsed)} ofertas extraídas via JSON-LD para {api_loc}")
+
+            jobs.extend(parsed)
+
+        print(f"[Indeed] Total: {len(jobs)} ofertas")
         return jobs

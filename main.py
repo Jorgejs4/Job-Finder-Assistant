@@ -7,6 +7,8 @@ from utils.gemini_client import GeminiClient
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
+from scrapers.computrabajo_scraper import ComputrabajoScraper
+from scrapers.tecnolabs_scraper import TecnoJobsScraper
 from scrapers.fallback_api import FallbackJobsAPI
 from notion_sync import NotionSync
 
@@ -65,7 +67,9 @@ def main():
     scrapers = [
         InfoJobsScraper(),
         LinkedInScraper(),
-        IndeedScraper()
+        IndeedScraper(),
+        ComputrabajoScraper(),
+        TecnoJobsScraper()
     ]
     
     # Buscaremos para cada puesto recomendado por la IA
@@ -203,6 +207,7 @@ def main():
             job["salary"] = str(match_result.estimated_salary)
             job["work_mode"] = match_result.work_mode
             job["salary_is_estimate"] = match_result.salary_is_estimate
+            job["required_experience"] = match_result.required_experience
             
             # Subir a Notion
             success = notion_sync.add_job_to_notion(job)
