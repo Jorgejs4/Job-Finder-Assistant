@@ -16,6 +16,7 @@ class EmailNotifier:
         self.smtp_password = os.getenv("SMTP_GMAIL_PASSWORD", "")
         self.notify_to = os.getenv("NOTIFY_EMAIL", self.smtp_user)
         self.enabled = bool(self.smtp_user and self.smtp_password and self.notify_to)
+        print(f"[Email] Config: user={'SI' if self.smtp_user else 'NO'}, pass={'SI' if self.smtp_password else 'NO'}, to={'SI' if self.notify_to else 'NO'}, enabled={self.enabled}")
 
     def send_summary(
         self,
@@ -41,13 +42,20 @@ class EmailNotifier:
         msg.attach(MIMEText(html, "html"))
 
         try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            print(f"[Email] Conectando a smtp.gmail.com:465...")
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
+                print(f"[Email] Login con usuario: {self.smtp_user}")
                 server.login(self.smtp_user, self.smtp_password)
+                print(f"[Email] Enviando email a: {self.notify_to}")
                 server.sendmail(self.smtp_user, self.notify_to, msg.as_string())
-            print(f"[Email] Resumen enviado a {self.notify_to}")
+            print(f"[Email] Resumen enviado OK a {self.notify_to}")
             return True
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"[Email] ERROR AUTENTICACION: {e}")
+            print("[Email] Verifica que SMTP_GMAIL_USER es tu email completo y SMTP_GMAIL_PASSWORD es la contraseña de aplicación de 16 caracteres (sin espacios)")
+            return False
         except Exception as e:
-            print(f"[Email] Error enviando email: {e}")
+            print(f"[Email] Error enviando email: {type(e).__name__}: {e}")
             return False
 
     def _build_html(
