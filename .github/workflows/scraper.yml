@@ -1,0 +1,48 @@
+name: Job Scraper and Notion Sync
+
+on:
+  schedule:
+    # Se ejecuta cada 12 horas: 8:00 y 20:00 UTC
+    - cron: '0 8,20 * * *'
+  workflow_dispatch:
+    inputs:
+      desired_locations:
+        description: 'Ubicaciones de búsqueda (separadas por comas, ej: Sevilla,Remoto)'
+        required: true
+        default: 'Sevilla,Remoto'
+      years_of_experience:
+        description: 'Años de experiencia requeridos'
+        required: false
+        default: '0'
+      min_salary:
+        description: 'Salario mínimo deseado (vacío para omitir)'
+        required: false
+        default: '20000'
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run Scraper
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        DESIRED_LOCATIONS: ${{ github.event.inputs.desired_locations || secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
+        YEARS_OF_EXPERIENCE: ${{ github.event.inputs.years_of_experience || secrets.YEARS_OF_EXPERIENCE || '0' }}
+        MIN_SALARY: ${{ github.event.inputs.min_salary || secrets.MIN_SALARY || '20000' }}
+        CV_PATH: 'cv.pdf'
+      run: python main.py
