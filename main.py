@@ -21,13 +21,50 @@ from notion_sync import NotionSync
 
 
 def run_scraper(scraper, role, locations):
-    """Ejecuta un scraper individual y devuelve (nombre, ofertas, error)."""
+    """Ejecuta un scraper y devuelve (nombre, ofertas, error)."""
     name = scraper.__class__.__name__
     try:
         jobs = scraper.scrape_jobs(role, locations)
         return name, jobs, None
     except Exception as e:
         return name, [], f"{type(e).__name__}: {e}"
+
+
+def analyze_and_upload(args):
+    """Analiza una oferta con Gemini y la sube a Notion. Retorna (exito, job_data)."""
+    gemini, notion_sync, cv_text, job, desired_cities = args
+    link = job.get("link", "")
+
+    if notion_sync.check_if_job_exists(link):
+        return False, job, "duplicado"
+
+    desc_for_match = job.get("description") or job["title"]
+    match_result = gemini.match_offer(
+        cv_text=cv_text,
+        offer_title=job["title"],
+        offer_description=desc_for_match,
+    )
+
+    if match_result.match_score < 35:
+        return False, job, f"bajo_match_{match_result.match_score}"
+
+    work_mode = match_result.work_mode
+    if work_mode != "Remoto" and desired_cities:
+        job_loc = job.get("location", "").lower()
+        matches_city = any(city in job_loc for city in desired_cities)
+        if not matches_city:
+            return False, job, f"ubicacion_{work_mode}"
+
+    job["match_score"] = match_result.match_score
+    job["tech_stack"] = match_result.tech_stack
+    job["tailored_advice"] = match_result.tailored_advice
+    job["salary"] = str(match_result.estimated_salary)
+    job["work_mode"] = match_result.work_mode
+    job["salary_is_estimate"] = match_result.salary_is_estimate
+    job["required_experience"] = match_result.required_experience
+
+    success = notion_sync.add_job_to_notion(job)
+    return success, job, "ok" if success else "notion_error"
 
 
 def main():
@@ -93,24 +130,24 @@ def main():
         WelcomeToTheJungleScraper(),
     ]
 
-    roles_to_search = profile.recommended_roles[:2]
+    roles_to_search = profile.recommended_roles[:4]
     print(f"[Buscador] Roles: {roles_to_search}")
     print(f"[Buscador] Límite: {config.MAX_JOBS_PER_SCRAPER} ofertas/plataforma")
-    print(f"[Buscador] Scrapers en paralelo: {len(scrapers)}")
 
+    # ── FASE 1: Scraping paralelo ──
+    t0 = time.time()
     all_jobs = []
-
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {}
         for role in roles_to_search:
             for scraper in scrapers:
                 future = executor.submit(run_scraper, scraper, role, config.DESIRED_LOCATIONS)
-                futures[future] = (scraper.__class__.__name__, role)
+                futures[future] = scraper.__class__.__name__
 
-        for future in as_completed(futures):
-            name, role_used = futures[future]
+        for future in as_completed(futures, timeout=120):
+            name = futures[future]
             try:
-                scraper_name, jobs_found, error = future.result(timeout=60)
+                scraper_name, jobs_found, error = future.result(timeout=30)
                 if error:
                     print(f"[{scraper_name}] Error: {error}")
                     results.record_scraper_result(scraper_name, [], failed=True, error_msg=error)
@@ -119,7 +156,7 @@ def main():
                     all_jobs.extend(jobs_found)
                     results.record_scraper_result(scraper_name, jobs_found)
                     if jobs_found:
-                        print(f"[{scraper_name}] +{len(jobs_found)} ofertas (role: {role_used})")
+                        print(f"[{scraper_name}] +{len(jobs_found)} ofertas")
             except Exception as e:
                 print(f"[{name}] Error future: {e}")
                 results.record_scraper_result(name, [], failed=True, error_msg=str(e))
@@ -134,12 +171,15 @@ def main():
             except Exception as e:
                 print(f"[Fallback] Error: {e}")
 
+    t1 = time.time()
+    print(f"\n[Timing] Scraping: {t1 - t0:.1f}s")
+
+    # ── Deduplicar y filtrar ──
     unique_jobs = {}
     for job in all_jobs:
         if job.get("link"):
             unique_jobs[job["link"]] = job
     jobs_to_process = list(unique_jobs.values())
-    print(f"\n[Procesamiento] Ofertas únicas: {len(jobs_to_process)}")
 
     source_priority = {
         "InfoJobs": 0, "LinkedIn": 1, "Indeed": 2,
@@ -149,8 +189,6 @@ def main():
     jobs_to_process.sort(key=lambda j: source_priority.get(j.get("source", ""), 99))
 
     desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
-    print(f"[Filtro] Ciudades: {desired_cities}")
-
     remote_kw = ["remoto", "remote", "teletrabajo", "distancia", "virtual", "home office"]
     filtered_jobs = []
     for job in jobs_to_process:
@@ -166,25 +204,22 @@ def main():
         if is_remote or matches_city:
             filtered_jobs.append(job)
 
-    jobs_to_process = filtered_jobs
-    print(f"[Procesamiento] Tras filtro preliminar: {len(jobs_to_process)}")
+    jobs_to_process = filtered_jobs[:50]
+    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx 50 para análisis IA)")
 
+    # ── FASE 2: Análisis Gemini + Notion en pipeline ──
+    t2 = time.time()
     new_jobs_added = 0
     analyzed_count = 0
+    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "notion_error": 0}
 
     for idx, job in enumerate(jobs_to_process, 1):
-        link = job.get("link", "")
-
-        if notion_sync.check_if_job_exists(link):
-            print(f"[{idx}/{len(jobs_to_process)}] Duplicado: {job['title']}")
-            continue
-
-        if analyzed_count >= 15:
-            print(f"\nLímite de 15 nuevas ofertas alcanzado.")
+        if analyzed_count >= 25:
+            print(f"\nLímite de 25 nuevas ofertas alcanzado.")
             break
 
-        print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']}")
-        print(f"  Fuente: {job.get('source')} | Ubicación: {job.get('location')}")
+        link = job.get("link", "")
+        print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']} [{job.get('source', '')}]")
 
         try:
             desc_for_match = job.get("description") or job["title"]
@@ -196,7 +231,8 @@ def main():
 
             if match_result.match_score < 35:
                 print(f"  - [IA] Baja compatibilidad ({match_result.match_score}%). Saltando.")
-                time.sleep(4)
+                skipped["bajo_match"] += 1
+                time.sleep(2)
                 continue
 
             work_mode = match_result.work_mode
@@ -205,7 +241,8 @@ def main():
                 matches_city = any(city in job_loc for city in desired_cities)
                 if not matches_city:
                     print(f"  - [Filtro] {work_mode} fuera de ciudades deseadas. Saltando.")
-                    time.sleep(4)
+                    skipped["ubicacion"] += 1
+                    time.sleep(2)
                     continue
 
             job["match_score"] = match_result.match_score
@@ -220,23 +257,33 @@ def main():
             if success:
                 new_jobs_added += 1
                 analyzed_count += 1
+                print(f"  - [OK] Añadida a Notion (match: {match_result.match_score}%)")
+            else:
+                skipped["notion_error"] += 1
 
-            time.sleep(4)
+            time.sleep(2)
 
         except Exception as e:
             print(f"  - [Error] {e}")
-            time.sleep(4)
+            skipped["notion_error"] += 1
+            time.sleep(2)
+
+    t3 = time.time()
+    print(f"\n[Timing] Análisis IA + Notion: {t3 - t2:.1f}s")
+    print(f"[Timing] Total: {t3 - t0:.1f}s")
 
     results.set_total_added(new_jobs_added)
     results.set_analyzed_count(analyzed_count)
-    json_path = results.save()
+    results.save()
 
     print("\n" + "=" * 60)
     print("                 EJECUCIÓN FINALIZADA")
     print("-" * 60)
     print(f"  - Eliminadas de Notion: {deleted_count}")
-    print(f"  - Nuevas añadidas: {new_jobs_added}")
     print(f"  - Analizadas por IA: {analyzed_count}")
+    print(f"  - Nuevas añadidas: {new_jobs_added}")
+    print(f"  - Skipped: {skipped}")
+    print(f"  - Tiempo total: {t3 - t0:.1f}s")
     print("=" * 60)
 
     scraper_stats = results.get_scraper_stats()
