@@ -21,7 +21,8 @@ from typing import List, Dict, Any
 class WebhookNotifier:
     def __init__(self):
         self.url = os.getenv("WEBHOOK_URL", "")
-        self.min_match = int(os.getenv("WEBHOOK_MIN_MATCH", "80"))
+        _wm = os.getenv("WEBHOOK_MIN_MATCH", "80")
+        self.min_match = int(_wm) if _wm else 80
         self.enabled = bool(self.url)
         
         if self.enabled:
