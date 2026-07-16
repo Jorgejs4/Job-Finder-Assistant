@@ -32,6 +32,12 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 6. **Resultados persistentes:** Cada ejecución guarda JSON + CSV con métricas por scraper.
 7. **Dashboard interactivo:** Streamlit con KPIs, gráficos, filtros y exportación CSV.
 8. **Tests automatizados:** Verifican que todos los scrapers responden correctamente.
+9. **Búsqueda multilingüe:** Busca automáticamente en español (InfoJobs, TecnoEmpleo) e inglés (LinkedIn, RemoteOK).
+10. **Dedup fuzzy matching:** Detecta duplicados cross-scraper con similitud de texto (no solo URL exacta).
+11. **Tracker de aplicaciones:** Pipeline en Notion: Nuevo → Revisado → Interesado → Aplicado → Entrevista → Oferta → Rechazado.
+12. **Carta de presentación IA:** Genera cartas personalizadas por oferta con Gemini.
+13. **Skills gap analysis:** Detecta qué habilidades faltan en tu CV vs demanda del mercado.
+14. **Informe de mercado:** Tendencias de tech, salarios, empresas que contratan.
 
 ---
 
@@ -69,6 +75,34 @@ docker-compose up --build
 
 ---
 
+## Scripts útiles
+
+### Skills Gap Analysis
+```bash
+# Analiza las últimas 25 ofertas y muestra qué skills faltan
+MOCK_GEMINI=true python skills_gap.py
+
+# Analizar más ofertas
+python skills_gap.py --top 50
+
+# Guardar informe en archivo
+python skills_gap.py --output skills_gap.md
+```
+
+### Market Report
+```bash
+# Genera informe de mercado en HTML
+MOCK_GEMINI=true python market_report.py
+
+# Guardar en archivo
+python market_report.py --output report.html
+
+# Enviar por email
+python market_report.py --email
+```
+
+---
+
 ## Dashboard
 
 El dashboard es una aplicación local con **Streamlit** que visualiza los resultados de las ejecuciones.
@@ -84,9 +118,10 @@ Abrir **http://localhost:8501** en el navegador.
 ### Qué muestra
 
 - **KPIs:** Ofertas encontradas, añadidas a Notion, analizadas por IA, scrapers OK/fallidos
+- **Pipeline de aplicaciones:** Funnel visual del estado de cada oferta
 - **Gráficos:** Evolución de ofertas por ejecución, scrapers OK vs fallidos
 - **Tabla de scrapers:** Estado de cada plataforma (OK, vacío, fallido) y número de ofertas
-- **Ofertas:** Tabla con todos los resultados, filtrable por fuente, match mínimo y modalidad
+- **Ofertas:** Tabla con todos los resultados, filtrable por fuente, match, modalidad y estado
 - **Exportación:** Botón para descargar el CSV filtrado
 
 ### Cómo alimentar el dashboard con datos de GitHub Actions
@@ -137,16 +172,11 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 | `DESIRED_LOCATIONS` | No | Ubicaciones por defecto (ej: `Sevilla,Remoto`) |
 | `YEARS_OF_EXPERIENCE` | No | Años de experiencia (ej: `3`) |
 | `MIN_SALARY` | No | Salario mínimo anual (ej: `35000`) |
+| `SMTP_GMAIL_USER` | No | Email de Gmail para notificaciones |
+| `SMTP_GMAIL_PASSWORD` | No | Contraseña de aplicación de Gmail |
+| `NOTIFY_EMAIL` | No | Email destino del resumen |
 
 ### Configurar email (Gmail)
-
-**Necesitas 3 secrets para recibir el email de resumen:**
-
-1. **`SMTP_GMAIL_USER`** — Tu correo Gmail (ej: `tucorreo@gmail.com`)
-2. **`SMTP_GMAIL_PASSWORD`** — Contraseña de aplicación de 16 caracteres
-3. **`NOTIFY_EMAIL`** — Email donde quieres recibir el reporte (puede ser el mismo)
-
-#### Cómo crear la contraseña de aplicación:
 
 1. Activa **Verificación en 2 pasos** en https://myaccount.google.com/security
 2. Ve a https://myaccount.google.com/apppasswords
@@ -155,31 +185,16 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 5. Google te dará un código de 16 caracteres tipo: `abcdefghijklmnop`
 6. Ese código es tu `SMTP_GMAIL_PASSWORD` (guárdalo **sin espacios**)
 
-> **Nota:** La contraseña de aplicación es distinta a tu contraseña normal de Gmail. Es una clave especial que permite enviar emails sin exponer tu contraseña principal.
+### Campos opcionales en Notion
 
-#### Si no ves la opción de "Contraseñas de aplicación":
+Para usar las funciones avanzadas, añade estos campos a tu base de datos:
 
-1. Activa la **Verificación en 2 pasos** primero (paso 1)
-2. Si no aparece, ve a https://myaccount.google.com/security
-3. En "Cómo acceder a Google", busca "Contraseñas de aplicaciones"
-4. Si no aparece, puede que tu cuenta no la tenga habilitada — usa otra cuenta Gmail
-
-### Probar que el email funciona
-
-1. Ve a **Actions** > **Job Scraper and Notion Sync** > **Run workflow**
-2. Asegúrate de que los 3 secrets de email están configurados
-3. Espera a que termine la ejecución (3-5 minutos)
-4. Revisa tu bandeja de entrada (y spam) por un email con asunto "[Job Scraper] Resumen ..."
-
-### Cómo ver los resultados de cada ejecución
-
-1. Ve a la pestaña **Actions** de tu repositorio
-2. Haz clic en la ejecución que quieras revisar
-3. En la sección **Artifacts** (abajo) encontrarás:
-   - `scraper-results-XXXX` — JSON, CSV e histórico de la ejecución
-   - `scraper-test-report` — Reporte de tests de scrapers
-4. Haz clic en el artifact para descargarlo (formato .zip)
-5. Descomprime y abre el CSV en Excel/Google Sheets o el JSON en un visor de texto
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `Estado` | Select | Pipeline de aplicaciones (Nuevo, Revisado, Interesado, Aplicado, Entrevista, Oferta, Rechazado) |
+| `Carta Presentación` | Rich text | Carta de presentación generada por IA para cada oferta |
+| `Exp` | Number | Años de experiencia requeridos |
+| `Origen Salario` | Select | "Estimado (IA)" o "Directo" |
 
 ### Flujo de ejecución
 
