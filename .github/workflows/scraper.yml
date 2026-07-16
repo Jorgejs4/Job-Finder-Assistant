@@ -131,12 +131,16 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add results/data.json
-        if git diff --cached --quiet; then
-          echo "No changes to data.json"
+        if [ -f results/data.json ]; then
+          git add results/data.json
+          if git diff --cached --quiet; then
+            echo "No changes to data.json"
+          else
+            git commit -m "📊 Update data.json [skip ci]"
+            git push
+          fi
         else
-          git commit -m "📊 Update data.json [skip ci]"
-          git push
+          echo "data.json not found, skipping commit"
         fi
 
     - name: Cleanup Docker cache

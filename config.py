@@ -240,4 +240,5 @@ def load_preferences():
 
 # Webhook configuration (opcional)
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
-WEBHOOK_MIN_MATCH = int(os.getenv("WEBHOOK_MIN_MATCH", "80"))
+_webhook_min = os.getenv("WEBHOOK_MIN_MATCH", "80")
+WEBHOOK_MIN_MATCH = int(_webhook_min) if _webhook_min else 80
