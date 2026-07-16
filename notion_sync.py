@@ -40,10 +40,6 @@ class NotionSync:
         return response.get("results", [])
 
     def clean_deleted_items(self) -> int:
-        """
-        Busca las páginas donde el usuario ha marcado el checkbox "Eliminar" 
-        y las archiva (elimina) de Notion.
-        """
         print("[Notion] Buscando ofertas marcadas para eliminar...")
         count = 0
         try:
@@ -54,7 +50,6 @@ class NotionSync:
                 }
             })
             for page in results:
-                # Archivar la página (eliminarla)
                 self.notion.pages.update(page_id=page["id"], archived=True)
                 count += 1
                 
@@ -66,9 +61,6 @@ class NotionSync:
         return count
 
     def delete_all_items(self) -> int:
-        """
-        Busca todas las páginas en la base de datos de Notion y las archiva (elimina).
-        """
         print("[Notion] Eliminando todos los elementos de la base de datos...")
         count = 0
         has_more = True
@@ -109,12 +101,7 @@ class NotionSync:
         print(f"[Notion] Se eliminaron {count} ofertas de la base de datos.")
         return count
 
-
     def check_if_job_exists(self, link: str) -> bool:
-        """
-        Verifica si una oferta ya existe en la base de datos de Notion 
-        utilizando su URL única.
-        """
         if not link:
             return False
             
@@ -134,9 +121,63 @@ class NotionSync:
             return False
 
     def get_all_jobs_for_fuzzy(self) -> list:
+        jobs = []
+        start_cursor = None
+        while True:
+            try:
+                body = {"page_size": 100}
+                if start_cursor:
+                    body["start_cursor"] = start_cursor
+
+                if self.data_source_id:
+                    resp = self.notion.data_sources.query(
+                        data_source_id=self.data_source_id, **body
+                    )
+                else:
+                    resp = self.notion.request(
+                        path=f"databases/{self.database_id}/query",
+                        method="POST",
+                        body=body
+                    )
+
+                for page in resp.get("results", []):
+                    props = page.get("properties", {})
+                    title_arr = props.get("Puesto", {}).get("title", [])
+                    title_text = title_arr[0].get("text", {}).get("content", "") if title_arr else ""
+                    empresa_arr = props.get("Empresa", {}).get("rich_text", [])
+                    empresa_text = empresa_arr[0].get("text", {}).get("content", "") if empresa_arr else ""
+                    url = props.get("URL", {}).get("url", "")
+                    jobs.append({"title": title_text, "company": empresa_text, "link": url})
+
+                if not resp.get("has_more"):
+                    break
+                start_cursor = resp.get("next_cursor")
+            except Exception as e:
+                print(f"[Notion] Error obteniendo ofertas para fuzzy: {e}")
+                break
+        return jobs
+
+    def update_job_status(self, page_id: str, status: str) -> bool:
+        if not self.schema_properties or "Estado" not in self.schema_properties:
+            return False
+
+        estado_type = self.schema_properties["Estado"].get("type", "select")
+        if estado_type == "rich_text":
+            prop = {"rich_text": [{"text": {"content": status}}]}
+        else:
+            prop = {"select": {"name": status}}
+
+        try:
+            self.notion.pages.update(page_id=page_id, properties={"Estado": prop})
+            return True
+        except Exception as e:
+            print(f"[Notion] Error actualizando Estado: {e}")
+            return False
+
+    def get_all_jobs_for_analysis(self) -> list:
         """
-        Devuelve lista de {title, company, link} de todas las ofertas activas.
-        Usado para fuzzy matching de duplicados cross-scraper.
+        Devuelve lista completa de ofertas activas con todos los campos.
+        Usado para skills gap analysis e informes de mercado.
         """
         jobs = []
         start_cursor = None
@@ -161,49 +202,81 @@ class NotionSync:
                     props = page.get("properties", {})
                     # Extraer título
                     title_arr = props.get("Puesto", {}).get("title", [])
-                    title_text = title_arr[0].get("text", {}).get("content", "") if title_arr else ""
+                    title = title_arr[0].get("text", {}).get("content", "") if title_arr else ""
                     # Extraer empresa
                     empresa_arr = props.get("Empresa", {}).get("rich_text", [])
-                    empresa_text = empresa_arr[0].get("text", {}).get("content", "") if empresa_arr else ""
+                    company = empresa_arr[0].get("text", {}).get("content", "") if empresa_arr else ""
                     # Extraer URL
                     url = props.get("URL", {}).get("url", "")
-                    jobs.append({"title": title_text, "company": empresa_text, "link": url})
+                    # Extraer Match
+                    match_score = props.get("Match", {}).get("number", 0)
+                    # Extraer Salario
+                    salary = props.get("Salario", {}).get("number")
+                    # Extraer Modalidad
+                    modalidad = props.get("Modalidad", {})
+                    work_mode = modalidad.get("select", {}).get("name", "") if modalidad.get("type") == "select" else ""
+                    if not work_mode:
+                        rt = modalidad.get("rich_text", [])
+                        work_mode = rt[0].get("text", {}).get("content", "") if rt else ""
+                    # Extraer Stack
+                    stack_arr = props.get("Stack", {}).get("rich_text", [])
+                    stack_str = stack_arr[0].get("text", {}).get("content", "") if stack_arr else ""
+                    tech_stack = [t.strip() for t in stack_str.split(",") if t.strip()]
+                    # Extraer Estado
+                    estado = props.get("Estado", {})
+                    status = estado.get("select", {}).get("name", "Nuevo") if estado.get("type") == "select" else ""
+                    if not status:
+                        rt = estado.get("rich_text", [])
+                        status = rt[0].get("text", {}).get("content", "Nuevo") if rt else "Nuevo"
+                    # Extraer Exp
+                    exp = props.get("Exp", {}).get("number", 0)
+
+                    jobs.append({
+                        "title": title,
+                        "company": company,
+                        "link": url,
+                        "match_score": match_score,
+                        "salary": salary,
+                        "work_mode": work_mode,
+                        "tech_stack": tech_stack,
+                        "status": status,
+                        "required_experience": exp,
+                    })
 
                 if not resp.get("has_more"):
                     break
                 start_cursor = resp.get("next_cursor")
             except Exception as e:
-                print(f"[Notion] Error obteniendo ofertas para fuzzy: {e}")
+                print(f"[Notion] Error obteniendo ofertas para análisis: {e}")
                 break
         return jobs
 
-    def update_job_status(self, page_id: str, status: str) -> bool:
+    def update_cover_letter(self, page_id: str, cover_letter: str) -> bool:
         """
-        Actualiza el campo 'Estado' de una página en Notion.
+        Actualiza el campo 'Carta Presentación' de una página en Notion.
         """
-        if not self.schema_properties or "Estado" not in self.schema_properties:
+        if not self.schema_properties or "Carta Presentación" not in self.schema_properties:
             return False
 
-        estado_type = self.schema_properties["Estado"].get("type", "select")
-        if estado_type == "rich_text":
-            prop = {"rich_text": [{"text": {"content": status}}]}
-        else:
-            prop = {"select": {"name": status}}
-
         try:
-            self.notion.pages.update(page_id=page_id, properties={"Estado": prop})
+            self.notion.pages.update(
+                page_id=page_id,
+                properties={
+                    "Carta Presentación": {
+                        "rich_text": [{"text": {"content": cover_letter[:1900]}}]
+                    }
+                }
+            )
             return True
         except Exception as e:
-            print(f"[Notion] Error actualizando Estado: {e}")
+            print(f"[Notion] Error actualizando Carta Presentación: {e}")
             return False
 
     def _parse_salary_to_num(self, salary_str: str):
         if not salary_str:
             return None
         import re
-        # Limpiar puntos y espacios que sirven como separadores de miles
         cleaned = re.sub(r'(?<=\d)[.\s](?=\d{3})', '', salary_str)
-        # Limpieza básica
         cleaned_simple = cleaned.replace('.', '').replace(',', '').strip()
         match = re.search(r'\d+', cleaned_simple)
         if match:
@@ -214,14 +287,9 @@ class NotionSync:
         return None
 
     def add_job_to_notion(self, job_data: dict) -> bool:
-        """
-        Añade una oferta de empleo a la base de datos de Notion.
-        """
-        # Sanitizar campos de texto para evitar errores de longitud en la API de Notion (límite 2000 chars)
         def clean_text(text: str, limit: int = 1900) -> str:
             if not text:
                 return ""
-            # Eliminar caracteres extraños y recortar
             text_str = str(text).replace("\u0000", "")
             return text_str[:limit] + "..." if len(text_str) > limit else text_str
 
@@ -232,10 +300,8 @@ class NotionSync:
         salario_num = self._parse_salary_to_num(salario_raw)
         match_score = int(job_data.get("match_score", 0))
         
-        # Modalidad de trabajo
         work_mode_raw = job_data.get("work_mode", "Presencial")
         if work_mode_raw not in ["Presencial", "Remoto", "Híbrido"]:
-            # Fallback en caso de que varíe ligeramente
             work_mode_lower = str(work_mode_raw).lower()
             if "remot" in work_mode_lower or "teletrabaj" in work_mode_lower or "distancia" in work_mode_lower:
                 work_mode = "Remoto"
@@ -246,30 +312,16 @@ class NotionSync:
         else:
             work_mode = work_mode_raw
 
-        # Determinar el formato de la propiedad 'Modalidad' según el tipo definido en Notion
         modalidad_prop = {}
-        modalidad_type = "select"  # por defecto
+        modalidad_type = "select"
         if self.schema_properties and "Modalidad" in self.schema_properties:
             modalidad_type = self.schema_properties["Modalidad"].get("type", "select")
             
         if modalidad_type == "rich_text":
-            modalidad_prop = {
-                "rich_text": [
-                    {
-                        "text": {
-                            "content": work_mode
-                        }
-                    }
-                ]
-            }
+            modalidad_prop = {"rich_text": [{"text": {"content": work_mode}}]}
         else:
-            modalidad_prop = {
-                "select": {
-                    "name": work_mode
-                }
-            }
+            modalidad_prop = {"select": {"name": work_mode}}
 
-        # Formatear el stack como lista para Notion rich_text
         tech_stack = []
         for tech in job_data.get("tech_stack", []):
             clean_tech = clean_text(tech.strip(), 50)
@@ -277,147 +329,74 @@ class NotionSync:
                 tech_stack.append(clean_tech)
         
         stack_str = ", ".join(tech_stack[:20])
-
         consejos = clean_text(job_data.get("tailored_advice", "Sin consejos adicionales."), 1900)
         enlace = job_data.get("link", "")
         if enlace.startswith("//"):
             enlace = "https:" + enlace
         
-        # Validar y parsear fecha de publicación
         fecha_pub = None
         date_str = job_data.get("date_posted", "")
         try:
-            # Si tiene formato de fecha simple
             if len(date_str) >= 10 and date_str[4] == "-" and date_str[7] == "-":
                 fecha_pub = date_str[:10]
             else:
-                # Si no es fecha válida, usamos la fecha de hoy
                 fecha_pub = datetime.today().strftime('%Y-%m-%d')
         except Exception:
             fecha_pub = datetime.today().strftime('%Y-%m-%d')
 
         fecha_det = datetime.today().strftime('%Y-%m-%d')
 
-        # Estructura de propiedades para crear la página en Notion
         properties = {
-            "Puesto": {
-                "title": [
-                    {
-                        "text": {
-                            "content": puesto
-                        }
-                    }
-                ]
-            },
-            "Empresa": {
-                "rich_text": [
-                    {
-                        "text": {
-                            "content": empresa if empresa else "Desconocida"
-                        }
-                    }
-                ]
-            },
-            "Ubicacion": {
-                "rich_text": [
-                    {
-                        "text": {
-                            "content": ubicacion
-                        }
-                    }
-                ]
-            },
+            "Puesto": {"title": [{"text": {"content": puesto}}]},
+            "Empresa": {"rich_text": [{"text": {"content": empresa if empresa else "Desconocida"}}]},
+            "Ubicacion": {"rich_text": [{"text": {"content": ubicacion}}]},
             "Modalidad": modalidad_prop,
-            "Stack": {
-                "rich_text": [
-                    {
-                        "text": {
-                            "content": stack_str
-                        }
-                    }
-                ]
-            },
-            "Consejos": {
-                "rich_text": [
-                    {
-                        "text": {
-                            "content": consejos
-                        }
-                    }
-                ]
-            },
-            "Eliminar": {
-                "checkbox": False
-            },
-            "URL": {
-                "url": enlace if enlace else "https://www.google.com"
-            },
-            "Match": {
-                "number": match_score
-            },
-            "Fecha de publicacion": {
-                "date": {
-                    "start": fecha_pub
-                }
-            },
-            "Fecha Deteccion": {
-                "date": {
-                    "start": fecha_det
-                }
-            }
+            "Stack": {"rich_text": [{"text": {"content": stack_str}}]},
+            "Consejos": {"rich_text": [{"text": {"content": consejos}}]},
+            "Eliminar": {"checkbox": False},
+            "URL": {"url": enlace if enlace else "https://www.google.com"},
+            "Match": {"number": match_score},
+            "Fecha de publicacion": {"date": {"start": fecha_pub}},
+            "Fecha Deteccion": {"date": {"start": fecha_det}},
         }
 
         if salario_num is not None:
-            properties["Salario"] = {
-                "number": salario_num
-            }
+            properties["Salario"] = {"number": salario_num}
 
-        # Origen del salario (Estimado por IA vs Directo de la oferta)
         salary_is_estimate = job_data.get("salary_is_estimate")
         if salary_is_estimate is not None:
             origen = "Estimado (IA)" if salary_is_estimate else "Directo"
-            # Si el campo "Origen Salario" existe en el esquema, usarlo
             if self.schema_properties and "Origen Salario" in self.schema_properties:
                 modalidad_type_origen = self.schema_properties["Origen Salario"].get("type", "select")
                 if modalidad_type_origen == "rich_text":
-                    properties["Origen Salario"] = {
-                        "rich_text": [{"text": {"content": origen}}]
-                    }
+                    properties["Origen Salario"] = {"rich_text": [{"text": {"content": origen}}]}
                 else:
-                    properties["Origen Salario"] = {
-                        "select": {"name": origen}
-                    }
+                    properties["Origen Salario"] = {"select": {"name": origen}}
             else:
-                # Si no existe el campo, añadir la info al inicio de Consejos
                 prefix = f"[{origen}] "
                 consejos_val = properties.get("Consejos", {}).get("rich_text", [{}])
                 if consejos_val and isinstance(consejos_val, list) and consejos_val:
                     existing = consejos_val[0].get("text", {}).get("content", "")
                     if not existing.startswith("["):
-                        properties["Consejos"] = {
-                            "rich_text": [{"text": {"content": prefix + existing}}]
-                        }
+                        properties["Consejos"] = {"rich_text": [{"text": {"content": prefix + existing}}]}
 
-        # Años de experiencia requeridos (campo Exp)
         required_exp = job_data.get("required_experience")
         if required_exp is not None and "Exp" in self.schema_properties:
-            properties["Exp"] = {
-                "number": int(required_exp)
-            }
+            properties["Exp"] = {"number": int(required_exp)}
 
         # Estado de aplicación (nuevo job siempre entra como "Nuevo")
         if self.schema_properties and "Estado" in self.schema_properties:
             estado_type = self.schema_properties["Estado"].get("type", "select")
             if estado_type == "rich_text":
-                properties["Estado"] = {
-                    "rich_text": [{"text": {"content": "Nuevo"}}]
-                }
+                properties["Estado"] = {"rich_text": [{"text": {"content": "Nuevo"}}]}
             else:
-                properties["Estado"] = {
-                    "select": {"name": "Nuevo"}
-                }
+                properties["Estado"] = {"select": {"name": "Nuevo"}}
 
-        # Filtrar las propiedades enviadas para incluir únicamente las que existen en el esquema de la base de datos
+        # Carta de presentación (si se genera)
+        cover_letter = job_data.get("cover_letter")
+        if cover_letter and self.schema_properties and "Carta Presentación" in self.schema_properties:
+            properties["Carta Presentación"] = {"rich_text": [{"text": {"content": clean_text(cover_letter, 1900)}}]}
+
         if self.schema_properties:
             properties = {k: v for k, v in properties.items() if k in self.schema_properties}
 
