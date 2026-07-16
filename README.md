@@ -108,15 +108,11 @@ python market_report.py --email
 
 ## Dashboard
 
-El dashboard es una aplicación local con **Streamlit** que visualiza los resultados de las ejecuciones.
+Dashboard público desplegado en **Streamlit Cloud**:
 
-### Cómo lanzarlo
+🔗 **https://jorgejs4-job-finder-assistant-dashboard-xxxxx.streamlit.app**
 
-```bash
-~/proyectos/job_scraper_ai/venv/bin/streamlit run dashboard.py
-```
-
-Abrir **http://localhost:8501** en el navegador.
+> Si el enlace no funciona, desplégalo tú mismo: ve a [share.streamlit.io](https://share.streamlit.io), conecta el repo `Jorgejs4/Job-Finder-Assistant`, selecciona `dashboard.py` como archivo principal y haz click en "Deploy".
 
 ### Qué muestra
 
@@ -129,14 +125,17 @@ Abrir **http://localhost:8501** en el navegador.
 - **Ofertas:** Tabla con todos los resultados, filtrable por fuente, match, modalidad y estado
 - **Exportación:** Botón para descargar el CSV filtrado
 
-### Cómo alimentar el dashboard con datos de GitHub Actions
+### Cómo funciona
 
-1. Ve a **Actions** en tu repositorio de GitHub
-2. Clic en la ejecución que quieras visualizar
-3. Baja hasta **Artifacts** (al final de la página)
-4. Descarga `scraper-results-XXXX`
-5. Descomprime y copia la carpeta `results/` a la raíz de tu proyecto local
-6. Lanza el dashboard: `streamlit run dashboard.py`
+El dashboard lee los datos directamente desde el repositorio en GitHub (archivo `results/data.json`). Cada ejecución del scraper actualiza este archivo automáticamente, así que el dashboard siempre muestra los datos más recientes sin necesidad de redesplegar.
+
+### Lanzarlo localmente
+
+```bash
+~/proyectos/job_scraper_ai/venv/bin/streamlit run dashboard.py
+```
+
+Abrir **http://localhost:8501** en el navegador.
 
 ---
 
@@ -220,7 +219,8 @@ El workflow se ejecuta **dos veces al día (8:00 y 20:00 UTC)**:
 
 1. **Tests** → Verifica que los scrapers responden (con Gemini mock)
 2. **Scraper** → Ejecuta el pipeline completo (scraping → IA → Notion → email → webhooks)
-3. **Artifacts** → Guarda resultados JSON/CSV por 90 días
+3. **Artifacts** → Guarda resultados JSON por 90 días
+4. **Commit** → Actualiza `results/data.json` en el repositorio (para el dashboard)
 
 También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion Sync > Run workflow**.
 
@@ -228,11 +228,14 @@ También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion 
 
 ## Resultados
 
-Cada ejecución genera en `results/`:
+Cada ejecución acumula datos en `results/data.json` (único archivo, máx. 100 ejecuciones):
 
-| Archivo | Descripción |
-|---------|-------------|
-| `run_YYYYMMDD_HHMMSS.json` | Datos completos de la ejecución (scrapers, ofertas, errores) |
-| `run_YYYYMMDD_HHMMSS.csv` | Ofertas en formato tabular (title, company, source, match_score...) |
-| `history.csv` | Histórico aggregate: una fila por ejecución con métricas |
-| `test_report.json` | Último reporte de tests de scrapers |
+| Campo | Descripción |
+|-------|-------------|
+| `runs[].run_id` | ID de la ejecución (YYYYMMDD_HHMMSS) |
+| `runs[].timestamp` | Fecha/hora ISO de la ejecución |
+| `runs[].scraper_stats` | Ofertas por plataforma, estado OK/fallido |
+| `runs[].jobs` | Todas las ofertas encontradas con match, salario, stack... |
+| `runs[].errors` | Errores durante la ejecución |
+
+El archivo se actualiza automáticamente tras cada ejecución en GitHub Actions.
