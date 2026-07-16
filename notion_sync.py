@@ -267,6 +267,88 @@ class NotionSync:
                 break
         return jobs
 
+    def get_all_jobs_full(self) -> list:
+        """
+        Devuelve todas las ofertas con page_id y todos los campos necesarios
+        para rellenar los vacíos (cover letter, CV, etc).
+        """
+        jobs = []
+        start_cursor = None
+        while True:
+            try:
+                body = {"page_size": 100}
+                if start_cursor:
+                    body["start_cursor"] = start_cursor
+
+                if self.data_source_id:
+                    resp = self.notion.data_sources.query(
+                        data_source_id=self.data_source_id, **body
+                    )
+                else:
+                    resp = self.notion.request(
+                        path=f"databases/{self.database_id}/query",
+                        method="POST",
+                        body=body
+                    )
+
+                for page in resp.get("results", []):
+                    props = page.get("properties", {})
+
+                    def _rt(prop_name):
+                        arr = props.get(prop_name, {}).get("rich_text", [])
+                        return arr[0].get("text", {}).get("content", "") if arr else ""
+
+                    def _title(prop_name):
+                        arr = props.get(prop_name, {}).get("title", [])
+                        return arr[0].get("text", {}).get("content", "") if arr else ""
+
+                    def _num(prop_name):
+                        return props.get(prop_name, {}).get("number", 0)
+
+                    def _select(prop_name):
+                        s = props.get(prop_name, {})
+                        if s.get("type") == "select":
+                            return s.get("select", {}).get("name", "")
+                        return ""
+
+                    def _url(prop_name):
+                        return props.get(prop_name, {}).get("url", "")
+
+                    title = _title("Puesto")
+                    company = _rt("Empresa")
+                    stack_str = _rt("Stack")
+                    tech_stack = [t.strip() for t in stack_str.split(",") if t.strip()]
+                    advice = _rt("Consejos")
+                    cover_letter_raw = props.get("Carta Presentación", props.get("Carta Presentacion", {}))
+                    cl_texts = cover_letter_raw.get("rich_text", [])
+                    has_cover_letter = bool(cl_texts and cl_texts[0].get("text", {}).get("content", ""))
+
+                    cv_raw = props.get("CV", {})
+                    has_cv = bool(cv_raw.get("url"))
+
+                    jobs.append({
+                        "page_id": page["id"],
+                        "title": title,
+                        "company": company,
+                        "link": _url("URL"),
+                        "match_score": _num("Match"),
+                        "salary": _num("Salario"),
+                        "work_mode": _select("Modalidad"),
+                        "tech_stack": tech_stack,
+                        "required_experience": _num("Exp"),
+                        "advice": advice,
+                        "has_cover_letter": has_cover_letter,
+                        "has_cv": has_cv,
+                    })
+
+                if not resp.get("has_more"):
+                    break
+                start_cursor = resp.get("next_cursor")
+            except Exception as e:
+                print(f"[Notion] Error obteniendo ofertas full: {e}")
+                break
+        return jobs
+
     def update_cover_letter(self, page_id: str, cover_letter: str) -> bool:
         """
         Actualiza el campo 'Carta Presentación' de una página en Notion.
