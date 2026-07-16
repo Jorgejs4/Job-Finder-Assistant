@@ -1,5 +1,6 @@
 import smtplib
 import os
+import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -16,7 +17,25 @@ class EmailNotifier:
         self.smtp_password = os.getenv("SMTP_GMAIL_PASSWORD", "")
         self.notify_to = os.getenv("NOTIFY_EMAIL", self.smtp_user)
         self.enabled = bool(self.smtp_user and self.smtp_password and self.notify_to)
-        print(f"[Email] Config: user={'SI' if self.smtp_user else 'NO'}, pass={'SI' if self.smtp_password else 'NO'}, to={'SI' if self.notify_to else 'NO'}, enabled={self.enabled}")
+        
+        # Diagnóstico detallado
+        print("=" * 50)
+        print("[Email] DIAGNÓSTICO DE CONFIGURACIÓN")
+        print("=" * 50)
+        print(f"  SMTP_GMAIL_USER:    {'✅ ' + self.smtp_user if self.smtp_user else '❌ NO CONFIGURADO'}")
+        print(f"  SMTP_GMAIL_PASSWORD: {'✅ (' + str(len(self.smtp_password)) + ' caracteres)' if self.smtp_password else '❌ NO CONFIGURADO'}")
+        print(f"  NOTIFY_EMAIL:       {'✅ ' + self.notify_to if self.notify_to else '❌ NO CONFIGURADO'}")
+        print(f"  Habilitado:         {'✅ SÍ' if self.enabled else '❌ NO'}")
+        
+        if self.smtp_password and len(self.smtp_password) != 16:
+            print(f"  ⚠️  ADVERTENCIA: La contraseña de aplicación debería tener 16 caracteres (tiene {len(self.smtp_password)})")
+            if " " in self.smtp_password:
+                print(f"  ⚠️  ADVERTENCIA: La contraseña contiene ESPACIOS — guárdala sin espacios")
+        
+        if self.smtp_user and self.notify_to and self.smtp_user == self.notify_to:
+            print(f"  ℹ️  Envías y recibes en el mismo email: {self.smtp_user}")
+        
+        print("=" * 50)
 
     def send_summary(
         self,
@@ -27,7 +46,8 @@ class EmailNotifier:
         errors: List[str],
     ):
         if not self.enabled:
-            print("[Email] Notificación deshabilitada (faltan SMTP_GMAIL_USER/SMTP_GMAIL_PASSWORD/NOTIFY_EMAIL)")
+            print("[Email] ❌ Notificación deshabilitada — faltan variables de entorno")
+            print("[Email] Configura en GitHub Actions > Secrets: SMTP_GMAIL_USER, SMTP_GMAIL_PASSWORD, NOTIFY_EMAIL")
             return False
 
         date_str = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -42,20 +62,33 @@ class EmailNotifier:
         msg.attach(MIMEText(html, "html"))
 
         try:
-            print(f"[Email] Conectando a smtp.gmail.com:465...")
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
-                print(f"[Email] Login con usuario: {self.smtp_user}")
+            print(f"[Email] 📧 Conectando a smtp.gmail.com:465...")
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30, context=context) as server:
+                print(f"[Email] 🔐 Login con usuario: {self.smtp_user}")
                 server.login(self.smtp_user, self.smtp_password)
-                print(f"[Email] Enviando email a: {self.notify_to}")
+                print(f"[Email] 📤 Enviando email a: {self.notify_to}")
                 server.sendmail(self.smtp_user, self.notify_to, msg.as_string())
-            print(f"[Email] Resumen enviado OK a {self.notify_to}")
+            print(f"[Email] ✅ Resumen enviado OK a {self.notify_to}")
+            print(f"[Email] Subject: {subject}")
             return True
         except smtplib.SMTPAuthenticationError as e:
-            print(f"[Email] ERROR AUTENTICACION: {e}")
-            print("[Email] Verifica que SMTP_GMAIL_USER es tu email completo y SMTP_GMAIL_PASSWORD es la contraseña de aplicación de 16 caracteres (sin espacios)")
+            print(f"[Email] ❌ ERROR DE AUTENTICACIÓN: {e}")
+            print("[Email] Posibles causas:")
+            print("  1. La contraseña de aplicación es incorrecta")
+            print("  2. La verificación en 2 pasos no está activada")
+            print("  3. El email no es correcto")
+            print("  Solución: Ve a https://myaccount.google.com/apppasswords y crea una nueva contraseña")
+            return False
+        except smtplib.SMTPConnectError as e:
+            print(f"[Email] ❌ ERROR DE CONEXIÓN: {e}")
+            print("[Email] Gmail podría estar bloqueando la conexión desde este servidor")
+            return False
+        except smtplib.SMTPException as e:
+            print(f"[Email] ❌ ERROR SMTP: {type(e).__name__}: {e}")
             return False
         except Exception as e:
-            print(f"[Email] Error enviando email: {type(e).__name__}: {e}")
+            print(f"[Email] ❌ ERROR INESPERADO: {type(e).__name__}: {e}")
             return False
 
     def _build_html(

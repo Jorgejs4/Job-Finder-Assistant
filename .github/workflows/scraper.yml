@@ -91,6 +91,9 @@ jobs:
         SMTP_GMAIL_USER: ${{ secrets.SMTP_GMAIL_USER }}
         SMTP_GMAIL_PASSWORD: ${{ secrets.SMTP_GMAIL_PASSWORD }}
         NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+        JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        WEBHOOK_MIN_MATCH: ${{ secrets.WEBHOOK_MIN_MATCH }}
         DESIRED_LOCATIONS: ${{ github.event.inputs.desired_locations || secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
         YEARS_OF_EXPERIENCE: ${{ github.event.inputs.years_of_experience || secrets.YEARS_OF_EXPERIENCE || '0' }}
         MIN_SALARY: ${{ github.event.inputs.min_salary || secrets.MIN_SALARY || '20000' }}
@@ -106,6 +109,9 @@ jobs:
           -e SMTP_GMAIL_USER="$SMTP_GMAIL_USER" \
           -e SMTP_GMAIL_PASSWORD="$SMTP_GMAIL_PASSWORD" \
           -e NOTIFY_EMAIL="$NOTIFY_EMAIL" \
+          -e JOOBLE_API_KEY="$JOOBLE_API_KEY" \
+          -e WEBHOOK_URL="$WEBHOOK_URL" \
+          -e WEBHOOK_MIN_MATCH="$WEBHOOK_MIN_MATCH" \
           -e DESIRED_LOCATIONS="$DESIRED_LOCATIONS" \
           -e YEARS_OF_EXPERIENCE="$YEARS_OF_EXPERIENCE" \
           -e MIN_SALARY="$MIN_SALARY" \
@@ -119,6 +125,19 @@ jobs:
         name: scraper-results-${{ github.run_id }}
         path: results/
         retention-days: 90
+
+    - name: Commit data.json to repo
+      if: always()
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add results/data.json
+        if git diff --cached --quiet; then
+          echo "No changes to data.json"
+        else
+          git commit -m "📊 Update data.json [skip ci]"
+          git push
+        fi
 
     - name: Cleanup Docker cache
       if: always()

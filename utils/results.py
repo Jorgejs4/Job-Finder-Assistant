@@ -1,22 +1,21 @@
 import json
-import csv
 import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
-from collections import defaultdict
 
 
 class ResultsManager:
     """
-    Guarda resultados de cada ejecución en JSON + CSV.
-    Registra métricas por plataforma y detecta scrapers caídos.
+    Guarda todos los resultados en un único archivo data.json que se acumula.
+    Cada ejecución se añade al inicio de la lista (más reciente primero).
     """
     def __init__(self, results_dir: str = None):
         if results_dir is None:
             results_dir = os.path.join(Path(__file__).resolve().parent.parent, "results")
         self.results_dir = results_dir
         os.makedirs(self.results_dir, exist_ok=True)
+        self.data_path = os.path.join(self.results_dir, "data.json")
         self.run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.run_data = {
             "run_id": self.run_id,
@@ -24,6 +23,8 @@ class ResultsManager:
             "scraper_stats": {},
             "jobs": [],
             "errors": [],
+            "_total_added": 0,
+            "_analyzed_count": 0,
         }
 
     def record_scraper_result(self, name: str, jobs: List[Dict], failed: bool = False, error_msg: str = ""):
@@ -59,61 +60,57 @@ class ResultsManager:
         self.run_data["_analyzed_count"] = count
 
     def save(self) -> str:
-        json_path = os.path.join(self.results_dir, f"run_{self.run_id}.json")
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(self.run_data, f, ensure_ascii=False, indent=2)
+        # Cargar datos existentes
+        data = self._load_data()
+        
+        # Añadir esta ejecución al inicio (más reciente primero)
+        data["runs"].insert(0, self.run_data)
+        
+        # Mantener solo las últimas 100 ejecuciones para no crecer infinitamente
+        if len(data["runs"]) > 100:
+            data["runs"] = data["runs"][:100]
+        
+        # Guardar
+        with open(self.data_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        
+        run_count = len(data["runs"])
+        print(f"[Results] Guardado en {self.data_path} ({run_count} ejecuciones)")
+        return self.data_path
 
-        csv_path = os.path.join(self.results_dir, f"run_{self.run_id}.csv")
-        if self.run_data["jobs"]:
-            fieldnames = ["title", "company", "location", "link", "source", "date_posted",
-                          "match_score", "work_mode", "salary", "description"]
-            with open(csv_path, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
-                writer.writeheader()
-                for job in self.run_data["jobs"]:
-                    writer.writerow({k: job.get(k, "") for k in fieldnames})
-
-        self._append_history()
-
-        print(f"[Results] Guardados: {json_path}")
-        print(f"[Results] Guardados: {csv_path}")
-        return json_path
-
-    def _append_history(self):
-        history_path = os.path.join(self.results_dir, "history.csv")
-        write_header = not os.path.exists(history_path)
-
-        stats = self.run_data["scraper_stats"]
-        row = {
-            "run_id": self.run_id,
-            "timestamp": self.run_data["timestamp"],
-            "total_jobs_found": sum(s["found"] for s in stats.values()),
-            "jobs_added_notion": self.run_data.get("_total_added", 0),
-            "jobs_analyzed": self.run_data.get("_analyzed_count", 0),
-            "scrapers_ok": sum(1 for s in stats.values() if not s["failed"]),
-            "scrapers_failed": sum(1 for s in stats.values() if s["failed"]),
-            "errors": len(self.run_data["errors"]),
-        }
-        for name, s in stats.items():
-            row[f"_{name}_found"] = s["found"]
-            row[f"_{name}_ok"] = 0 if s["failed"] else 1
-
-        with open(history_path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=row.keys())
-            if write_header:
-                writer.writeheader()
-            writer.writerow(row)
-
-    def load_history(self) -> List[Dict]:
-        history_path = os.path.join(self.results_dir, "history.csv")
-        if not os.path.exists(history_path):
-            return []
-        with open(history_path, "r", encoding="utf-8") as f:
-            return list(csv.DictReader(f))
+    def _load_data(self) -> dict:
+        if os.path.exists(self.data_path):
+            try:
+                with open(self.data_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if "runs" in data:
+                    return data
+            except (json.JSONDecodeError, KeyError):
+                pass
+        return {"runs": []}
 
     def load_all_runs(self) -> List[Dict]:
-        runs = []
-        for p in sorted(Path(self.results_dir).glob("run_*.json"), reverse=True):
-            with open(p, "r", encoding="utf-8") as f:
-                runs.append(json.load(f))
-        return runs
+        data = self._load_data()
+        return data.get("runs", [])
+
+    def load_latest_run(self) -> dict:
+        runs = self.load_all_runs()
+        return runs[0] if runs else {}
+
+    def get_history(self) -> List[Dict]:
+        """Genera historial resumido a partir de data.json"""
+        runs = self.load_all_runs()
+        history = []
+        for run in runs:
+            stats = run.get("scraper_stats", {})
+            history.append({
+                "run_id": run.get("run_id", ""),
+                "timestamp": run.get("timestamp", ""),
+                "total_jobs_found": sum(s.get("found", 0) for s in stats.values()),
+                "jobs_added_notion": run.get("_total_added", 0),
+                "jobs_analyzed": run.get("_analyzed_count", 0),
+                "scrapers_ok": sum(1 for s in stats.values() if not s.get("failed")),
+                "scrapers_failed": sum(1 for s in stats.values() if s.get("failed")),
+                "errors": len(run.get("errors", [])),
+            })
+        return history

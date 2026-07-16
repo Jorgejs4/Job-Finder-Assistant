@@ -2,6 +2,7 @@
 """
 Dashboard interactivo para el Job Scraper Assistant.
 Ejecutar con: streamlit run dashboard.py
+En Streamlit Cloud: leerá data.json desde GitHub API.
 """
 import os
 import sys
@@ -12,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import streamlit as st
 import pandas as pd
 import json
+import httpx
 from datetime import datetime
 from utils.results import ResultsManager
 import config
@@ -23,14 +25,31 @@ st.set_page_config(
 )
 
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
-rm = ResultsManager(results_dir=RESULTS_DIR)
+
+# Intentar cargar data.json: local primero, luego GitHub API
+def load_data():
+    data_path = os.path.join(RESULTS_DIR, "data.json")
+    if os.path.exists(data_path):
+        with open(data_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    # Fallback: descargar desde GitHub API
+    github_repo = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
+    url = f"https://api.github.com/repos/{github_repo}/contents/results/data.json"
+    try:
+        resp = httpx.get(url, timeout=10, follow_redirects=True)
+        if resp.status_code == 200:
+            import base64
+            content = base64.b64decode(resp.json()["content"])
+            return json.loads(content)
+    except Exception:
+        pass
+    return {"runs": []}
+
+data = load_data()
+runs = data.get("runs", [])
 
 st.title("🔍 Job Scraper Dashboard")
 st.caption(f"Última carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-
-# --- Cargar datos ---
-runs = rm.load_all_runs()
-history = rm.load_history()
 
 if not runs:
     st.warning("No hay ejecuciones registradas. Ejecuta `python main.py` primero.")
@@ -222,6 +241,20 @@ else:
     st.info("Selecciona al menos 2 ofertas para comparar")
 
 # --- Historial ---
+history = []
+for run in runs:
+    st_stats = run.get("scraper_stats", {})
+    history.append({
+        "run_id": run.get("run_id", ""),
+        "timestamp": run.get("timestamp", ""),
+        "total_jobs_found": sum(s.get("found", 0) for s in st_stats.values()),
+        "jobs_added_notion": run.get("_total_added", 0),
+        "jobs_analyzed": run.get("_analyzed_count", 0),
+        "scrapers_ok": sum(1 for s in st_stats.values() if not s.get("failed")),
+        "scrapers_failed": sum(1 for s in st_stats.values() if s.get("failed")),
+        "errors": len(run.get("errors", [])),
+    })
+
 if len(history) > 1:
     st.header("📈 Historial de ejecuciones")
     hist_df = pd.DataFrame(history)
