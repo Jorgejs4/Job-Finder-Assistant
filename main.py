@@ -2,6 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import config
 from utils.cv_parser import parse_cv
 from utils.gemini_client import GeminiClient
@@ -17,6 +18,16 @@ from scrapers.jobfluent_scraper import JobfluentScraper
 from scrapers.wttj_scraper import WelcomeToTheJungleScraper
 from scrapers.fallback_api import FallbackJobsAPI
 from notion_sync import NotionSync
+
+
+def run_scraper(scraper, role, locations):
+    """Ejecuta un scraper individual y devuelve (nombre, ofertas, error)."""
+    name = scraper.__class__.__name__
+    try:
+        jobs = scraper.scrape_jobs(role, locations)
+        return name, jobs, None
+    except Exception as e:
+        return name, [], f"{type(e).__name__}: {e}"
 
 
 def main():
@@ -82,23 +93,36 @@ def main():
         WelcomeToTheJungleScraper(),
     ]
 
-    roles_to_search = profile.recommended_roles[:4]
+    roles_to_search = profile.recommended_roles[:2]
     print(f"[Buscador] Roles: {roles_to_search}")
     print(f"[Buscador] Límite: {config.MAX_JOBS_PER_SCRAPER} ofertas/plataforma")
+    print(f"[Buscador] Scrapers en paralelo: {len(scrapers)}")
 
     all_jobs = []
-    for role in roles_to_search:
-        for scraper in scrapers:
-            scraper_name = scraper.__class__.__name__
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {}
+        for role in roles_to_search:
+            for scraper in scrapers:
+                future = executor.submit(run_scraper, scraper, role, config.DESIRED_LOCATIONS)
+                futures[future] = (scraper.__class__.__name__, role)
+
+        for future in as_completed(futures):
+            name, role_used = futures[future]
             try:
-                jobs_found = scraper.scrape_jobs(role, config.DESIRED_LOCATIONS)
-                jobs_found = jobs_found[:config.MAX_JOBS_PER_SCRAPER]
-                all_jobs.extend(jobs_found)
-                results.record_scraper_result(scraper_name, jobs_found)
+                scraper_name, jobs_found, error = future.result(timeout=60)
+                if error:
+                    print(f"[{scraper_name}] Error: {error}")
+                    results.record_scraper_result(scraper_name, [], failed=True, error_msg=error)
+                else:
+                    jobs_found = jobs_found[:config.MAX_JOBS_PER_SCRAPER]
+                    all_jobs.extend(jobs_found)
+                    results.record_scraper_result(scraper_name, jobs_found)
+                    if jobs_found:
+                        print(f"[{scraper_name}] +{len(jobs_found)} ofertas (role: {role_used})")
             except Exception as e:
-                error_msg = f"{type(e).__name__}: {e}"
-                print(f"[{scraper_name}] Error: {error_msg}")
-                results.record_scraper_result(scraper_name, [], failed=True, error_msg=error_msg)
+                print(f"[{name}] Error future: {e}")
+                results.record_scraper_result(name, [], failed=True, error_msg=str(e))
 
     if len(all_jobs) < 30 and config.RAPIDAPI_KEY:
         print(f"[Buscador] Pocas ofertas ({len(all_jobs)}). Activando Fallback API...")
@@ -155,8 +179,8 @@ def main():
             print(f"[{idx}/{len(jobs_to_process)}] Duplicado: {job['title']}")
             continue
 
-        if analyzed_count >= 25:
-            print(f"\nLímite de 25 nuevas ofertas alcanzado.")
+        if analyzed_count >= 15:
+            print(f"\nLímite de 15 nuevas ofertas alcanzado.")
             break
 
         print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']}")
@@ -172,7 +196,7 @@ def main():
 
             if match_result.match_score < 35:
                 print(f"  - [IA] Baja compatibilidad ({match_result.match_score}%). Saltando.")
-                time.sleep(6)
+                time.sleep(4)
                 continue
 
             work_mode = match_result.work_mode
@@ -181,7 +205,7 @@ def main():
                 matches_city = any(city in job_loc for city in desired_cities)
                 if not matches_city:
                     print(f"  - [Filtro] {work_mode} fuera de ciudades deseadas. Saltando.")
-                    time.sleep(6)
+                    time.sleep(4)
                     continue
 
             job["match_score"] = match_result.match_score
@@ -197,11 +221,11 @@ def main():
                 new_jobs_added += 1
                 analyzed_count += 1
 
-            time.sleep(6)
+            time.sleep(4)
 
         except Exception as e:
             print(f"  - [Error] {e}")
-            time.sleep(6)
+            time.sleep(4)
 
     results.set_total_added(new_jobs_added)
     results.set_analyzed_count(analyzed_count)
