@@ -1,6 +1,12 @@
 from datetime import datetime
 from notion_client import Client
+import unicodedata
 import config
+
+
+def _normalize_key(s: str) -> str:
+    """Elimina tildes y normaliza para comparación robusta de nombres de propiedades."""
+    return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower().strip()
 
 class NotionSync:
     def __init__(self):
@@ -22,6 +28,15 @@ class NotionSync:
             print(f"[Notion] Propiedades de la base de datos detectadas: {list(self.schema_properties.keys())}")
         except Exception as e:
             print(f"[Notion] Error al recuperar detalles de la base de datos: {e}")
+
+        # Índice normalizado para buscar propiedades sin importar tildes
+        self._prop_index = {}
+        for key in self.schema_properties:
+            self._prop_index[_normalize_key(key)] = key
+
+    def _find_prop(self, name: str) -> str:
+        """Busca una propiedad por nombre normalizado (sin tildes). Devuelve el nombre real o None."""
+        return self._prop_index.get(_normalize_key(name))
 
     def _query(self, filter_body: dict) -> list:
         if self.data_source_id:
@@ -158,17 +173,18 @@ class NotionSync:
         return jobs
 
     def update_job_status(self, page_id: str, status: str) -> bool:
-        if not self.schema_properties or "Estado" not in self.schema_properties:
+        prop_name = self._find_prop("Estado")
+        if not prop_name:
             return False
 
-        estado_type = self.schema_properties["Estado"].get("type", "select")
+        estado_type = self.schema_properties[prop_name].get("type", "select")
         if estado_type == "rich_text":
             prop = {"rich_text": [{"text": {"content": status}}]}
         else:
             prop = {"select": {"name": status}}
 
         try:
-            self.notion.pages.update(page_id=page_id, properties={"Estado": prop})
+            self.notion.pages.update(page_id=page_id, properties={prop_name: prop})
             return True
         except Exception as e:
             print(f"[Notion] Error actualizando Estado: {e}")
@@ -255,14 +271,15 @@ class NotionSync:
         """
         Actualiza el campo 'Carta Presentación' de una página en Notion.
         """
-        if not self.schema_properties or "Carta Presentación" not in self.schema_properties:
+        prop_name = self._find_prop("Carta Presentación")
+        if not prop_name:
             return False
 
         try:
             self.notion.pages.update(
                 page_id=page_id,
                 properties={
-                    "Carta Presentación": {
+                    prop_name: {
                         "rich_text": [{"text": {"content": cover_letter[:1900]}}]
                     }
                 }
@@ -314,8 +331,9 @@ class NotionSync:
 
         modalidad_prop = {}
         modalidad_type = "select"
-        if self.schema_properties and "Modalidad" in self.schema_properties:
-            modalidad_type = self.schema_properties["Modalidad"].get("type", "select")
+        mod_prop = self._find_prop("Modalidad")
+        if mod_prop:
+            modalidad_type = self.schema_properties[mod_prop].get("type", "select")
             
         if modalidad_type == "rich_text":
             modalidad_prop = {"rich_text": [{"text": {"content": work_mode}}]}
@@ -346,64 +364,71 @@ class NotionSync:
 
         fecha_det = datetime.today().strftime('%Y-%m-%d')
 
-        properties = {
-            "Puesto": {"title": [{"text": {"content": puesto}}]},
-            "Empresa": {"rich_text": [{"text": {"content": empresa if empresa else "Desconocida"}}]},
-            "Ubicacion": {"rich_text": [{"text": {"content": ubicacion}}]},
-            "Modalidad": modalidad_prop,
-            "Stack": {"rich_text": [{"text": {"content": stack_str}}]},
-            "Consejos": {"rich_text": [{"text": {"content": consejos}}]},
-            "Eliminar": {"checkbox": False},
-            "URL": {"url": enlace if enlace else "https://www.google.com"},
-            "Match": {"number": match_score},
-            "Fecha de publicacion": {"date": {"start": fecha_pub}},
-            "Fecha Deteccion": {"date": {"start": fecha_det}},
-        }
+        # Construir properties usando nombres reales de Notion (con _find_prop)
+        p = {}
+        for logical_name, prop_val in [
+            ("Puesto", {"title": [{"text": {"content": puesto}}]}),
+            ("Empresa", {"rich_text": [{"text": {"content": empresa if empresa else "Desconocida"}}]}),
+            ("Ubicacion", {"rich_text": [{"text": {"content": ubicacion}}]}),
+            ("Modalidad", modalidad_prop),
+            ("Stack", {"rich_text": [{"text": {"content": stack_str}}]}),
+            ("Consejos", {"rich_text": [{"text": {"content": consejos}}]}),
+            ("Eliminar", {"checkbox": False}),
+            ("URL", {"url": enlace if enlace else "https://www.google.com"}),
+            ("Match", {"number": match_score}),
+            ("Fecha de publicacion", {"date": {"start": fecha_pub}}),
+            ("Fecha Deteccion", {"date": {"start": fecha_det}}),
+        ]:
+            real = self._find_prop(logical_name)
+            if real:
+                p[real] = prop_val
 
         if salario_num is not None:
-            properties["Salario"] = {"number": salario_num}
+            sal_prop = self._find_prop("Salario")
+            if sal_prop:
+                p[sal_prop] = {"number": salario_num}
 
         salary_is_estimate = job_data.get("salary_is_estimate")
         if salary_is_estimate is not None:
             origen = "Estimado (IA)" if salary_is_estimate else "Directo"
-            if self.schema_properties and "Origen Salario" in self.schema_properties:
-                modalidad_type_origen = self.schema_properties["Origen Salario"].get("type", "select")
-                if modalidad_type_origen == "rich_text":
-                    properties["Origen Salario"] = {"rich_text": [{"text": {"content": origen}}]}
+            origen_prop = self._find_prop("Origen Salario")
+            if origen_prop:
+                origen_type = self.schema_properties[origen_prop].get("type", "select")
+                if origen_type == "rich_text":
+                    p[origen_prop] = {"rich_text": [{"text": {"content": origen}}]}
                 else:
-                    properties["Origen Salario"] = {"select": {"name": origen}}
-            else:
-                prefix = f"[{origen}] "
-                consejos_val = properties.get("Consejos", {}).get("rich_text", [{}])
-                if consejos_val and isinstance(consejos_val, list) and consejos_val:
-                    existing = consejos_val[0].get("text", {}).get("content", "")
-                    if not existing.startswith("["):
-                        properties["Consejos"] = {"rich_text": [{"text": {"content": prefix + existing}}]}
+                    p[origen_prop] = {"select": {"name": origen}}
 
         required_exp = job_data.get("required_experience")
-        if required_exp is not None and "Exp" in self.schema_properties:
-            properties["Exp"] = {"number": int(required_exp)}
+        exp_prop = self._find_prop("Exp")
+        if required_exp is not None and exp_prop:
+            p[exp_prop] = {"number": int(required_exp)}
 
         # Estado de aplicación (nuevo job siempre entra como "Nuevo")
-        if self.schema_properties and "Estado" in self.schema_properties:
-            estado_type = self.schema_properties["Estado"].get("type", "select")
+        estado_prop = self._find_prop("Estado")
+        if estado_prop:
+            estado_type = self.schema_properties[estado_prop].get("type", "select")
             if estado_type == "rich_text":
-                properties["Estado"] = {"rich_text": [{"text": {"content": "Nuevo"}}]}
+                p[estado_prop] = {"rich_text": [{"text": {"content": "Nuevo"}}]}
             else:
-                properties["Estado"] = {"select": {"name": "Nuevo"}}
+                p[estado_prop] = {"select": {"name": "Nuevo"}}
 
         # Carta de presentación (si se genera)
         cover_letter = job_data.get("cover_letter")
-        if cover_letter and self.schema_properties and "Carta Presentación" in self.schema_properties:
-            properties["Carta Presentación"] = {"rich_text": [{"text": {"content": clean_text(cover_letter, 1900)}}]}
+        cl_prop = self._find_prop("Carta Presentación")
+        if cover_letter and cl_prop:
+            p[cl_prop] = {"rich_text": [{"text": {"content": clean_text(cover_letter, 1900)}}]}
 
-        if self.schema_properties:
-            properties = {k: v for k, v in properties.items() if k in self.schema_properties}
+        # CV personalizado (enlace al PDF)
+        cv_url = job_data.get("custom_cv_url")
+        cv_prop = self._find_prop("CV")
+        if cv_url and cv_prop:
+            p[cv_prop] = {"url": cv_url}
 
         try:
             self.notion.pages.create(
                 parent={"database_id": self.database_id},
-                properties=properties
+                properties=p
             )
             print(f"[Notion] Añadida con éxito: {puesto} en {empresa} ({ubicacion}) [{work_mode}] - Match: {match_score}% - Salario: {salario_num}€")
             return True

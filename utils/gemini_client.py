@@ -339,6 +339,73 @@ Un cordial saludo."""
         data = json.loads(response_text)
         return SkillsGap(**data)
 
+    def generate_custom_cv(self, cv_text: str, offer_title: str, company: str, advice: str, tech_stack: str) -> dict:
+        """
+        Genera el contenido de un CV personalizado para una oferta específica.
+        Devuelve un dict con: name, contact, summary, experience, education, skills, projects.
+        """
+        import os
+        if os.getenv("MOCK_GEMINI") == "true":
+            return {
+                "name": "Candidato",
+                "contact": "email@ejemplo.com | +34 600 000 000",
+                "summary": "Desarrollador de software con experiencia en tecnologías modernas.",
+                "experience": [],
+                "education": [],
+                "skills": ["Python", "JavaScript", "Docker"],
+                "projects": [],
+            }
+
+        prompt = f"""
+        Eres un experto en creación de CVs profesionales. Genera un CV personalizado y optimizado para esta oferta de empleo.
+
+        INSTRUCCIONES:
+        1. Reorganiza y adapta la información del CV original para destacar lo más relevante para ESTA oferta
+        2. Reformula el resumen profesional para enfocarlo en el puesto
+        3. Reordena la experiencia laboral poniendo lo más relevante primero
+        4. Adapta las descripciones de cada rol para resaltar las tecnologías y habilidades que pide la oferta
+        5. Incluye solo las habilidades más relevantes para este puesto
+        6. Añade proyectos relevantes (puedes reformular los existentes del CV para que encajen mejor)
+        7. Mantén la información veraz - no inventes experiencia que no exista
+        8. El CV debe estar en español
+
+        CONSEJOS DEL ANALISTA PARA ESTA OFERTA:
+        {advice}
+
+        TECNOLOGÍAS REQUERIDAS:
+        {tech_stack}
+
+        CV ORIGINAL DEL CANDIDATO:
+        ---
+        {cv_text}
+        ---
+
+        Oferta:
+        Puesto: {offer_title}
+        Empresa: {company}
+
+        Responde CON SOLO el JSON con esta estructura exacta:
+        {{
+            "name": "Nombre completo",
+            "contact": "email | teléfono | ubicación",
+            "summary": "Resumen profesional de 3-4 líneas optimizado para este puesto",
+            "experience": [
+                {{"role": "Título del puesto", "company": "Empresa", "period": "2023 - Presente", "description": "Descripción adaptada de 2-3 líneas con logros y tecnologías relevantes"}}
+            ],
+            "education": [
+                {{"degree": "Título", "institution": "Centro", "year": "2023"}}
+            ],
+            "skills": ["Skill1", "Skill2", "Skill3"],
+            "projects": [
+                {{"name": "Nombre del proyecto", "description": "Descripción breve de 1-2 líneas"}}
+            ]
+        }}
+        """
+
+        response_text = self._generate_with_retry(prompt, None)
+        data = json.loads(response_text)
+        return data
+
     def generate_market_report(self, cv_text: str, jobs_data: list) -> str:
         """
         Genera un informe de mercado semanal en HTML basado en las ofertas recientes.

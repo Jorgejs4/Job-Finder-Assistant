@@ -12,3 +12,4 @@ streamlit>=1.35.0
 pandas>=2.2.0
 thefuzz>=0.22.0
 python-Levenshtein>=0.25.0
+fpdf2>=2.8.0

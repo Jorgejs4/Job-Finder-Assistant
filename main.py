@@ -10,6 +10,7 @@ from utils.gemini_client import GeminiClient
 from utils.results import ResultsManager
 from utils.notifications import EmailNotifier
 from utils.webhooks import WebhookNotifier
+from utils.cv_generator import CVGenerator
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
@@ -40,6 +41,7 @@ def main():
     results = ResultsManager()
     notifier = EmailNotifier()
     webhook = WebhookNotifier()
+    cv_gen = CVGenerator()
 
     try:
         config.validate_config()
@@ -277,7 +279,7 @@ def main():
             job["required_experience"] = match_result.required_experience
 
             # Generar carta de presentación si hay campo en Notion
-            if "Carta Presentación" in notion_sync.schema_properties:
+            if notion_sync._find_prop("Carta Presentación"):
                 try:
                     cover_letter = gemini.generate_cover_letter(
                         cv_text=cv_text,
@@ -289,6 +291,18 @@ def main():
                     print(f"  - [IA] Carta de presentación generada")
                 except Exception as e:
                     print(f"  - [IA] Error generando carta: {e}")
+
+            # Generar CV personalizado si hay campo en Notion
+            if notion_sync._find_prop("CV"):
+                try:
+                    cv_path = cv_gen.generate(gemini, cv_text, job)
+                    if cv_path:
+                        slug = os.path.basename(cv_path)
+                        cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                        job["custom_cv_url"] = cv_url
+                        print(f"  - [CV] PDF personalizado generado")
+                except Exception as e:
+                    print(f"  - [CV] Error generando CV: {e}")
 
             success = notion_sync.add_job_to_notion(job)
             if success:

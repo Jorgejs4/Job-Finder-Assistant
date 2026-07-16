@@ -36,6 +36,7 @@ build/
 # Resultados de ejecuciones (generados automáticamente)
 results/*
 !results/data.json
+!results/cvs/
 
 # Streamlit
 .streamlit/
