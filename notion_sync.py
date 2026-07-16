@@ -133,6 +133,70 @@ class NotionSync:
             print(f"[Notion] Error al verificar existencia del enlace {link}: {e}")
             return False
 
+    def get_all_jobs_for_fuzzy(self) -> list:
+        """
+        Devuelve lista de {title, company, link} de todas las ofertas activas.
+        Usado para fuzzy matching de duplicados cross-scraper.
+        """
+        jobs = []
+        start_cursor = None
+        while True:
+            try:
+                body = {"page_size": 100}
+                if start_cursor:
+                    body["start_cursor"] = start_cursor
+
+                if self.data_source_id:
+                    resp = self.notion.data_sources.query(
+                        data_source_id=self.data_source_id, **body
+                    )
+                else:
+                    resp = self.notion.request(
+                        path=f"databases/{self.database_id}/query",
+                        method="POST",
+                        body=body
+                    )
+
+                for page in resp.get("results", []):
+                    props = page.get("properties", {})
+                    # Extraer título
+                    title_arr = props.get("Puesto", {}).get("title", [])
+                    title_text = title_arr[0].get("text", {}).get("content", "") if title_arr else ""
+                    # Extraer empresa
+                    empresa_arr = props.get("Empresa", {}).get("rich_text", [])
+                    empresa_text = empresa_arr[0].get("text", {}).get("content", "") if empresa_arr else ""
+                    # Extraer URL
+                    url = props.get("URL", {}).get("url", "")
+                    jobs.append({"title": title_text, "company": empresa_text, "link": url})
+
+                if not resp.get("has_more"):
+                    break
+                start_cursor = resp.get("next_cursor")
+            except Exception as e:
+                print(f"[Notion] Error obteniendo ofertas para fuzzy: {e}")
+                break
+        return jobs
+
+    def update_job_status(self, page_id: str, status: str) -> bool:
+        """
+        Actualiza el campo 'Estado' de una página en Notion.
+        """
+        if not self.schema_properties or "Estado" not in self.schema_properties:
+            return False
+
+        estado_type = self.schema_properties["Estado"].get("type", "select")
+        if estado_type == "rich_text":
+            prop = {"rich_text": [{"text": {"content": status}}]}
+        else:
+            prop = {"select": {"name": status}}
+
+        try:
+            self.notion.pages.update(page_id=page_id, properties={"Estado": prop})
+            return True
+        except Exception as e:
+            print(f"[Notion] Error actualizando Estado: {e}")
+            return False
+
     def _parse_salary_to_num(self, salary_str: str):
         if not salary_str:
             return None
@@ -340,6 +404,18 @@ class NotionSync:
             properties["Exp"] = {
                 "number": int(required_exp)
             }
+
+        # Estado de aplicación (nuevo job siempre entra como "Nuevo")
+        if self.schema_properties and "Estado" in self.schema_properties:
+            estado_type = self.schema_properties["Estado"].get("type", "select")
+            if estado_type == "rich_text":
+                properties["Estado"] = {
+                    "rich_text": [{"text": {"content": "Nuevo"}}]
+                }
+            else:
+                properties["Estado"] = {
+                    "select": {"name": "Nuevo"}
+                }
 
         # Filtrar las propiedades enviadas para incluir únicamente las que existen en el esquema de la base de datos
         if self.schema_properties:

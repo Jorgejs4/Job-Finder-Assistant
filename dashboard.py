@@ -14,6 +14,7 @@ import pandas as pd
 import json
 from datetime import datetime
 from utils.results import ResultsManager
+import config
 
 st.set_page_config(
     page_title="Job Scraper Dashboard",
@@ -52,6 +53,36 @@ col2.metric("Añadidas a Notion", added)
 col3.metric("Analizadas por IA", analyzed)
 col4.metric("Scrapers OK", scrapers_ok)
 col5.metric("Scrapers fallidos", scrapers_fail, delta=f"-{scrapers_fail}" if scrapers_fail else None, delta_color="inverse")
+
+# --- Pipeline de Aplicaciones ---
+st.header("🔄 Pipeline de Aplicaciones")
+jobs = latest.get("jobs", [])
+if jobs:
+    # Contar por estado
+    status_counts = {}
+    for status in config.APPLICATION_STATUSES:
+        count = len([j for j in jobs if j.get("status") == status])
+        status_counts[status] = count
+
+    # Mostrar como métricas en fila
+    status_cols = st.columns(len(config.APPLICATION_STATUSES))
+    for i, status in enumerate(config.APPLICATION_STATUSES):
+        status_cols[i].metric(status, status_counts.get(status, 0))
+
+    # Barra de progreso visual
+    total_jobs = len(jobs)
+    if total_jobs > 0:
+        progress_html = '<div style="display:flex; gap:2px; height:30px; border-radius:6px; overflow:hidden; margin:10px 0;">'
+        colors = ["#4CAF50", "#8BC34A", "#CDDC39", "#FFC107", "#FF9800", "#2196F3", "#F44336"]
+        for i, status in enumerate(config.APPLICATION_STATUSES):
+            count = status_counts.get(status, 0)
+            pct = (count / total_jobs * 100) if total_jobs > 0 else 0
+            if pct > 0:
+                progress_html += f'<div style="width:{pct}%; background:{colors[i]}; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:bold;">{count}</div>'
+        progress_html += '</div>'
+        st.markdown(progress_html, unsafe_allow_html=True)
+else:
+    st.info("No hay ofertas para mostrar el pipeline.")
 
 # --- Historial ---
 if len(history) > 1:
@@ -97,12 +128,11 @@ if errors:
 
 # --- Ofertas ---
 st.header("💼 Ofertas encontradas")
-jobs = latest.get("jobs", [])
 if jobs:
     df_jobs = pd.DataFrame(jobs)
 
     # Filtros
-    filter_col1, filter_col2, filter_col3 = st.columns(3)
+    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
     with filter_col1:
         source_filter = st.multiselect(
             "Filtrar por fuente",
@@ -123,6 +153,15 @@ if jobs:
             )
         else:
             mode_filter = []
+    with filter_col4:
+        if "status" in df_jobs.columns:
+            status_filter = st.multiselect(
+                "Estado",
+                options=config.APPLICATION_STATUSES,
+                default=config.APPLICATION_STATUSES,
+            )
+        else:
+            status_filter = []
 
     filtered = df_jobs.copy()
     if "source" in filtered.columns:
@@ -131,6 +170,8 @@ if jobs:
         filtered = filtered[filtered["match_score"] >= min_score]
     if mode_filter and "work_mode" in filtered.columns:
         filtered = filtered[filtered["work_mode"].isin(mode_filter)]
+    if status_filter and "status" in filtered.columns:
+        filtered = filtered[filtered["status"].isin(status_filter)]
 
     if "match_score" in filtered.columns:
         filtered = filtered.sort_values("match_score", ascending=False)
@@ -138,7 +179,7 @@ if jobs:
     st.write(f"Mostrando **{len(filtered)}** ofertas de **{len(jobs)}** totales")
 
     display_cols = ["title", "company", "source", "location", "work_mode",
-                    "match_score", "salary", "link"]
+                    "match_score", "salary", "status", "link"]
     display_cols = [c for c in display_cols if c in filtered.columns]
     st.dataframe(filtered[display_cols], use_container_width=True, hide_index=True)
 

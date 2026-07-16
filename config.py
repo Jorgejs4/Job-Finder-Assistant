@@ -44,6 +44,50 @@ YEARS_OF_EXPERIENCE = 0
 MIN_SALARY = None
 CV_PATH = os.getenv("CV_PATH", str(DEFAULT_CV_PATH))
 
+# Traducción de roles ES → EN para scrapers internacionales
+ROLE_TRANSLATIONS = {
+    "desarrollador backend": "backend developer",
+    "desarrollador frontend": "frontend developer",
+    "ingeniero de software": "software engineer",
+    "devops": "devops engineer",
+    "full stack": "full stack developer",
+    "data engineer": "data engineer",
+    "cientifico de datos": "data scientist",
+    "arquitecto de software": "software architect",
+    "tech lead": "tech lead",
+    "product manager": "product manager",
+    "ux designer": "ux designer",
+    "qa engineer": "quality assurance engineer",
+    "site reliability engineer": "sre",
+    "cloud engineer": "cloud engineer",
+    "mobile developer": "mobile developer",
+    "ios developer": "ios developer",
+    "android developer": "android developer",
+    "python developer": "python developer",
+    "java developer": "java developer",
+    "javascript developer": "javascript developer",
+    "react developer": "react developer",
+    "node developer": "node.js developer",
+    "dotnet developer": ".net developer",
+    "php developer": "php developer",
+    "ruby developer": "ruby developer",
+    "go developer": "golang developer",
+    "rust developer": "rust developer",
+    "typescript developer": "typescript developer",
+}
+
+# Pipeline de aplicaciones
+APPLICATION_STATUSES = [
+    "Nuevo", "Revisado", "Interesado", "Aplicado",
+    "Entrevista", "Oferta", "Rechazado"
+]
+
+# Umbral para fuzzy matching de duplicados
+FUZZY_MATCH_THRESHOLD = int(os.getenv("FUZZY_MATCH_THRESHOLD", "85"))
+
+# Scrapers que buscan en inglés
+EN_SCRAPERS = {"LinkedInScraper", "RemoteOKScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper"}
+
 # Mapping de ubicaciones: expande nombres cortos a strings completos para cada scraper
 LOCATION_MAP = {
     "sevilla": {

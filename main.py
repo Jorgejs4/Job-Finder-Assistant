@@ -3,6 +3,7 @@ import sys
 import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from thefuzz import fuzz
 import config
 from utils.cv_parser import parse_cv
 from utils.gemini_client import GeminiClient
@@ -28,43 +29,6 @@ def run_scraper(scraper, role, locations):
         return name, jobs, None
     except Exception as e:
         return name, [], f"{type(e).__name__}: {e}"
-
-
-def analyze_and_upload(args):
-    """Analiza una oferta con Gemini y la sube a Notion. Retorna (exito, job_data)."""
-    gemini, notion_sync, cv_text, job, desired_cities = args
-    link = job.get("link", "")
-
-    if notion_sync.check_if_job_exists(link):
-        return False, job, "duplicado"
-
-    desc_for_match = job.get("description") or job["title"]
-    match_result = gemini.match_offer(
-        cv_text=cv_text,
-        offer_title=job["title"],
-        offer_description=desc_for_match,
-    )
-
-    if match_result.match_score < 35:
-        return False, job, f"bajo_match_{match_result.match_score}"
-
-    work_mode = match_result.work_mode
-    if work_mode != "Remoto" and desired_cities:
-        job_loc = job.get("location", "").lower()
-        matches_city = any(city in job_loc for city in desired_cities)
-        if not matches_city:
-            return False, job, f"ubicacion_{work_mode}"
-
-    job["match_score"] = match_result.match_score
-    job["tech_stack"] = match_result.tech_stack
-    job["tailored_advice"] = match_result.tailored_advice
-    job["salary"] = str(match_result.estimated_salary)
-    job["work_mode"] = match_result.work_mode
-    job["salary_is_estimate"] = match_result.salary_is_estimate
-    job["required_experience"] = match_result.required_experience
-
-    success = notion_sync.add_job_to_notion(job)
-    return success, job, "ok" if success else "notion_error"
 
 
 def main():
@@ -132,7 +96,19 @@ def main():
     ]
 
     roles_to_search = profile.recommended_roles[:4]
-    print(f"[Buscador] Roles: {roles_to_search}")
+
+    # ── BÚSQUEDA MULTILINGÜE ──
+    # Traducir roles para scrapers internacionales (EN)
+    roles_en = []
+    for role in roles_to_search:
+        role_lower = role.lower().strip()
+        if role_lower in config.ROLE_TRANSLATIONS:
+            roles_en.append(config.ROLE_TRANSLATIONS[role_lower])
+        else:
+            roles_en.append(role)
+
+    print(f"[Buscador] Roles (ES): {roles_to_search}")
+    print(f"[Buscador] Roles (EN): {roles_en}")
     print(f"[Buscador] Límite: {config.MAX_JOBS_PER_SCRAPER} ofertas/plataforma")
 
     # ── FASE 1: Scraping paralelo ──
@@ -140,10 +116,13 @@ def main():
     all_jobs = []
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {}
-        for role in roles_to_search:
+        for role_es, role_en in zip(roles_to_search, roles_en):
             for scraper in scrapers:
-                future = executor.submit(run_scraper, scraper, role, config.DESIRED_LOCATIONS)
-                futures[future] = scraper.__class__.__name__
+                scraper_name = scraper.__class__.__name__
+                # Scrapers EN usan el rol traducido, scrapers ES usan el original
+                role_to_use = role_en if scraper_name in config.EN_SCRAPERS else role_es
+                future = executor.submit(run_scraper, scraper, role_to_use, config.DESIRED_LOCATIONS)
+                futures[future] = scraper_name
 
         for future in as_completed(futures, timeout=120):
             name = futures[future]
@@ -179,11 +158,44 @@ def main():
     t1 = time.time()
     print(f"\n[Timing] Scraping: {t1 - t0:.1f}s")
 
-    # ── Deduplicar y filtrar ──
+    # ── DEDUPLICACIÓN FUZZY ──
+    print(f"\n[Dedup] {len(all_jobs)} ofertas totales. Obteniendo ofertas existentes de Notion...")
+    existing_jobs = notion_sync.get_all_jobs_for_fuzzy()
+    print(f"[Dedup] {len(existing_jobs)} ofertas en Notion")
+
     unique_jobs = {}
+    duplicates_fuzzy = 0
     for job in all_jobs:
-        if job.get("link"):
-            unique_jobs[job["link"]] = job
+        link = job.get("link", "")
+        if not link:
+            continue
+
+        # Dedup por URL exacto
+        if link in unique_jobs:
+            continue
+
+        # Fuzzy match contra Notion
+        job_key = f"{job.get('title', '')} {job.get('company', '')}".lower().strip()
+        if not job_key:
+            unique_jobs[link] = job
+            continue
+
+        is_duplicate = False
+        for existing in existing_jobs:
+            existing_key = f"{existing['title']} {existing['company']}".lower().strip()
+            if not existing_key:
+                continue
+            similarity = fuzz.token_sort_ratio(job_key, existing_key)
+            if similarity >= config.FUZZY_MATCH_THRESHOLD:
+                is_duplicate = True
+                duplicates_fuzzy += 1
+                break
+
+        if not is_duplicate:
+            unique_jobs[link] = job
+
+    print(f"[Dedup] {duplicates_fuzzy} duplicados fuzzy eliminados, {len(unique_jobs)} únicas")
+
     jobs_to_process = list(unique_jobs.values())
 
     source_priority = {
@@ -225,6 +237,12 @@ def main():
 
         link = job.get("link", "")
         print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']} [{job.get('source', '')}]")
+
+        # ── FIX: Verificar si ya existe en Notion (ahorra llamadas a Gemini) ──
+        if notion_sync.check_if_job_exists(link):
+            print(f"  - [Dedup] Ya existe en Notion. Saltando.")
+            skipped["duplicado"] += 1
+            continue
 
         try:
             desc_for_match = job.get("description") or job["title"]
@@ -289,6 +307,7 @@ def main():
     print(f"  - Eliminadas de Notion: {deleted_count}")
     print(f"  - Analizadas por IA: {analyzed_count}")
     print(f"  - Nuevas añadidas: {new_jobs_added}")
+    print(f"  - Duplicados fuzzy: {duplicates_fuzzy}")
     print(f"  - Skipped: {skipped}")
     print(f"  - Tiempo total: {t3 - t0:.1f}s")
     print("=" * 60)
