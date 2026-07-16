@@ -15,8 +15,8 @@ from scrapers.remoteok_scraper import RemoteOKScraper
 from scrapers.remotive_scraper import RemotiveScraper
 from scrapers.tecnobs_scraper import TecnoJobsScraper
 from scrapers.jobfluent_scraper import JobfluentScraper
-from scrapers.wttj_scraper import WelcomeToTheJungleScraper
-from scrapers.fallback_api import FallbackJobsAPI
+from scrapers.jooble_scraper import JoobleScraper
+from scrapers.getonbrd_scraper import GetOnBoardScraper
 from notion_sync import NotionSync
 
 
@@ -127,7 +127,8 @@ def main():
         RemotiveScraper(),
         TecnoJobsScraper(),
         JobfluentScraper(),
-        WelcomeToTheJungleScraper(),
+        JoobleScraper(),
+        GetOnBoardScraper(),
     ]
 
     roles_to_search = profile.recommended_roles[:4]
@@ -162,14 +163,18 @@ def main():
                 results.record_scraper_result(name, [], failed=True, error_msg=str(e))
 
     if len(all_jobs) < 30 and config.RAPIDAPI_KEY:
-        print(f"[Buscador] Pocas ofertas ({len(all_jobs)}). Activando Fallback API...")
-        fallback = FallbackJobsAPI()
-        for role in roles_to_search:
-            try:
-                fallback_jobs = fallback.fetch_jobs(role, config.DESIRED_LOCATIONS)
-                all_jobs.extend(fallback_jobs)
-            except Exception as e:
-                print(f"[Fallback] Error: {e}")
+        print(f"[Buscador] Pocas ofertas ({len(all_jobs)}). Usando fallback API...")
+        try:
+            from scrapers.fallback_api import FallbackJobsAPI
+            fallback = FallbackJobsAPI()
+            for role in roles_to_search:
+                try:
+                    fallback_jobs = fallback.fetch_jobs(role, config.DESIRED_LOCATIONS)
+                    all_jobs.extend(fallback_jobs)
+                except Exception as e:
+                    print(f"[Fallback] Error: {e}")
+        except ImportError:
+            print("[Fallback] fallback_api no disponible")
 
     t1 = time.time()
     print(f"\n[Timing] Scraping: {t1 - t0:.1f}s")
@@ -184,7 +189,7 @@ def main():
     source_priority = {
         "InfoJobs": 0, "LinkedIn": 1, "Indeed": 2,
         "RemoteOK": 3, "Remotive": 4, "TecnoEmpleo": 5,
-        "Jobfluent": 6, "Glassdoor": 7, "API Fallback": 8,
+        "Jobfluent": 6, "Jooble": 7, "GetOnBoard": 8, "API Fallback": 9,
     }
     jobs_to_process.sort(key=lambda j: source_priority.get(j.get("source", ""), 99))
 
@@ -223,10 +228,12 @@ def main():
 
         try:
             desc_for_match = job.get("description") or job["title"]
+            experience_hint = job.get("experience_hint", 0)
             match_result = gemini.match_offer(
                 cv_text=cv_text,
                 offer_title=job["title"],
                 offer_description=desc_for_match,
+                experience_hint=experience_hint,
             )
 
             if match_result.match_score < 35:

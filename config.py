@@ -28,6 +28,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # API Keys para fallbacks (opcional)
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
+JOOBLE_API_KEY = os.getenv("JOOBLE_API_KEY", "")
 
 # Configuración de email (opcional)
 SMTP_GMAIL_USER = os.getenv("SMTP_GMAIL_USER", "")
@@ -52,7 +53,8 @@ LOCATION_MAP = {
         "jsearch": "Sevilla Spain",
         "tecnoempleo": "sevilla",
         "jobfluent": "Sevilla",
-        "glassdoor": "sevilla",
+        "jooble": "Sevilla",
+        "getonbrd": "Sevilla",
         "display": "Sevilla, Andalucía, España",
     },
     "madrid": {
@@ -62,7 +64,8 @@ LOCATION_MAP = {
         "jsearch": "Madrid Spain",
         "tecnoempleo": "madrid",
         "jobfluent": "Madrid",
-        "glassdoor": "madrid",
+        "jooble": "Madrid",
+        "getonbrd": "Madrid",
         "display": "Madrid, España",
     },
     "barcelona": {
@@ -72,7 +75,8 @@ LOCATION_MAP = {
         "jsearch": "Barcelona Spain",
         "tecnoempleo": "barcelona",
         "jobfluent": "Barcelona",
-        "glassdoor": "barcelona",
+        "jooble": "Barcelona",
+        "getonbrd": "Barcelona",
         "display": "Barcelona, Cataluña, España",
     },
     "valencia": {
@@ -82,7 +86,8 @@ LOCATION_MAP = {
         "jsearch": "Valencia Spain",
         "tecnoempleo": "valencia",
         "jobfluent": "Valencia",
-        "glassdoor": "valencia",
+        "jooble": "Valencia",
+        "getonbrd": "Valencia",
         "display": "Valencia, España",
     },
     "remoto": {
@@ -92,7 +97,8 @@ LOCATION_MAP = {
         "jsearch": "Remote",
         "tecnoempleo": "remoto",
         "jobfluent": "Remote",
-        "glassdoor": "remoto",
+        "jooble": "España",
+        "getonbrd": "Remote",
         "display": "Remoto",
     },
     "remote": {
@@ -102,7 +108,8 @@ LOCATION_MAP = {
         "jsearch": "Remote",
         "tecnoempleo": "remoto",
         "jobfluent": "Remote",
-        "glassdoor": "remote",
+        "jooble": "España",
+        "getonbrd": "Remote",
         "display": "Remote",
     },
 }

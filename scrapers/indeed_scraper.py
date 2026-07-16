@@ -7,15 +7,36 @@ import config
 
 class IndeedScraper(BaseScraper):
     def _fetch_with_cffi(self, url: str, params: dict = None) -> str:
-        """Fetch usando curl_cffi para evadir Cloudflare. Prueba múltiples impersonations."""
+        """Fetch usando curl_cffi para evadir Cloudflare. Prueba múltiples impersonations y cookies."""
         try:
             from curl_cffi import requests as cffi_requests
+            headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7",
+                "Referer": "https://es.indeed.com/",
+                "DNT": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Upgrade-Insecure-Requests": "1",
+            }
             for impersonation in ["chrome131", "chrome120", "safari17_0"]:
                 try:
-                    resp = cffi_requests.get(url, params=params, impersonate=impersonation, timeout=20)
+                    resp = cffi_requests.get(
+                        url, params=params, headers=headers,
+                        impersonate=impersonation, timeout=20
+                    )
                     if resp.status_code == 200:
                         return resp.text
                     if resp.status_code == 403:
+                        # Intentar con cookie de consentimiento
+                        cookies = {"CONSENT": "YES+cb.20210328-17-p0.en+FX+410"}
+                        resp2 = cffi_requests.get(
+                            url, params=params, headers=headers, cookies=cookies,
+                            impersonate=impersonation, timeout=20
+                        )
+                        if resp2.status_code == 200:
+                            return resp2.text
                         continue
                     print(f"[Indeed] curl_cffi ({impersonation}) status {resp.status_code}")
                 except Exception:

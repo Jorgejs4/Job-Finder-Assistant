@@ -1,6 +1,6 @@
 # Asistente Inteligente de Empleo con IA y Notion
 
-Recopila automáticamente ofertas de empleo de **8 plataformas**, analiza la compatibilidad con tu currículum usando **Gemini IA**, y sincroniza todo en **Notion** con un resumen por email.
+Recopila automáticamente ofertas de empleo de **9 plataformas**, analiza la compatibilidad con tu currículum usando **Gemini IA**, y sincroniza todo en **Notion** con un resumen por email.
 
 Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma local con Docker.
 
@@ -17,14 +17,15 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 | Remotive | API JSON | Remoto |
 | TecnoEmpleo | Scraping HTML | España |
 | Jobfluent | Scraping HTML | Global |
-| Glassdoor | Scraping HTML | Global |
+| Jooble | API/HTML | Global (agregador) |
+| GetOnBoard | Scraping HTML | LATAM (remoto) |
 
 ---
 
 ## Características
 
 1. **Análisis de Perfil:** Lee tu CV (PDF, DOCX, TXT o JSON) y extrae roles recomendados y habilidades clave.
-2. **Scraping en 8 fuentes:** Con curl_cffi para evadir anti-bot (Cloudflare, Distil Networks).
+2. **Scraping en 9 fuentes:** Con curl_cffi para evadir anti-bot (Cloudflare, Distil Networks).
 3. **Scoring IA:** Gemini calcula match %, stack tecnológico, salario estimado y consejos personalizados.
 4. **Notion Sync:** Sube ofertas evitando duplicadas, con borrado automático si marcas "Eliminar".
 5. **Email de resumen:** Recibe un email HTML con estadísticas por plataforma, top ofertas y errores.
@@ -37,6 +38,16 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 ## Configuración de credenciales
 
 Sigue la guía en `configuracion_credenciales.md` para crear tu base de datos de Notion y obtener la API key de Gemini.
+
+### API Key de Jooble (opcional)
+
+Jooble es un agregador de empleo. Para mejores resultados:
+
+1. Ve a https://jooble.org/api/about
+2. Regístrate (gratis, toma 1 minuto)
+3. Copia la API key que te generan
+4. Añádela como secret en GitHub: `JOOBLE_API_KEY`
+5. Sin API key, Jooble puede no devolver resultados (Cloudflare)
 
 ---
 
@@ -65,7 +76,7 @@ El dashboard es una aplicación local con **Streamlit** que visualiza los result
 ### Cómo lanzarlo
 
 ```bash
-streamlit run dashboard.py
+~/proyectos/job_scraper_ai/venv/bin/streamlit run dashboard.py
 ```
 
 Abrir **http://localhost:8501** en el navegador.
@@ -91,7 +102,7 @@ Abrir **http://localhost:8501** en el navegador.
 
 ## Tests automatizados
 
-Los tests verifican que los 8 scrapers responden correctamente. Se ejecutan automáticamente en GitHub Actions antes de cada run del scraper.
+Los tests verifican que los 9 scrapers responden correctamente. Se ejecutan automáticamente en GitHub Actions antes de cada run del scraper.
 
 ### Ejecutar tests localmente
 
@@ -122,23 +133,36 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 | `NOTION_TOKEN` | Sí | Token de integración de Notion |
 | `NOTION_DATABASE_ID` | Sí | ID de la base de datos de Notion |
 | `RAPIDAPI_KEY` | No | Fallback JSearch (solo resultados US/UK) |
+| `JOOBLE_API_KEY` | No | API key de Jooble (mejora resultados) |
 | `DESIRED_LOCATIONS` | No | Ubicaciones por defecto (ej: `Sevilla,Remoto`) |
 | `YEARS_OF_EXPERIENCE` | No | Años de experiencia (ej: `3`) |
 | `MIN_SALARY` | No | Salario mínimo anual (ej: `35000`) |
-| `SMTP_GMAIL_USER` | No | Email de Gmail para notificaciones |
-| `SMTP_GMAIL_PASSWORD` | No | Contraseña de aplicación de Gmail |
-| `NOTIFY_EMAIL` | No | Email destino del resumen |
 
 ### Configurar email (Gmail)
+
+**Necesitas 3 secrets para recibir el email de resumen:**
+
+1. **`SMTP_GMAIL_USER`** — Tu correo Gmail (ej: `tucorreo@gmail.com`)
+2. **`SMTP_GMAIL_PASSWORD`** — Contraseña de aplicación de 16 caracteres
+3. **`NOTIFY_EMAIL`** — Email donde quieres recibir el reporte (puede ser el mismo)
+
+#### Cómo crear la contraseña de aplicación:
 
 1. Activa **Verificación en 2 pasos** en https://myaccount.google.com/security
 2. Ve a https://myaccount.google.com/apppasswords
 3. Selecciona **Otra (nombre personalizado)** → escribe "Job Scraper"
 4. Click en **Crear**
-5. Google te dará un código de 16 caracteres tipo: `abcd efgh ijkl mnop`
-6. Ese código es tu `SMTP_GMAIL_PASSWORD` (guárdalo sin espacios)
+5. Google te dará un código de 16 caracteres tipo: `abcdefghijklmnop`
+6. Ese código es tu `SMTP_GMAIL_PASSWORD` (guárdalo **sin espacios**)
 
 > **Nota:** La contraseña de aplicación es distinta a tu contraseña normal de Gmail. Es una clave especial que permite enviar emails sin exponer tu contraseña principal.
+
+#### Si no ves la opción de "Contraseñas de aplicación":
+
+1. Activa la **Verificación en 2 pasos** primero (paso 1)
+2. Si no aparece, ve a https://myaccount.google.com/security
+3. En "Cómo acceder a Google", busca "Contraseñas de aplicaciones"
+4. Si no aparece, puede que tu cuenta no la tenga habilitada — usa otra cuenta Gmail
 
 ### Probar que el email funciona
 

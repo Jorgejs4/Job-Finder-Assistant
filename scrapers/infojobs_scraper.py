@@ -47,6 +47,59 @@ class InfoJobsScraper(BaseScraper):
             cards = soup.find_all("a", href=re.compile(r"/ofertas-trabajo/"))
         return cards
 
+    def _extract_experience_hint(self, description: str, title: str) -> int:
+        """Extrae años de experiencia del texto de la oferta usando regex."""
+        text = f"{title} {description}".lower()
+
+        # Patrones explícitos: "3 años de experiencia", "mínimo 5 años", etc.
+        patterns_anios = [
+            r'(\d+)\s*a[ñn]os?\s+de\s+experiencia',
+            r'experiencia\s+(?:mínima?\s+)?(?:de\s+)?(\d+)\s*a[ñn]os?',
+            r'mínimo\s+de?\s*(\d+)\s*a[ñn]os?',
+            r'al menos\s+(\d+)\s*a[ñn]os?',
+            r'(\d+)\s*years?\s+(?:of\s+)?experience',
+            r'experiencia\s+de\s+(\d+)\s*a[ñn]os?',
+            r'rango\s+de\s+(\d+)\s*a[ñn]os?\s*(?:de\s+experiencia)?',
+        ]
+        for pat in patterns_anios:
+            m = re.search(pat, text)
+            if m:
+                val = int(m.group(1))
+                if 0 < val <= 20:
+                    return val
+
+        # Meses: "18 meses de experiencia" → convertir a años
+        patterns_meses = [
+            r'(\d+)\s*meses?\s+de\s+experiencia',
+            r'experiencia\s+(?:mínima?\s+)?(?:de\s+)?(\d+)\s*meses?',
+            r'al menos\s+(\d+)\s*meses?',
+            r'mínimo\s+de?\s*(\d+)\s*meses?',
+        ]
+        for pat in patterns_meses:
+            m = re.search(pat, text)
+            if m:
+                months = int(m.group(1))
+                if 0 < months <= 240:
+                    return max(1, round(months / 12))
+
+        # Rangos: "2-4 años", "entre 3 y 5 años"
+        range_match = re.search(r'(\d+)\s*[-–a]\s*(\d+)\s*a[ñn]os', text)
+        if range_match:
+            low = int(range_match.group(1))
+            high = int(range_match.group(2))
+            if 0 < low <= 20 and 0 < high <= 20:
+                return (low + high) // 2
+
+        # Nivel senior/mid/junior sin número
+        if re.search(r'\bsenior\b', text):
+            return 5
+        if re.search(r'\b(mid[- ]?level|intermedio|pleno)\b', text):
+            return 3
+        if re.search(r'\b(junior|trainee|práctic|becario)\b', text):
+            return 0
+
+        return 0
+
     def _format_offer(self, offer: dict, search_location: str) -> dict:
         """Convierte una oferta cruda de InfoJobs al formato estándar."""
         title = offer.get("title", "Puesto no especificado")
@@ -72,6 +125,8 @@ class InfoJobsScraper(BaseScraper):
 
         published = offer.get("published", offer.get("publishedAt", ""))
 
+        experience_hint = self._extract_experience_hint(description, title)
+
         return {
             "title": title,
             "company": company,
@@ -83,6 +138,7 @@ class InfoJobsScraper(BaseScraper):
             "salary_raw": salary_desc,
             "salary_min": salary_min,
             "salary_max": salary_max,
+            "experience_hint": experience_hint,
         }
 
     def _is_remote(self, offer: dict) -> bool:

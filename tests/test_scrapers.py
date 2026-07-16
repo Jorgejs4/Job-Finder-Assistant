@@ -35,7 +35,8 @@ ALL_SCRAPERS = {
     "Remotive": ("scrapers.remotive_scraper", "RemotiveScraper"),
     "TecnoJobs": ("scrapers.tecnobs_scraper", "TecnoJobsScraper"),
     "Jobfluent": ("scrapers.jobfluent_scraper", "JobfluentScraper"),
-    "WTTJ": ("scrapers.wttj_scraper", "WelcomeToTheJungleScraper"),
+    "Jooble": ("scrapers.jooble_scraper", "JoobleScraper"),
+    "GetOnBoard": ("scrapers.getonbrd_scraper", "GetOnBoardScraper"),
 }
 
 MAX_PER_PLATFORM = 50

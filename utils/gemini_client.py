@@ -115,7 +115,7 @@ class GeminiClient:
         data = json.loads(response_text)
         return ProfileAnalysis(**data)
 
-    def match_offer(self, cv_text: str, offer_title: str, offer_description: str) -> OfferMatch:
+    def match_offer(self, cv_text: str, offer_title: str, offer_description: str, experience_hint: int = 0) -> OfferMatch:
         """
         Compara el CV con una oferta de empleo y devuelve un Match Score, 
         el stack tecnológico detectado, modalidad, salario y consejos de optimización.
@@ -190,7 +190,7 @@ class GeminiClient:
                 estimated_salary=estimated_salary,
                 work_mode=work_mode,
                 salary_is_estimate=len(re.findall(r'(\d{2})[\s.]?(\d{3})', offer_description)) == 0,
-                required_experience=0
+                required_experience=experience_hint
             )
 
         prompt = f"""
@@ -202,7 +202,16 @@ class GeminiClient:
         3. Escribe consejos breves, personalizados y accionables para adaptar el currículum del candidato a esta oferta específica (por ejemplo, destacar sus proyectos relacionados, enfocar sus estudios de CFGS en las tecnologías demandadas, etc.). Los consejos DEBEN ser específicos para esta oferta y no repetitivos.
         4. Identifica o calcula el salario anual bruto estimado (estimated_salary) en euros. Si el texto no menciona el salario, la IA DEBE estimar un salario anual bruto realista para este puesto en España considerando las tecnologías requeridas, la modalidad y la experiencia solicitada (ej. 28000 para juniors, 35000 para mid, etc.).
         5. Determina la modalidad de trabajo (work_mode) de la oferta en una de estas opciones exactas: 'Presencial', 'Remoto' o 'Híbrido' (teletrabajo parcial).
-        6. Determina los años de experiencia requeridos (required_experience). Si la oferta dice explícitamente 'X años de experiencia', devuelve X. Si pone 'junior' devuelve 0, 'mid-level' o 'intermedio' devuelve 2, 'senior' devuelve 5. Si no menciona nada, devuelve 0.
+        6. Determina los años de experiencia requeridos (required_experience) basándote en TODA la información disponible de la oferta:
+           - Si la oferta dice explícitamente 'X años de experiencia', devuelve X.
+           - Si menciona un rango como '2-4 años', devuelve el número más bajo del rango.
+           - Si pone 'junior' o 'trainee' o 'becario' devuelve 0.
+           - Si pone 'mid-level', 'intermedio' o 'pleno' devuelve 3.
+           - Si pone 'senior' sin número concreto devuelve 5.
+           - Si habla de 'experiencia mínima' o 'al menos X años', devuelve X.
+           - Si no menciona nada ni hay pistas, devuelve 0.
+           - Máximo 20.
+           {f'PISTA DEL SCRAPER: el texto fue pre-analizado y se detectó un valor de {experience_hint} años.' if experience_hint > 0 else ''}
 
         Currículum del candidato:
         ---
