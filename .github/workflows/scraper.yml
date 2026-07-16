@@ -23,6 +23,9 @@ concurrency:
   group: scraper-run
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   test-scrapers:
     runs-on: ubuntu-latest
