@@ -30,7 +30,7 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 4. **Notion Sync:** Sube ofertas evitando duplicadas, con borrado automático si marcas "Eliminar".
 5. **Email de resumen:** Recibe un email HTML con estadísticas por plataforma, top ofertas y errores.
 6. **Resultados persistentes:** Cada ejecución guarda JSON + CSV con métricas por scraper.
-7. **Dashboard interactivo:** Streamlit con KPIs, gráficos, filtros y exportación CSV.
+7. **Dashboard interactivo:** Streamlit con KPIs, gráficos, filtros, comparador y exportación CSV.
 8. **Tests automatizados:** Verifican que todos los scrapers responden correctamente.
 9. **Búsqueda multilingüe:** Busca automáticamente en español (InfoJobs, TecnoEmpleo) e inglés (LinkedIn, RemoteOK).
 10. **Dedup fuzzy matching:** Detecta duplicados cross-scraper con similitud de texto (no solo URL exacta).
@@ -38,6 +38,9 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 12. **Carta de presentación IA:** Genera cartas personalizadas por oferta con Gemini.
 13. **Skills gap analysis:** Detecta qué habilidades faltan en tu CV vs demanda del mercado.
 14. **Informe de mercado:** Tendencias de tech, salarios, empresas que contratan.
+15. **Inteligencia salarial:** Estadísticas de salario por modalidad y plataforma en el dashboard.
+16. **Comparador de ofertas:** Compara 2-3 ofertas lado a lado en el dashboard.
+17. **Webhooks:** Notificaciones en tiempo real a Slack, Discord o URL genérica para ofertas de alto match.
 
 ---
 
@@ -80,7 +83,7 @@ docker-compose up --build
 ### Skills Gap Analysis
 ```bash
 # Analiza las últimas 25 ofertas y muestra qué skills faltan
-MOCK_GEMINI=true python skills_gap.py
+python skills_gap.py
 
 # Analizar más ofertas
 python skills_gap.py --top 50
@@ -92,7 +95,7 @@ python skills_gap.py --output skills_gap.md
 ### Market Report
 ```bash
 # Genera informe de mercado en HTML
-MOCK_GEMINI=true python market_report.py
+python market_report.py
 
 # Guardar en archivo
 python market_report.py --output report.html
@@ -118,7 +121,9 @@ Abrir **http://localhost:8501** en el navegador.
 ### Qué muestra
 
 - **KPIs:** Ofertas encontradas, añadidas a Notion, analizadas por IA, scrapers OK/fallidos
-- **Pipeline de aplicaciones:** Funnel visual del estado de cada oferta
+- **Pipeline de aplicaciones:** Funnel visual del estado de cada oferta (7 colores)
+- **Inteligencia salarial:** Promedio, mediana, min, max + desglose por modalidad y plataforma
+- **Comparador de ofertas:** Selecciona 2-3 ofertas y compáralas lado a lado con tabla + consejos
 - **Gráficos:** Evolución de ofertas por ejecución, scrapers OK vs fallidos
 - **Tabla de scrapers:** Estado de cada plataforma (OK, vacío, fallido) y número de ofertas
 - **Ofertas:** Tabla con todos los resultados, filtrable por fuente, match, modalidad y estado
@@ -137,13 +142,16 @@ Abrir **http://localhost:8501** en el navegador.
 
 ## Tests automatizados
 
-Los tests verifican que los 9 scrapers responden correctamente. Se ejecutan automáticamente en GitHub Actions antes de cada run del scraper.
+Los tests verifican que los 9 scrapers y todas las features responden correctamente. Se ejecutan automáticamente en GitHub Actions antes de cada run del scraper.
 
 ### Ejecutar tests localmente
 
 ```bash
-# Ejecuta los tests con Gemini en modo mock (sin gastar cuota)
+# Tests de scrapers (sin gastar cuota de Gemini)
 MOCK_GEMINI=true python tests/test_scrapers.py
+
+# Test de conexión Gemini (gasta 1 llamada)
+python test_gemini.py
 ```
 
 ### Qué verifican
@@ -175,6 +183,8 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 | `SMTP_GMAIL_USER` | No | Email de Gmail para notificaciones |
 | `SMTP_GMAIL_PASSWORD` | No | Contraseña de aplicación de Gmail |
 | `NOTIFY_EMAIL` | No | Email destino del resumen |
+| `WEBHOOK_URL` | No | URL de webhook (Slack, Discord o genérico) |
+| `WEBHOOK_MIN_MATCH` | No | Match mínimo para webhook (default: 80) |
 
 ### Configurar email (Gmail)
 
@@ -185,13 +195,21 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 5. Google te dará un código de 16 caracteres tipo: `abcdefghijklmnop`
 6. Ese código es tu `SMTP_GMAIL_PASSWORD` (guárdalo **sin espacios**)
 
+### Configurar webhooks (opcional)
+
+1. **Slack:** Ve a Incoming Webhooks → crea un webhook → copia la URL
+2. **Discord:** Server Settings → Integrations → Webhooks → crea uno → copia la URL
+3. **Genérica:** Cualquier URL que acepte POST con JSON
+4. Añade `WEBHOOK_URL` como secret en GitHub
+5. Opcional: `WEBHOOK_MIN_MATCH=80` (default) para filtrar por match score
+
 ### Campos opcionales en Notion
 
 Para usar las funciones avanzadas, añade estos campos a tu base de datos:
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `Estado` | Select | Pipeline de aplicaciones (Nuevo, Revisado, Interesado, Aplicado, Entrevista, Oferta, Rechazado) |
+| `Estado` | Select | Pipeline: Nuevo, Revisado, Interesado, Aplicado, Entrevista, Oferta, Rechazado |
 | `Carta Presentación` | Rich text | Carta de presentación generada por IA para cada oferta |
 | `Exp` | Number | Años de experiencia requeridos |
 | `Origen Salario` | Select | "Estimado (IA)" o "Directo" |
@@ -201,7 +219,7 @@ Para usar las funciones avanzadas, añade estos campos a tu base de datos:
 El workflow se ejecuta **dos veces al día (8:00 y 20:00 UTC)**:
 
 1. **Tests** → Verifica que los scrapers responden (con Gemini mock)
-2. **Scraper** → Ejecuta el pipeline completo (scraping → IA → Notion → email)
+2. **Scraper** → Ejecuta el pipeline completo (scraping → IA → Notion → email → webhooks)
 3. **Artifacts** → Guarda resultados JSON/CSV por 90 días
 
 También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion Sync > Run workflow**.
