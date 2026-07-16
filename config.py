@@ -237,3 +237,7 @@ def load_preferences():
             MIN_SALARY = None
     else:
         MIN_SALARY = None
+
+# Webhook configuration (opcional)
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+WEBHOOK_MIN_MATCH = int(os.getenv("WEBHOOK_MIN_MATCH", "80"))

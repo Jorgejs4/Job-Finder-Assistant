@@ -9,6 +9,7 @@ from utils.cv_parser import parse_cv
 from utils.gemini_client import GeminiClient
 from utils.results import ResultsManager
 from utils.notifications import EmailNotifier
+from utils.webhooks import WebhookNotifier
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
@@ -38,6 +39,7 @@ def main():
 
     results = ResultsManager()
     notifier = EmailNotifier()
+    webhook = WebhookNotifier()
 
     try:
         config.validate_config()
@@ -98,7 +100,6 @@ def main():
     roles_to_search = profile.recommended_roles[:4]
 
     # ── BÚSQUEDA MULTILINGÜE ──
-    # Traducir roles para scrapers internacionales (EN)
     roles_en = []
     for role in roles_to_search:
         role_lower = role.lower().strip()
@@ -119,7 +120,6 @@ def main():
         for role_es, role_en in zip(roles_to_search, roles_en):
             for scraper in scrapers:
                 scraper_name = scraper.__class__.__name__
-                # Scrapers EN usan el rol traducido, scrapers ES usan el original
                 role_to_use = role_en if scraper_name in config.EN_SCRAPERS else role_es
                 future = executor.submit(run_scraper, scraper, role_to_use, config.DESIRED_LOCATIONS)
                 futures[future] = scraper_name
@@ -170,11 +170,9 @@ def main():
         if not link:
             continue
 
-        # Dedup por URL exacto
         if link in unique_jobs:
             continue
 
-        # Fuzzy match contra Notion
         job_key = f"{job.get('title', '')} {job.get('company', '')}".lower().strip()
         if not job_key:
             unique_jobs[link] = job
@@ -228,6 +226,7 @@ def main():
     t2 = time.time()
     new_jobs_added = 0
     analyzed_count = 0
+    high_match_jobs = []
     skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "notion_error": 0}
 
     for idx, job in enumerate(jobs_to_process, 1):
@@ -238,7 +237,6 @@ def main():
         link = job.get("link", "")
         print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']} [{job.get('source', '')}]")
 
-        # ── FIX: Verificar si ya existe en Notion (ahorra llamadas a Gemini) ──
         if notion_sync.check_if_job_exists(link):
             print(f"  - [Dedup] Ya existe en Notion. Saltando.")
             skipped["duplicado"] += 1
@@ -278,10 +276,25 @@ def main():
             job["salary_is_estimate"] = match_result.salary_is_estimate
             job["required_experience"] = match_result.required_experience
 
+            # Generar carta de presentación si hay campo en Notion
+            if "Carta Presentación" in notion_sync.schema_properties:
+                try:
+                    cover_letter = gemini.generate_cover_letter(
+                        cv_text=cv_text,
+                        offer_title=job["title"],
+                        company=job.get("company", ""),
+                        offer_description=desc_for_match,
+                    )
+                    job["cover_letter"] = cover_letter
+                    print(f"  - [IA] Carta de presentación generada")
+                except Exception as e:
+                    print(f"  - [IA] Error generando carta: {e}")
+
             success = notion_sync.add_job_to_notion(job)
             if success:
                 new_jobs_added += 1
                 analyzed_count += 1
+                high_match_jobs.append(job)
                 print(f"  - [OK] Añadida a Notion (match: {match_result.match_score}%)")
             else:
                 skipped["notion_error"] += 1
@@ -323,6 +336,10 @@ def main():
         top_jobs=top_jobs,
         errors=email_errors,
     )
+
+    # Webhook notifications
+    webhook.notify_high_match_jobs(high_match_jobs, scraper_stats)
+    webhook.notify_summary(new_jobs_added, analyzed_count, scraper_stats)
 
 
 if __name__ == "__main__":
