@@ -60,6 +60,26 @@ class OfferMatch(BaseModel):
         description="Proyectos relevantes reformulados para encajar con el puesto. Cada item: {name: str, description: str (1-2 líneas)}"
     )
 
+class CVContent(BaseModel):
+    """Contenido estructurado de un CV personalizado para una oferta específica."""
+    name: str = Field(description="Nombre completo del candidato")
+    contact: str = Field(description="Contacto: email | teléfono | ubicación")
+    summary: str = Field(
+        description="Resumen profesional de 3-4 líneas. Debe incluir: cargo objetivo, años de experiencia, especialización y tecnologías principales. Ejemplo: 'Backend Software Engineer con 4 años de experiencia desarrollando APIs REST escalables con Java, Spring Boot y PostgreSQL.'"
+    )
+    experience: List[dict] = Field(
+        description="Experiencia laboral. Cada item: {role, company, period, description: list[str]}. La description DEBE ser una lista de bullet points con logros CUANTIFICADOS (%, tiempo, usuarios, métricas). Ejemplo: ['Desarrollé 12 APIs REST en Spring Boot que redujeron tiempos de respuesta en un 40%', 'Migré monolito a microservicios, reduciendo despliegues de 2h a 15min']. NUNCA usar verbos genéricos sin métricas."
+    )
+    education: List[dict] = Field(
+        description="Formación académica. Cada item: {degree, institution, year}"
+    )
+    skills: dict = Field(
+        description="Habilidades AGRUPADAS por categoría. Ejemplo: {\"Backend\": [\"Java\", \"Spring Boot\", \"Hibernate\"], \"Bases de datos\": [\"PostgreSQL\", \"MySQL\"], \"Cloud\": [\"AWS\", \"Docker\"]}. NUNCA hacer una lista plana mixta."
+    )
+    projects: List[dict] = Field(
+        description="Proyectos relevantes reformulados. Cada item: {name, description}. No incluir proyectos básicos (CRUD, calculadora, to-do list). Incluir proyectos completos, open source, SaaS, herramientas propias."
+    )
+
 class SkillsGap(BaseModel):
     missing_skills: List[dict] = Field(
         description="Lista de habilidades faltantes ordenadas por frecuencia. Cada item: {skill: str, count: int, percentage: float, advice: str}"
@@ -367,65 +387,118 @@ Un cordial saludo."""
         data = json.loads(response_text)
         return SkillsGap(**data)
 
-    def generate_custom_cv(self, cv_text: str, offer_title: str, company: str, advice: str, tech_stack: str) -> dict:
+    def generate_cv_content(self, cv_text: str, offer_title: str, company: str, advice: str, tech_stack: str, feedback: str = None) -> dict:
         """
-        Genera el contenido de un CV personalizado para una oferta específica.
-        Devuelve un dict con: name, contact, summary, experience, education, skills, projects.
+        Genera contenido de CV de alta calidad para una oferta específica.
+        Sigue las 10 reglas de un CV técnico profesional.
+        Devuelve un dict con: name, contact, summary, experience, education, skills (dict), projects.
         """
         import os
         if os.getenv("MOCK_GEMINI") == "true":
             return {
                 "name": "Candidato",
-                "contact": "email@ejemplo.com | +34 600 000 000",
-                "summary": "Desarrollador de software con experiencia en tecnologías modernas.",
-                "experience": [],
-                "education": [],
-                "skills": ["Python", "JavaScript", "Docker"],
-                "projects": [],
+                "contact": "email@ejemplo.com | +34 600 000 000 | Madrid",
+                "summary": "Backend Software Engineer con 2 años de experiencia desarrollando APIs REST con Python, Django y PostgreSQL. Especializado en arquitecturas escalables y despliegue continuo.",
+                "experience": [
+                    {"role": "Backend Developer", "company": "TechCorp", "period": "2023 - Presente", "description": [
+                        "Desarrollé 8 APIs REST en Django que procesaron +100K peticiones diarias",
+                        "Implementé pipeline CI/CD con GitHub Actions reduciendo tiempos de despliegue un 60%",
+                        "Migré base de datos de MySQL a PostgreSQL mejorando tiempos de consulta un 35%"
+                    ]}
+                ],
+                "education": [{"degree": "CFGS Desarrollo de Aplicaciones Multiplataforma", "institution": "IES Tecnológico", "year": "2022"}],
+                "skills": {"Backend": ["Python", "Django", "Java"], "Bases de datos": ["PostgreSQL", "MySQL"], "Cloud": ["AWS", "Docker"], "CI/CD": ["GitHub Actions"]},
+                "projects": [{"name": "Job Scraper AI", "description": "Sistema de scraping con IA que analiza ofertas de 9 plataformas, genera CVs personalizados y sincroniza con Notion. Procesa +500 ofertas diarias."}],
             }
 
+        feedback_block = ""
+        if feedback:
+            feedback_block = f"""
+        FEEDBACK DEL USUARIO SOBRE EL CV ANTERIOR:
+        El usuario quiere lo siguiente para mejorar el CV:
+        {feedback}
+        Incorpora esta feedback en el nuevo CV. Si el usuario pide más detalle en alguna experiencia, añade más bullet points con métricas. Si pide cambiar el tono, adáptalo. Si pide quitar algo, elimínalo."""
+
         prompt = f"""
-        Eres un experto en creación de CVs profesionales. Genera un CV personalizado y optimizado para esta oferta de empleo.
+        Eres un experto en creación de CVs técnicos profesionales. Genera un CV de alta calidad optimizado para ESTA oferta de empleo.
 
-        INSTRUCCIONES:
-        1. Reorganiza y adapta la información del CV original para destacar lo más relevante para ESTA oferta
-        2. Reformula el resumen profesional para enfocarlo en el puesto
-        3. Reordena la experiencia laboral poniendo lo más relevante primero
-        4. Adapta las descripciones de cada rol para resaltar las tecnologías y habilidades que pide la oferta
-        5. Incluye solo las habilidades más relevantes para este puesto
-        6. Añade proyectos relevantes (puedes reformular los existentes del CV para que encajen mejor)
-        7. Mantén la información veraz - no inventes experiencia que no exista
-        8. El CV debe estar en español
+        REGLAS OBLIGATORIAS (las 10 reglas de un CV técnico profesional):
 
-        CONSEJOS DEL ANALISTA PARA ESTA OFERTA:
-        {advice}
+        1. LEGIBILIDAD EN 30-60 SEGUNDOS: El CV debe ser scaneable rápidamente. Títulos claros, buen espacio en blanco, información ordenada cronológicamente (lo más reciente primero).
 
-        TECNOLOGÍAS REQUERIDAS:
-        {tech_stack}
+        2. PERFIL TÉCNICO CLARO desde el primer párrafo: cargo objetivo + años de experiencia + especialización + tecnologías principales.
+        Ejemplo: "Backend Software Engineer con 4 años de experiencia desarrollando APIs REST escalables con Java, Spring Boot y PostgreSQL."
+
+        3. HABILIDADES AGRUPADAS POR CATEGORÍA (nunca lista plana):
+        ✅ Backend: Java, Spring Boot, Hibernate
+           Bases de datos: PostgreSQL, MySQL
+           Cloud: AWS, Docker, Kubernetes
+           CI/CD: GitHub Actions, Jenkins
+        ❌ Java, Spring, AWS, Docker, Python, Node, React, Angular, Mongo, Redis...
+
+        4. LOGROS CUANTIFICADOS en cada experiencia (OBLIGATORIO):
+        ✅ "Desarrollé 12 APIs REST en Spring Boot que redujeron tiempos de respuesta en un 40%"
+        ✅ "Migré aplicación monolítica a microservicios, reduciendo tiempo de despliegue de 2 horas a 15 minutos"
+        ✅ "Procesé 2 millones de eventos diarios con Kafka"
+        ❌ "Desarrollé APIs"
+        ❌ "Mantenimiento de aplicaciones"
+
+        5. MÉTRICAS SIEMPRE QUE SEA POSIBLE: %, tiempo, usuarios, volumen, rendimiento, ahorro.
+        Ejemplos: reduje consumo un 30%, soporté 500K usuarios, automatizé pipeline de 3h a 20min.
+
+        6. CONOCIMIENTOS TÉCNICOS PROFUNDOS:
+        ✅ "Diseñé arquitectura hexagonal con Spring Boot utilizando CQRS, Kafka y PostgreSQL"
+        ❌ "Java + Spring"
+
+        7. PROYECTOS RELEVANTES (no básicos):
+        ✅ Aplicaciones completas, open source, SaaS, herramientas propias
+        ❌ To-Do List, Calculadora, CRUD sencillo
+
+        8. ADAPTADO A LA OFERTA: Las tecnologías que pide la oferta deben aparecer destacadas si realmente se dominan.
+
+        9. ATS-COMPATIBLE: Texto plano, sin tablas complejas, sin iconos, títulos estándar (Experiencia, Habilidades, Formación), incluir keywords de la oferta.
+
+        10. EVOLUCIÓN PROFESIONAL: Mostrar progresión (Junior → Backend → Senior) o mayor complejidad técnica (CRUD → Microservicios → Cloud).
 
         CV ORIGINAL DEL CANDIDATO:
         ---
         {cv_text}
         ---
 
+        CONSEJOS DEL ANALISTA PARA ESTA OFERTA:
+        {advice}
+
+        TECNOLOGÍAS REQUERIDAS POR LA OFERTA:
+        {tech_stack}
+
         Oferta:
         Puesto: {offer_title}
         Empresa: {company}
+        {feedback_block}
 
         Responde CON SOLO el JSON con esta estructura exacta:
         {{
-            "name": "Nombre completo",
+            "name": "Nombre completo del candidato",
             "contact": "email | teléfono | ubicación",
-            "summary": "Resumen profesional de 3-4 líneas optimizado para este puesto",
+            "summary": "Resumen profesional de 3-4 líneas con cargo objetivo + años + especialización + tech principal",
             "experience": [
-                {{"role": "Título del puesto", "company": "Empresa", "period": "2023 - Presente", "description": "Descripción adaptada de 2-3 líneas con logros y tecnologías relevantes"}}
+                {{
+                    "role": "Título del puesto",
+                    "company": "Empresa",
+                    "period": "2023 - Presente",
+                    "description": ["Bullet point 1 con métrica cuantificada", "Bullet point 2 con resultado medible"]
+                }}
             ],
             "education": [
                 {{"degree": "Título", "institution": "Centro", "year": "2023"}}
             ],
-            "skills": ["Skill1", "Skill2", "Skill3"],
+            "skills": {{
+                "Backend": ["Java", "Spring Boot"],
+                "Bases de datos": ["PostgreSQL"],
+                "Cloud": ["AWS", "Docker"]
+            }},
             "projects": [
-                {{"name": "Nombre del proyecto", "description": "Descripción breve de 1-2 líneas"}}
+                {{"name": "Nombre del proyecto", "description": "Descripción de 1-2 líneas con impacto/tecnologías"}}
             ]
         }}
         """
@@ -447,11 +520,11 @@ Un cordial saludo."""
                 return data
             except ResourceExhausted:
                 wait_time = (2 ** attempt) * 3 + 2
-                print(f"\n[Gemini] Cuota excedida en custom_cv. Esperando {wait_time}s (intento {attempt+1}/5)...")
+                print(f"\n[Gemini] Cuota excedida en cv_content. Esperando {wait_time}s (intento {attempt+1}/5)...")
                 time.sleep(wait_time)
             except Exception as e:
                 raise e
-        raise RuntimeError("No se pudo generar custom_cv tras 5 intentos.")
+        raise RuntimeError("No se pudo generar cv_content tras 5 intentos.")
 
     def generate_market_report(self, cv_text: str, jobs_data: list) -> str:
         """

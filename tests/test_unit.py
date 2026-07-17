@@ -150,15 +150,17 @@ class TestCVGenerator:
             "name": "Test User",
             "contact": "test@email.com",
             "summary": "Test summary",
-            "experience": [{"role": "Dev", "company": "Test", "period": "2024", "description": "Work"}],
+            "experience": [{"role": "Dev", "company": "Test", "period": "2024", "description": ["Work done"]}],
             "education": [],
-            "skills": ["Python", "Docker"],
+            "skills": {"Backend": ["Python", "Docker"]},
             "projects": [],
         }
-        pdf_path = cv_gen.generate_from_data(cv_content, "Test Job", "Test Co")
+        html_path, pdf_path = cv_gen.generate_from_data(cv_content, "Test Job", "Test Co")
         assert pdf_path is not None
         assert os.path.exists(pdf_path)
         assert os.path.getsize(pdf_path) > 0
+        if html_path and os.path.exists(html_path):
+            os.remove(html_path)
         os.remove(pdf_path)
 
 
@@ -178,3 +180,57 @@ class TestResultsManager:
         stats = rm.get_scraper_stats()
         assert "TestScraper" in stats
         assert stats["TestScraper"]["found"] == 1
+
+
+class TestFeedbackManager:
+    """Tests para el gestor de feedback de CVs."""
+
+    def test_save_and_retrieve(self):
+        from utils.feedback_manager import FeedbackManager
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fm = FeedbackManager(results_dir=tmpdir)
+            fm.save_feedback("Test Job", "Test Co", "Más detalle en Spring Boot")
+            pending = fm.get_pending()
+            assert len(pending) == 1
+            assert pending[0]["title"] == "Test Job"
+            assert pending[0]["feedback"] == "Más detalle en Spring Boot"
+
+    def test_mark_done(self):
+        from utils.feedback_manager import FeedbackManager
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fm = FeedbackManager(results_dir=tmpdir)
+            fm.save_feedback("Job A", "Co A", "feedback text")
+            job_id = fm.make_job_id("Job A", "Co A")
+            fm.mark_done(job_id)
+            assert fm.count_pending() == 0
+            assert len(fm._data["completed"]) == 1
+
+    def test_has_pending(self):
+        from utils.feedback_manager import FeedbackManager
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fm = FeedbackManager(results_dir=tmpdir)
+            assert not fm.has_pending("Job A", "Co A")
+            fm.save_feedback("Job A", "Co A", "test")
+            assert fm.has_pending("Job A", "Co A")
+
+
+class TestCVContentModel:
+    """Tests para el modelo CVContent de Gemini."""
+
+    def test_cv_content_fields(self):
+        from utils.gemini_client import CVContent
+        cv = CVContent(
+            name="Test",
+            contact="test@email.com",
+            summary="Backend Developer con 2 años de experiencia.",
+            experience=[{"role": "Dev", "company": "Co", "period": "2024", "description": ["Bullet 1"]}],
+            education=[{"degree": "DAM", "institution": "IES", "year": "2022"}],
+            skills={"Backend": ["Python"], "Cloud": ["AWS"]},
+            projects=[{"name": "Proj", "description": "Desc"}],
+        )
+        assert cv.name == "Test"
+        assert isinstance(cv.skills, dict)
+        assert "Backend" in cv.skills

@@ -12,6 +12,7 @@ from utils.results import ResultsManager
 from utils.notifications import EmailNotifier
 from utils.webhooks import WebhookNotifier
 from utils.cv_generator import CVGenerator
+from utils.feedback_manager import FeedbackManager
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
@@ -100,6 +101,7 @@ def main():
     notifier = EmailNotifier()
     webhook = WebhookNotifier()
     cv_gen = CVGenerator()
+    feedback_mgr = FeedbackManager()
 
     try:
         config.validate_config()
@@ -304,7 +306,7 @@ def main():
 
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
-    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "notion_error": 0}
+    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "notion_error": 0, "cuota_gemini": False}
 
     # Pre-filter: remove duplicates and obviously non-matching jobs before Gemini
     pre_filtered = []
@@ -323,6 +325,71 @@ def main():
     analyzed_count = 0
     high_match_jobs = []
 
+    # ── Procesar feedback pendiente de CVs anteriores ──
+    pending_feedback = feedback_mgr.get_pending()
+    if pending_feedback:
+        print(f"\n[Feedback] {len(pending_feedback)} CVs pendientes de regenerar con feedback")
+        existing_data = results._load_data()
+        for fb in pending_feedback:
+            fb_job_id = fb.get("job_id", "")
+            fb_title = fb.get("title", "")
+            fb_company = fb.get("company", "")
+            fb_text = fb.get("feedback", "")
+            print(f"  - Regenerando: {fb_title} @ {fb_company}")
+            print(f"    Feedback: {fb_text[:80]}...")
+
+            # Buscar el job original en data.json para re-analizar
+            found_job = None
+            for run in existing_data.get("runs", []):
+                for j in run.get("jobs", []):
+                    if j.get("title") == fb_title and j.get("company") == fb_company:
+                        found_job = j
+                        break
+                if found_job:
+                    break
+
+            if not found_job:
+                print(f"    [Warning] No se encontró el job original en data.json, saltando feedback")
+                feedback_mgr.mark_done(fb_job_id)
+                continue
+
+            try:
+                # Regenerar CV directamente con feedback (1 llamada Gemini, no 2)
+                rate_limiter.wait()
+                job_data_for_cv = {
+                    "title": fb_title,
+                    "company": fb_company,
+                    "tech_stack": found_job.get("tech_stack", []),
+                    "tailored_advice": found_job.get("tailored_advice", ""),
+                }
+                html_path, pdf_path = cv_gen.regenerate_with_feedback(
+                    gemini, cv_text, job_data_for_cv, fb_text, cv_pdf_path=str(cv_path)
+                )
+                if pdf_path:
+                    slug = os.path.basename(pdf_path)
+                    cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                    # Actualizar URL en data.json
+                    for run in existing_data.get("runs", []):
+                        for j in run.get("jobs", []):
+                            if j.get("title") == fb_title and j.get("company") == fb_company:
+                                j["custom_cv_url"] = cv_url
+                                break
+                    with open(results.data_path, "w", encoding="utf-8") as f:
+                        import json
+                        json.dump(existing_data, f, ensure_ascii=False, indent=2)
+                    # Actualizar Notion si la oferta existe
+                    existing_job = notion_sync.find_existing_job(fb_title, fb_company)
+                    if existing_job:
+                        notion_sync.update_cv_url(existing_job["page_id"], cv_url)
+                    feedback_mgr.mark_done(fb_job_id)
+                    print(f"    [OK] CV regenerado con feedback")
+                else:
+                    print(f"    [Error] No se pudo regenerar el CV")
+                    feedback_mgr.mark_done(fb_job_id)
+            except Exception as e:
+                print(f"    [Error] Regenerando CV: {e}")
+                feedback_mgr.mark_done(fb_job_id)
+
     for idx, job in enumerate(pre_filtered, 1):
         if analyzed_count >= 200:
             print(f"\nLímite de 200 nuevas ofertas alcanzado.")
@@ -334,6 +401,10 @@ def main():
 
         if error:
             print(f"  - [Error] {error}")
+            if "429" in error:
+                print(f"\n[CRÍTICO] Cuota Gemini agotada. Deteniendo análisis.")
+                skipped["cuota_gemini"] = True
+                break
             skipped["notion_error"] += 1
             continue
 
@@ -379,21 +450,23 @@ def main():
 
         if notion_sync._find_prop("CV") and match_result.cv_skills:
             try:
-                cv_content = {
-                    "name": "",
-                    "contact": "",
-                    "summary": match_result.cv_summary or "",
-                    "experience": match_result.cv_experience_adapted or [],
-                    "education": [],
-                    "skills": match_result.cv_skills or [],
-                    "projects": match_result.cv_projects or [],
+                job_data_for_cv = {
+                    "title": job["title"],
+                    "company": job.get("company", ""),
+                    "tech_stack": job.get("tech_stack", []),
+                    "tailored_advice": match_result.tailored_advice or "",
                 }
-                cv_path = cv_gen.generate_from_data(cv_content, job["title"], job.get("company", ""))
-                if cv_path:
-                    slug = os.path.basename(cv_path)
+                html_path, pdf_path = cv_gen.generate(
+                    gemini, cv_text, job_data_for_cv,
+                    cv_pdf_path=str(cv_path)
+                )
+                if pdf_path:
+                    slug = os.path.basename(pdf_path)
                     cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
                     job["custom_cv_url"] = cv_url
-                    print(f"    [CV] PDF personalizado generado")
+                    if html_path:
+                        job["custom_cv_html"] = os.path.basename(html_path)
+                    print(f"    [CV] PDF + HTML generados con Gemini")
             except Exception as e:
                 print(f"    [CV] Error generando CV: {e}")
 
@@ -446,6 +519,7 @@ def main():
         top_jobs=top_jobs,
         errors=email_errors,
         previous_run_stats=prev_stats,
+        quota_exceeded=skipped.get("cuota_gemini", False),
     )
 
     # Webhook notifications

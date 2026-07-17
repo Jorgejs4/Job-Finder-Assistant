@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV — {{ name }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #1f2937;
+    line-height: 1.5;
+    background: #fff;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    font-size: 14px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1e40af;
+  }
+  .header-left { flex: 1; }
+  .header-right { flex-shrink: 0; margin-left: 24px; }
+  .header-right img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+  }
+  .name {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.5px;
+  }
+  .contact {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+  .contact span { margin-right: 12px; }
+
+  .section { margin-top: 20px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #1e40af;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #dbeafe;
+  }
+
+  .summary {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+  }
+
+  .exp-item { margin-bottom: 14px; }
+  .exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .exp-role {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .exp-period {
+    font-size: 12px;
+    color: #9ca3af;
+    white-space: nowrap;
+  }
+  .exp-company {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+  .exp-desc {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.5;
+  }
+  .exp-desc ul {
+    padding-left: 18px;
+    margin-top: 4px;
+  }
+  .exp-desc li {
+    margin-bottom: 3px;
+  }
+
+  .edu-item { margin-bottom: 8px; }
+  .edu-degree {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .edu-detail {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+  }
+  .skill-category {
+    font-size: 13px;
+  }
+  .skill-label {
+    font-weight: 600;
+    color: #374151;
+  }
+  .skill-items {
+    color: #6b7280;
+  }
+
+  .skills-flat {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.6;
+  }
+
+  .project-item { margin-bottom: 10px; }
+  .project-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .project-desc {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.5;
+  }
+
+  @media print {
+    body { padding: 16px 24px; }
+    .header-right img { width: 80px; height: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="name">{{ name }}</div>
+    {% if contact %}
+    <div class="contact">
+      {% for part in contact.split('|') %}
+        <span>{{ part.strip() }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% if photo_base64 %}
+  <div class="header-right">
+    <img src="data:image/png;base64,{{ photo_base64 }}" alt="Foto">
+  </div>
+  {% endif %}
+</div>
+
+{% if summary %}
+<div class="section">
+  <div class="section-title">Perfil Profesional</div>
+  <div class="summary">{{ summary }}</div>
+</div>
+{% endif %}
+
+{% if experience %}
+<div class="section">
+  <div class="section-title">Experiencia Laboral</div>
+  {% for exp in experience %}
+  <div class="exp-item">
+    <div class="exp-header">
+      <div class="exp-role">{{ exp.role }}</div>
+      {% if exp.period %}
+      <div class="exp-period">{{ exp.period }}</div>
+      {% endif %}
+    </div>
+    {% if exp.company %}
+    <div class="exp-company">{{ exp.company }}</div>
+    {% endif %}
+    {% if exp.description %}
+    <div class="exp-desc">
+      {% if exp.description is iterable and exp.description is not string %}
+        <ul>
+        {% for bullet in exp.description %}
+          <li>{{ bullet }}</li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p>{{ exp.description }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if education %}
+<div class="section">
+  <div class="section-title">Formación</div>
+  {% for edu in education %}
+  <div class="edu-item">
+    <div class="edu-degree">{{ edu.degree }}</div>
+    <div class="edu-detail">
+      {% if edu.institution %}{{ edu.institution }}{% endif %}
+      {% if edu.year %} — {{ edu.year }}{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if skills %}
+<div class="section">
+  <div class="section-title">Habilidades</div>
+  {% if skills is mapping %}
+    <div class="skills-grid">
+    {% for category, items in skills.items() %}
+      <div class="skill-category">
+        <span class="skill-label">{{ category }}:</span>
+        <span class="skill-items">
+          {% if items is iterable and items is not string %}
+            {{ items | join(', ') }}
+          {% else %}
+            {{ items }}
+          {% endif %}
+        </span>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="skills-flat">
+      {% if skills is iterable and skills is not string %}
+        {{ skills | join(' · ') }}
+      {% else %}
+        {{ skills }}
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if projects %}
+<div class="section">
+  <div class="section-title">Proyectos Relevantes</div>
+  {% for proj in projects %}
+  <div class="project-item">
+    <div class="project-name">{{ proj.name }}</div>
+    {% if proj.description %}
+    <div class="project-desc">{{ proj.description }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+</body>
+</html>

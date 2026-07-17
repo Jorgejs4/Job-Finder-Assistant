@@ -549,3 +549,35 @@ class NotionSync:
         except Exception as e:
             print(f"[Notion] Error al crear la página para {puesto}: {e}")
             return False
+
+    def find_existing_job(self, title: str, company: str) -> dict | None:
+        """Busca un job existente por título y empresa en Notion."""
+        try:
+            result = self._query_notion(
+                filter_obj={
+                    "and": [
+                        {"property": "Puesto", "title": {"equals": title[:100]}},
+                        {"property": "Empresa", "rich_text": {"equals": company[:200]}},
+                    ]
+                }
+            )
+            pages = result.get("results", [])
+            if pages:
+                return {"page_id": pages[0]["id"], "properties": pages[0].get("properties", {})}
+        except Exception as e:
+            print(f"[Notion] Error buscando job {title} @ {company}: {e}")
+        return None
+
+    def update_cv_url(self, page_id: str, cv_url: str):
+        """Actualiza el campo CV (URL) de un job existente en Notion."""
+        cv_prop = self._find_prop("CV")
+        if not cv_prop:
+            return
+        try:
+            self.notion.pages.update(
+                page_id=page_id,
+                properties={cv_prop: {"url": cv_url}}
+            )
+            print(f"[Notion] CV actualizado para page {page_id[:8]}...")
+        except Exception as e:
+            print(f"[Notion] Error actualizando CV: {e}")

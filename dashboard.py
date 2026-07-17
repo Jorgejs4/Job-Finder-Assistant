@@ -11,12 +11,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import json
 import httpx
 import statistics
 from datetime import datetime
-from utils.results import ResultsManager
+from utils.feedback_manager import FeedbackManager
 import config
 
 st.set_page_config(
@@ -364,6 +365,8 @@ if jobs:
     # Visor de cartas y CVs
     st.header("📝 Cartas de Presentación y CVs")
     jobs_with_content = [j for j in jobs if j.get("cover_letter") or j.get("custom_cv_url")]
+    feedback_mgr = FeedbackManager()
+
     if jobs_with_content:
         for j in jobs_with_content:
             title = j.get("title", "N/A")
@@ -372,9 +375,46 @@ if jobs:
                 if j.get("cover_letter"):
                     st.subheader("Carta de Presentación")
                     st.markdown(j["cover_letter"])
+
                 if j.get("custom_cv_url"):
                     st.subheader("CV Personalizado")
+
+                    # Preview HTML del CV
+                    cv_html_file = j.get("custom_cv_html", "")
+                    if cv_html_file:
+                        cv_html_path = os.path.join(RESULTS_DIR, "cvs", cv_html_file)
+                        if os.path.exists(cv_html_path):
+                            with open(cv_html_path, "r", encoding="utf-8") as f:
+                                html_content = f.read()
+                            components.html(html_content, height=800, scrolling=True)
+                        else:
+                            st.info("Archivo HTML del CV no encontrado (se generó en una ejecución anterior)")
+                    else:
+                        st.info("Preview HTML no disponible (CV generado antes de la actualización)")
+
+                    # Botón de descarga PDF
                     st.link_button("📥 Descargar CV en PDF", j["custom_cv_url"])
+
+                    # Feedback form
+                    st.divider()
+                    has_pending = feedback_mgr.has_pending(title, company)
+                    if has_pending:
+                        st.warning("⏳ Feedback pendiente de procesar (se procesará en la próxima ejecución)")
+
+                    with st.form(key=f"feedback_{title}_{company}", clear_on_submit=True):
+                        st.markdown("**¿Quieres modificar algo del CV?**")
+                        feedback_text = st.text_area(
+                            "Describe qué quieres cambiar (ej: 'Más detalle en la experiencia con Spring Boot', 'Quitar el proyecto X', 'Cambiar el resumen para enfocarlo en DevOps')",
+                            key=f"fb_{title}_{company}",
+                            height=80,
+                        )
+                        submitted = st.form_submit_button("Enviar feedback")
+                        if submitted and feedback_text.strip():
+                            feedback_mgr.save_feedback(title, company, feedback_text.strip())
+                            st.success("Feedback guardado. Se procesará en la próxima ejecución del cron.")
+                            st.rerun()
+                        elif submitted:
+                            st.warning("Escribe algo de feedback antes de enviar.")
     else:
         st.info("No hay cartas de presentación ni CVs generados en esta ejecución.")
 else:

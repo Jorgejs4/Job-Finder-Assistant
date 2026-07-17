@@ -135,7 +135,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         if [ -f results/data.json ]; then
-          git add results/data.json results/cvs/
+          git add results/data.json results/cvs/ results/feedback.json
           if git diff --cached --quiet; then
             echo "No changes to data.json"
           else

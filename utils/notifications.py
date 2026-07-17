@@ -45,6 +45,7 @@ class EmailNotifier:
         top_jobs: List[Dict[str, Any]],
         errors: List[str],
         previous_run_stats: Dict[str, Any] = None,
+        quota_exceeded: bool = False,
     ):
         if not self.enabled:
             print("[Email] ❌ Notificación deshabilitada — faltan variables de entorno")
@@ -52,9 +53,12 @@ class EmailNotifier:
             return False
 
         date_str = datetime.now().strftime("%d/%m/%Y %H:%M")
-        subject = f"[Job Scraper] Resumen {date_str} — {jobs_added} ofertas nuevas"
+        if quota_exceeded:
+            subject = f"[Job Scraper] ⚠️ CUOTA GEMINI AGOTADA {date_str} — {jobs_added} ofertas previas"
+        else:
+            subject = f"[Job Scraper] Resumen {date_str} — {jobs_added} ofertas nuevas"
 
-        html = self._build_html(date_str, jobs_added, jobs_analyzed, scraper_stats, top_jobs, errors, previous_run_stats)
+        html = self._build_html(date_str, jobs_added, jobs_analyzed, scraper_stats, top_jobs, errors, previous_run_stats, quota_exceeded=quota_exceeded)
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -101,6 +105,7 @@ class EmailNotifier:
         top_jobs: List[Dict[str, Any]],
         errors: List[str],
         previous_run_stats: Dict[str, Any] = None,
+        quota_exceeded: bool = False,
     ) -> str:
         scraper_rows = ""
         for name, stats in scraper_stats.items():
@@ -172,6 +177,7 @@ class EmailNotifier:
 
             <div style="padding:20px;border:1px solid #e5e7eb;border-top:none">
                 <h2 style="margin:0 0 12px 0;font-size:17px">&#128202; Scrapers</h2>
+                {"" if not quota_exceeded else '<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:16px;margin:0 0 20px 0"><h3 style="color:#dc2626;margin:0 0 8px 0">&#9888;&#65039; CUOTA GEMINI AGOTADA</h3><p style="margin:0;color:#7f1d1d">La ejecución se detuvo automáticamente. Solo se analizaron las ofertas hasta que se agotó la cuota gratuita de Gemini. La próxima ejecución (cron) continuará normalmente.</p></div>'}
                 <table style="width:100%;border-collapse:collapse;font-size:14px">
                     <thead>
                         <tr style="background:#f3f4f6">

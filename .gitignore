@@ -37,6 +37,7 @@ build/
 results/*
 !results/data.json
 !results/cvs/
+!results/feedback.json
 
 # Streamlit
 .streamlit/
