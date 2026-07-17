@@ -85,7 +85,7 @@ class GeminiClient:
                 )
                 return response.text
             except ResourceExhausted:
-                wait_time = (2 ** attempt) * 5 + 5  # 10s, 15s, 25s, 45s, 85s
+                wait_time = (2 ** attempt) * 3 + 2  # 5s, 8s, 14s, 26s, 50s
                 print(f"\n[Gemini] Límite de cuota (429) excedido. Esperando {wait_time}s para reintentar (intento {attempt+1}/5)...")
                 time.sleep(wait_time)
             except Exception as e:

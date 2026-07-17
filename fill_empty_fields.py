@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--only-cartas", action="store_true", help="Solo generar cartas de presentación")
     parser.add_argument("--only-cvs", action="store_true", help="Solo generar CVs personalizados")
     parser.add_argument("--dry-run", action="store_true", help="Mostrar qué se haría sin ejecutar")
+    parser.add_argument("--limit", type=int, default=0, help="Máximo de ofertas a procesar (0=todas)")
     args = parser.parse_args()
 
     do_cartas = not args.only_cvs
@@ -91,8 +92,13 @@ def main():
     updated = 0
     errors = 0
     total = len(set(j['page_id'] for j in needs_cl + needs_cv))
+    processed = 0
 
     for i, job in enumerate(jobs, 1):
+        if args.limit and processed >= args.limit:
+            print(f"\n[Límite] {args.limit} ofertas procesadas. Para continuar: python fill_empty_fields.py --limit {args.limit}")
+            break
+
         page_id = job["page_id"]
         needs_this_cl = do_cartas and not job["has_cover_letter"]
         needs_this_cv = do_cvs and not job["has_cv"]
@@ -100,13 +106,12 @@ def main():
         if not needs_this_cl and not needs_this_cv:
             continue
 
-        print(f"[{i}/{total}] {job['title']} @ {job['company']}")
+        print(f"[{i}/{len(jobs)}] {job['title']} @ {job['company']}")
         success = False
 
         # Generar carta de presentación
         if needs_this_cl:
             try:
-                # Construir descripción simulada a partir de los datos que tenemos
                 desc = f"Puesto: {job['title']}. Empresa: {job['company']}. "
                 desc += f"Modalidad: {job['work_mode']}. "
                 desc += f"Tecnologías: {', '.join(job['tech_stack'])}. "
@@ -126,7 +131,7 @@ def main():
                 else:
                     print(f"  ❌ Error guardando carta en Notion")
                     errors += 1
-                time.sleep(2)
+                time.sleep(1)
             except Exception as e:
                 print(f"  ❌ Error generando carta: {e}")
                 errors += 1
@@ -144,7 +149,6 @@ def main():
                 if cv_path:
                     slug = os.path.basename(cv_path)
                     cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
-                    # Actualizar directamente en Notion
                     cv_prop = notion._find_prop("CV")
                     if cv_prop:
                         notion.notion.pages.update(
@@ -159,14 +163,15 @@ def main():
                 else:
                     print(f"  ❌ Error generando CV")
                     errors += 1
-                time.sleep(2)
+                time.sleep(1)
             except Exception as e:
                 print(f"  ❌ Error generando CV: {e}")
                 errors += 1
 
         if success:
             updated += 1
-        time.sleep(1)
+        processed += 1
+        time.sleep(0.5)
 
     print("\n" + "=" * 60)
     print(f"  COMPLETADO")
