@@ -61,9 +61,13 @@ class RateLimiter:
 
 def _analyze_single_job(args):
     """Worker function for Gemini analysis. Returns (job, match_result, error)."""
-    gemini, job, cv_text, rate_limiter = args
+    gemini, job, cv_text, rate_limiter, stop_event = args
+    if stop_event.is_set():
+        return job, None, "Stop signal received"
     try:
         rate_limiter.wait()
+        if stop_event.is_set():
+            return job, None, "Stop signal received"
         desc_for_match = job.get("description") or job["title"]
         experience_hint = job.get("experience_hint", 0)
         match_result = gemini.match_offer(
@@ -318,12 +322,14 @@ def main():
         pre_filtered.append(job)
     print(f"[PreFiltro] {len(pre_filtered)} ofertas tras pre-dedup (se eliminaron {skipped['duplicado']} duplicados exactos)")
 
-    # ── FASE 2: Análisis Gemini secuencial + Notion ──
+    # ── FASE 2: Análisis Gemini paralelo + Notion ──
     t2 = time.time()
     rate_limiter = RateLimiter(min_interval=10.0)
     new_jobs_added = 0
     analyzed_count = 0
     high_match_jobs = []
+    stop_event = threading.Event()
+    MAX_GEMINI_WORKERS = 3
 
     # ── Procesar feedback pendiente de CVs anteriores ──
     pending_feedback = feedback_mgr.get_pending()
@@ -390,94 +396,97 @@ def main():
                 print(f"    [Error] Regenerando CV: {e}")
                 feedback_mgr.mark_done(fb_job_id)
 
-    for idx, job in enumerate(pre_filtered, 1):
-        if analyzed_count >= 200:
-            print(f"\nLímite de 200 nuevas ofertas alcanzado.")
-            break
+    print(f"\n[Análisis] Procesando {min(len(pre_filtered), 200)} ofertas con 3 hilos Gemini...")
 
-        print(f"\n[{idx}/{len(pre_filtered)}] {job['title']} @ {job['company']} [{job.get('source', '')}]", flush=True)
-
-        job, match_result, error = _analyze_single_job((gemini, job, cv_text, rate_limiter))
-
-        if error:
-            print(f"  - [Error] {error}")
-            if "429" in error:
-                print(f"\n[CRÍTICO] Cuota Gemini agotada. Deteniendo análisis.")
-                skipped["cuota_gemini"] = True
+    pending_futures = []
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        for job in pre_filtered[:200]:
+            if stop_event.is_set():
                 break
-            skipped["notion_error"] += 1
-            continue
+            future = executor.submit(_analyze_single_job, (gemini, job, cv_text, rate_limiter, stop_event))
+            pending_futures.append(future)
 
-        print(f"  - match: {match_result.match_score}%", flush=True)
+        for future in as_completed(pending_futures):
+            if analyzed_count >= 200:
+                stop_event.set()
+                break
+            if stop_event.is_set():
+                break
 
-        if match_result.match_score < 35:
-            print(f"    [IA] Baja compatibilidad ({match_result.match_score}%). Saltando.")
-            skipped["bajo_match"] += 1
-            continue
+            job, match_result, error = future.result()
 
-        if config.MIN_SALARY and match_result.estimated_salary and not match_result.salary_is_estimate:
-            if match_result.estimated_salary < config.MIN_SALARY:
-                print(f"    [Filtro] Salario {match_result.estimated_salary}€ < mínimo {config.MIN_SALARY}€.")
+            if error:
+                if "429" in error:
+                    print(f"\n[CRÍTICO] Cuota Gemini agotada. Deteniendo análisis.")
+                    skipped["cuota_gemini"] = True
+                    stop_event.set()
+                    break
+                skipped["notion_error"] += 1
+                continue
+
+            print(f"  - {job['title']} @ {job['company']}: match {match_result.match_score}%", flush=True)
+
+            if match_result.match_score < 35:
                 skipped["bajo_match"] += 1
                 continue
 
-        max_exp = config.YEARS_OF_EXPERIENCE + 2
-        if max_exp > 0 and match_result.required_experience > max_exp:
-            print(f"    [Filtro] Experiencia {match_result.required_experience} años > máximo {max_exp}.")
-            skipped["ubicacion"] += 1
-            continue
+            if config.MIN_SALARY and match_result.estimated_salary and not match_result.salary_is_estimate:
+                if match_result.estimated_salary < config.MIN_SALARY:
+                    skipped["bajo_match"] += 1
+                    continue
 
-        work_mode = match_result.work_mode
-        if work_mode != "Remoto" and desired_cities:
-            job_loc = job.get("location", "").lower()
-            matches_city = any(city in job_loc for city in desired_cities)
-            if not matches_city:
-                print(f"    [Filtro] {work_mode} fuera de ciudades deseadas.")
+            max_exp = config.YEARS_OF_EXPERIENCE + 2
+            if max_exp > 0 and match_result.required_experience > max_exp:
                 skipped["ubicacion"] += 1
                 continue
 
-        job["match_score"] = match_result.match_score
-        job["tech_stack"] = match_result.tech_stack
-        job["tailored_advice"] = match_result.tailored_advice
-        job["salary"] = str(match_result.estimated_salary)
-        job["work_mode"] = match_result.work_mode
-        job["salary_is_estimate"] = match_result.salary_is_estimate
-        job["required_experience"] = match_result.required_experience
+            work_mode = match_result.work_mode
+            if work_mode != "Remoto" and desired_cities:
+                job_loc = job.get("location", "").lower()
+                matches_city = any(city in job_loc for city in desired_cities)
+                if not matches_city:
+                    skipped["ubicacion"] += 1
+                    continue
 
-        if match_result.cover_letter:
-            job["cover_letter"] = match_result.cover_letter
-            print(f"    [IA] Carta de presentación generada")
+            job["match_score"] = match_result.match_score
+            job["tech_stack"] = match_result.tech_stack
+            job["tailored_advice"] = match_result.tailored_advice
+            job["salary"] = str(match_result.estimated_salary)
+            job["work_mode"] = match_result.work_mode
+            job["salary_is_estimate"] = match_result.salary_is_estimate
+            job["required_experience"] = match_result.required_experience
 
-        if notion_sync._find_prop("CV") and match_result.cv_skills:
-            try:
-                job_data_for_cv = {
-                    "title": job["title"],
-                    "company": job.get("company", ""),
-                    "tech_stack": job.get("tech_stack", []),
-                    "tailored_advice": match_result.tailored_advice or "",
-                }
-                html_path, pdf_path = cv_gen.generate(
-                    gemini, cv_text, job_data_for_cv,
-                    cv_pdf_path=str(cv_path)
-                )
-                if pdf_path:
-                    slug = os.path.basename(pdf_path)
-                    cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
-                    job["custom_cv_url"] = cv_url
-                    if html_path:
-                        job["custom_cv_html"] = os.path.basename(html_path)
-                    print(f"    [CV] PDF + HTML generados con Gemini")
-            except Exception as e:
-                print(f"    [CV] Error generando CV: {e}")
+            if match_result.cover_letter:
+                job["cover_letter"] = match_result.cover_letter
 
-        success = notion_sync.add_job_to_notion(job)
-        if success:
-            new_jobs_added += 1
-            analyzed_count += 1
-            high_match_jobs.append(job)
-            print(f"    [OK] Añadida a Notion (match: {match_result.match_score}%)")
-        else:
-            skipped["notion_error"] += 1
+            if notion_sync._find_prop("CV") and match_result.cv_skills:
+                try:
+                    job_data_for_cv = {
+                        "title": job["title"],
+                        "company": job.get("company", ""),
+                        "tech_stack": job.get("tech_stack", []),
+                        "tailored_advice": match_result.tailored_advice or "",
+                    }
+                    html_path, pdf_path = cv_gen.generate(
+                        gemini, cv_text, job_data_for_cv,
+                        cv_pdf_path=str(cv_path)
+                    )
+                    if pdf_path:
+                        slug = os.path.basename(pdf_path)
+                        cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                        job["custom_cv_url"] = cv_url
+                        if html_path:
+                            job["custom_cv_html"] = os.path.basename(html_path)
+                except Exception as e:
+                    print(f"    [CV] Error generando CV: {e}")
+
+            success = notion_sync.add_job_to_notion(job)
+            if success:
+                new_jobs_added += 1
+                analyzed_count += 1
+                high_match_jobs.append(job)
+            else:
+                skipped["notion_error"] += 1
 
     t3 = time.time()
     print(f"\n[Timing] Análisis IA + Notion: {t3 - t2:.1f}s")

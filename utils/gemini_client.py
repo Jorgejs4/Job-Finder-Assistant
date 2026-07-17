@@ -98,10 +98,10 @@ class GeminiClient:
         self.model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
         self.model = genai.GenerativeModel(self.model_name)
 
-    def _generate_with_retry(self, prompt: str, schema) -> str:
+    def _generate_with_retry(self, prompt: str, schema, max_retries: int = 1) -> str:
         """
-        Realiza la llamada a la API de Gemini con reintentos automáticos y
-        retroceso exponencial si se excede la cuota (error 429 / ResourceExhausted).
+        Realiza la llamada a la API de Gemini con reintentos limitados.
+        En自由tier, 1 reintento es suficiente. Si falla, el caller decide qué hacer.
         """
         import time
         from google.api_core.exceptions import ResourceExhausted
@@ -112,7 +112,7 @@ class GeminiClient:
             temperature=0.2
         )
         
-        for attempt in range(5):
+        for attempt in range(max_retries + 1):
             try:
                 response = self.model.generate_content(
                     prompt,
@@ -120,13 +120,16 @@ class GeminiClient:
                 )
                 return response.text
             except ResourceExhausted:
-                wait_time = (2 ** attempt) * 3 + 2  # 5s, 8s, 14s, 26s, 50s
-                print(f"\n[Gemini] Límite de cuota (429) excedido. Esperando {wait_time}s para reintentar (intento {attempt+1}/5)...")
-                time.sleep(wait_time)
+                if attempt < max_retries:
+                    wait_time = 15
+                    print(f"\n[Gemini] Cuota (429) excedida. Esperando {wait_time}s (intento {attempt+1}/{max_retries})...")
+                    time.sleep(wait_time)
+                else:
+                    raise RuntimeError("429 - Cuota Gemini agotada. No se realizaron más análisis.")
             except Exception as e:
                 raise e
                 
-        raise RuntimeError("No se pudo conectar con la API de Gemini tras 5 intentos debido a la cuota (429).")
+        raise RuntimeError("429 - Cuota Gemini agotada.")
 
     def analyze_cv(self, cv_text: str) -> ProfileAnalysis:
         """
@@ -323,17 +326,19 @@ Un cordial saludo."""
         import time
         from google.api_core.exceptions import ResourceExhausted
 
-        for attempt in range(5):
+        for attempt in range(2):
             try:
                 response = self.model.generate_content(prompt)
                 return response.text
             except ResourceExhausted:
-                wait_time = (2 ** attempt) * 3 + 2
-                print(f"\n[Gemini] Cuota excedida en cover_letter. Esperando {wait_time}s (intento {attempt+1}/5)...")
-                time.sleep(wait_time)
+                if attempt < 1:
+                    print(f"\n[Gemini] Cuota excedida en cover_letter. Esperando 15s...")
+                    time.sleep(15)
+                else:
+                    raise RuntimeError("429 - Cuota agotada en cover_letter.")
             except Exception as e:
                 raise e
-        raise RuntimeError("No se pudo generar cover_letter tras 5 intentos.")
+        raise RuntimeError("429 - Cuota agotada en cover_letter.")
 
     def analyze_skills_gap(self, cv_text: str, jobs_data: list) -> SkillsGap:
         """
@@ -506,7 +511,7 @@ Un cordial saludo."""
         import time
         from google.api_core.exceptions import ResourceExhausted
 
-        for attempt in range(5):
+        for attempt in range(2):
             try:
                 generation_config = genai.GenerationConfig(
                     response_mime_type="application/json",
@@ -519,12 +524,14 @@ Un cordial saludo."""
                 data = json.loads(response.text)
                 return data
             except ResourceExhausted:
-                wait_time = (2 ** attempt) * 3 + 2
-                print(f"\n[Gemini] Cuota excedida en cv_content. Esperando {wait_time}s (intento {attempt+1}/5)...")
-                time.sleep(wait_time)
+                if attempt < 1:
+                    print(f"\n[Gemini] Cuota excedida en cv_content. Esperando 15s...")
+                    time.sleep(15)
+                else:
+                    raise RuntimeError("429 - Cuota agotada en cv_content.")
             except Exception as e:
                 raise e
-        raise RuntimeError("No se pudo generar cv_content tras 5 intentos.")
+        raise RuntimeError("429 - Cuota agotada en cv_content.")
 
     def generate_market_report(self, cv_text: str, jobs_data: list) -> str:
         """
@@ -617,14 +624,16 @@ Un cordial saludo."""
         import time
         from google.api_core.exceptions import ResourceExhausted
 
-        for attempt in range(5):
+        for attempt in range(2):
             try:
                 response = self.model.generate_content(prompt)
                 return response.text
             except ResourceExhausted:
-                wait_time = (2 ** attempt) * 3 + 2
-                print(f"\n[Gemini] Cuota excedida en market_report. Esperando {wait_time}s (intento {attempt+1}/5)...")
-                time.sleep(wait_time)
+                if attempt < 1:
+                    print(f"\n[Gemini] Cuota excedida en market_report. Esperando 15s...")
+                    time.sleep(15)
+                else:
+                    raise RuntimeError("429 - Cuota agotada en market_report.")
             except Exception as e:
                 raise e
-        raise RuntimeError("No se pudo generar market_report tras 5 intentos.")
+        raise RuntimeError("429 - Cuota agotada en market_report.")
