@@ -14,6 +14,7 @@ import streamlit as st
 import pandas as pd
 import json
 import httpx
+import statistics
 from datetime import datetime
 from utils.results import ResultsManager
 import config
@@ -116,7 +117,7 @@ if jobs:
             avg_sal = sum(salaries_num) // len(salaries_num)
             min_sal = min(salaries_num)
             max_sal = max(salaries_num)
-            median_sal = sorted(salaries_num)[len(salaries_num) // 2]
+            median_sal = statistics.median(salaries_num)
 
             sal_col1, sal_col2, sal_col3, sal_col4 = st.columns(4)
             sal_col1.metric("Salario promedio", f"{avg_sal:,}€".replace(",", "."))
@@ -359,8 +360,86 @@ if jobs:
         file_name=f"ofertas_{latest.get('run_id', 'export')}.csv",
         mime="text/csv",
     )
+
+    # Visor de cartas y CVs
+    st.header("📝 Cartas de Presentación y CVs")
+    jobs_with_content = [j for j in jobs if j.get("cover_letter") or j.get("custom_cv_url")]
+    if jobs_with_content:
+        for j in jobs_with_content:
+            title = j.get("title", "N/A")
+            company = j.get("company", "N/A")
+            with st.expander(f"📄 {title} @ {company}"):
+                if j.get("cover_letter"):
+                    st.subheader("Carta de Presentación")
+                    st.markdown(j["cover_letter"])
+                if j.get("custom_cv_url"):
+                    st.subheader("CV Personalizado")
+                    st.link_button("📥 Descargar CV en PDF", j["custom_cv_url"])
+    else:
+        st.info("No hay cartas de presentación ni CVs generados en esta ejecución.")
 else:
     st.info("No se encontraron ofertas en esta ejecución.")
+
+# --- Skills Gap y Market Report (tabs) ---
+if jobs:
+    st.header("🎯 Análisis del Mercado")
+    tab1, tab2 = st.tabs(["🔍 Skills Gap", "📊 Market Report"])
+
+    with tab1:
+        st.subheader("Skills más demandadas que no tienes en tu CV")
+        all_techs = {}
+        cv_skills_lower = set()
+        for j in jobs:
+            for tech in j.get("tech_stack", []):
+                all_techs[tech] = all_techs.get(tech, 0) + 1
+
+        if all_techs:
+            tech_data = []
+            for tech, count in sorted(all_techs.items(), key=lambda x: x[1], reverse=True)[:15]:
+                pct = round(count / len(jobs) * 100, 1)
+                tech_data.append({"Skill": tech, "Ofertas": count, "% del total": f"{pct}%"})
+            st.dataframe(pd.DataFrame(tech_data), use_container_width=True, hide_index=True)
+
+            st.bar_chart(pd.DataFrame(tech_data).set_index("Skill")["Ofertas"])
+        else:
+            st.info("No hay datos de skills suficientes para analizar.")
+
+    with tab2:
+        st.subheader("Resumen del mercado laboral")
+        salaries_num = []
+        remote_count = 0
+        mode_counts = {}
+        source_counts = {}
+        for j in jobs:
+            sal = j.get("salary")
+            if sal:
+                try:
+                    salaries_num.append(int(str(sal).replace(".", "").replace(",", "")))
+                except (ValueError, TypeError):
+                    pass
+            mode = j.get("work_mode", "N/A")
+            mode_counts[mode] = mode_counts.get(mode, 0) + 1
+            source = j.get("source", "N/A")
+            source_counts[source] = source_counts.get(source, 0) + 1
+
+            if mode == "Remoto":
+                remote_count += 1
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Total ofertas", len(jobs))
+        m2.metric("% Remoto", f"{remote_count/len(jobs)*100:.0f}%" if jobs else "0%")
+        m3.metric("Salario promedio", f"{statistics.median(salaries_num):,.0f}€".replace(",", ".") if salaries_num else "N/A")
+        m4.metric("Plataformas activas", len(source_counts))
+
+        st.subheader("Ofertas por modalidad")
+        st.bar_chart(pd.DataFrame(list(mode_counts.items()), columns=["Modalidad", "Ofertas"]).set_index("Modalidad"))
+
+        st.subheader("Ofertas por plataforma")
+        st.bar_chart(pd.DataFrame(list(source_counts.items()), columns=["Plataforma", "Ofertas"]).set_index("Plataforma"))
+
+        if salaries_num:
+            st.subheader("Distribución salarial")
+            st.bar_chart(pd.Series(salaries_num).describe())
 
 # --- Seleccionar ejecución ---
 st.header("📋 Ver ejecución anterior")
