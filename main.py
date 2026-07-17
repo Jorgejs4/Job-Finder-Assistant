@@ -235,8 +235,8 @@ def main():
     if keyword_skipped:
         print(f"[Filtro] {keyword_skipped} ofertas no-tech eliminadas por keywords")
 
-    jobs_to_process = keyword_filtered[:50]
-    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx 50 para análisis IA)")
+    jobs_to_process = keyword_filtered[:200]
+    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx 200 para análisis IA)")
 
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
@@ -249,8 +249,8 @@ def main():
     skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "notion_error": 0}
 
     for idx, job in enumerate(jobs_to_process, 1):
-        if analyzed_count >= 25:
-            print(f"\nLímite de 25 nuevas ofertas alcanzado.")
+        if analyzed_count >= 200:
+            print(f"\nLímite de 200 nuevas ofertas alcanzado.")
             break
 
         link = job.get("link", "")
