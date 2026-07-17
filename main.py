@@ -378,8 +378,9 @@ def main():
 
     # Stats de la ejecución anterior para comparar
     prev_stats = None
-    if len(results.data.get("runs", [])) > 1:
-        prev_run = results.data["runs"][1]
+    existing_data = results._load_data()
+    if len(existing_data.get("runs", [])) > 0:
+        prev_run = existing_data["runs"][0]
         prev_stats = {
             "total_added": prev_run.get("_total_added", 0),
             "analyzed": prev_run.get("_analyzed_count", 0),
