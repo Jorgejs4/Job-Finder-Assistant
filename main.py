@@ -221,8 +221,25 @@ def main():
         if is_remote or matches_city:
             filtered_jobs.append(job)
 
-    jobs_to_process = filtered_jobs[:50]
+    # Filtro por keywords no-tech (ahorra llamadas a Gemini)
+    before_keyword = len(filtered_jobs)
+    keyword_filtered = []
+    for job in filtered_jobs:
+        title_lower = job.get("title", "").lower()
+        desc_lower = job.get("description", "").lower()
+        combined = f"{title_lower} {desc_lower}"
+        if any(kw in combined for kw in config.NON_TECH_KEYWORDS):
+            continue
+        keyword_filtered.append(job)
+    keyword_skipped = before_keyword - len(keyword_filtered)
+    if keyword_skipped:
+        print(f"[Filtro] {keyword_skipped} ofertas no-tech eliminadas por keywords")
+
+    jobs_to_process = keyword_filtered[:50]
     print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx 50 para análisis IA)")
+
+    # Batch dedup: cargar URLs de Notion una sola vez
+    existing_urls = set(notion_sync.get_existing_urls())
 
     # ── FASE 2: Análisis Gemini + Notion en pipeline ──
     t2 = time.time()
@@ -239,7 +256,7 @@ def main():
         link = job.get("link", "")
         print(f"\n[{idx}/{len(jobs_to_process)}] {job['title']} @ {job['company']} [{job.get('source', '')}]")
 
-        if notion_sync.check_if_job_exists(link):
+        if link in existing_urls:
             print(f"  - [Dedup] Ya existe en Notion. Saltando.")
             skipped["duplicado"] += 1
             continue
@@ -278,24 +295,24 @@ def main():
             job["salary_is_estimate"] = match_result.salary_is_estimate
             job["required_experience"] = match_result.required_experience
 
-            # Generar carta de presentación si hay campo en Notion
-            if notion_sync._find_prop("Carta Presentación"):
-                try:
-                    cover_letter = gemini.generate_cover_letter(
-                        cv_text=cv_text,
-                        offer_title=job["title"],
-                        company=job.get("company", ""),
-                        offer_description=desc_for_match,
-                    )
-                    job["cover_letter"] = cover_letter
-                    print(f"  - [IA] Carta de presentación generada")
-                except Exception as e:
-                    print(f"  - [IA] Error generando carta: {e}")
+            # Carta de presentación del match combinado
+            if match_result.cover_letter:
+                job["cover_letter"] = match_result.cover_letter
+                print(f"  - [IA] Carta de presentación generada")
 
-            # Generar CV personalizado si hay campo en Notion
-            if notion_sync._find_prop("CV"):
+            # CV personalizado del match combinado
+            if notion_sync._find_prop("CV") and match_result.cv_skills:
                 try:
-                    cv_path = cv_gen.generate(gemini, cv_text, job)
+                    cv_content = {
+                        "name": "",
+                        "contact": "",
+                        "summary": match_result.cv_summary or "",
+                        "experience": match_result.cv_experience_adapted or [],
+                        "education": [],
+                        "skills": match_result.cv_skills or [],
+                        "projects": match_result.cv_projects or [],
+                    }
+                    cv_path = cv_gen.generate_from_data(cv_content, job["title"], job.get("company", ""))
                     if cv_path:
                         slug = os.path.basename(cv_path)
                         cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"

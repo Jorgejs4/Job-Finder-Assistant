@@ -85,6 +85,36 @@ APPLICATION_STATUSES = [
 # Umbral para fuzzy matching de duplicados
 FUZZY_MATCH_THRESHOLD = int(os.getenv("FUZZY_MATCH_THRESHOLD", "85"))
 
+# Keywords que indican puestos NO técnicos (se filtran antes de Gemini)
+NON_TECH_KEYWORDS = [
+    "operario", "limpieza", "camarero", "reponedor", "conductor",
+    "mozo de almacén", "personal de seguridad", "cajero", "dependiente",
+    "albañil", "electricista", "fontanero", "mecánico", "soldador",
+    "auxiliar administrativo", "secretaria", "recepcionista",
+    "atención al cliente", "call center", "telemarketing",
+    "community manager", "marketing digital", "ventas",
+    "recursos humanos", "contabilidad", "facturación",
+    "logística", "repartidor", "mensajero", "peón",
+    "monitor de guardería", "educador", "profesor",
+    "enfermera", "auxiliar de enfermería", "sanitario",
+    "abogado", "notario", "arbitro", "entrenador",
+    "peluquero", "esteticista", "chef", "cocinero",
+    "fontanería", "electricidad", "instalador",
+    "data entry", "virtual assistant", "executive assistant",
+    "copywriter", "redactor", "periodista",
+    "project coordinator", "office manager",
+    "accountant", "bookkeeper", "payroll",
+    "supply chain", "warehouse", "forklift",
+    "nurse", "therapist", "counselor",
+    "store manager", "retail", "sales representative",
+    "business development", "account manager", "client success",
+    "creative strategist", "motion designer", "graphic designer",
+    "content writer", "social media", "seo specialist",
+    "field marketing", "brand operations", "head of creative",
+    "licensed mental health", "mental health therapist",
+    "athlete engagement", "level designer",
+]
+
 # Scrapers que buscan en inglés
 EN_SCRAPERS = {"LinkedInScraper", "RemoteOKScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper"}
 

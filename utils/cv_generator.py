@@ -40,6 +40,19 @@ class CVGenerator:
             print(f"  - [CV] Error generando contenido con Gemini: {e}")
             return None
 
+        return self.generate_from_data(cv_content, title, company)
+
+    def generate_from_data(self, cv_content: dict, title: str = "", company: str = "") -> str:
+        """
+        Genera un CV en PDF a partir de datos ya generados (sin llamar a Gemini).
+        """
+        import hashlib
+        slug = hashlib.md5(f"{title}-{company}".encode()).hexdigest()[:12]
+        pdf_path = os.path.join(self.output_dir, f"cv_{slug}.pdf")
+
+        if os.path.exists(pdf_path):
+            return pdf_path
+
         # Renderizar a PDF
         try:
             self._render_pdf(cv_content, pdf_path)

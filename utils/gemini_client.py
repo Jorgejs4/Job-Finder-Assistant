@@ -44,6 +44,21 @@ class OfferMatch(BaseModel):
     required_experience: int = Field(
         description="Número de años de experiencia laboral que pide la empresa para el puesto. Si la oferta menciona explícitamente los años (ej: '3 años de experiencia'), devuelve ese número. Si solo pone 'junior' o no menciona experiencia, devuelve 0. Si pone 'senior' sin número concreto, devuelve 5. Máximo 20."
     )
+    cover_letter: str = Field(
+        description="Carta de presentación personalizada en español, 150-250 palabras, 3-4 párrafos. Tono profesional pero cercano, mencionando tecnologías específicas del candidato relevantes para ESTA oferta."
+    )
+    cv_summary: str = Field(
+        description="Resumen profesional de 3-4 líneas optimizado para este puesto específico."
+    )
+    cv_experience_adapted: List[dict] = Field(
+        description="Experiencia laboral reordenada y adaptada. Cada item: {role: str, company: str, period: str, description: str (2-3 líneas con logros y tech relevantes)}"
+    )
+    cv_skills: List[str] = Field(
+        description="Solo las habilidades más relevantes para este puesto, ordenadas por relevancia."
+    )
+    cv_projects: List[dict] = Field(
+        description="Proyectos relevantes reformulados para encajar con el puesto. Cada item: {name: str, description: str (1-2 líneas)}"
+    )
 
 class SkillsGap(BaseModel):
     missing_skills: List[dict] = Field(
@@ -201,28 +216,29 @@ class GeminiClient:
                 estimated_salary=estimated_salary,
                 work_mode=work_mode,
                 salary_is_estimate=len(re.findall(r'(\d{2})[\s.]?(\d{3})', offer_description)) == 0,
-                required_experience=experience_hint
+                required_experience=experience_hint,
+                cover_letter=f"Estimado equipo de reclutamiento,\n\nMe dirijo a ustedes para presentar mi candidatura a la posición de {offer_title}. Con mi formación en desarrollo de software y mi experiencia práctica, estoy preparado para contribuir a su equipo.\n\nMi perfil combina conocimientos técnicos sólidos con una mentalidad de aprendizaje continuo.\n\nQuedo a su disposición para ampliar cualquier información.\n\nUn cordial saludo.",
+                cv_summary="Desarrollador de software junior con formación en desarrollo de aplicaciones multiplataforma y experiencia en proyectos de IA.",
+                cv_experience_adapted=[],
+                cv_skills=tech_stack[:5],
+                cv_projects=[],
             )
 
         prompt = f"""
         Eres un reclutador experto y especialista en optimización de CVs. 
-        Compara el siguiente currículum con la oferta de empleo provista.
+        Compara el siguiente currículum con la oferta de empleo provista y genera TODO lo siguiente en una sola respuesta:
 
-        1. Calcula una puntuación de compatibilidad (Match Score de 0 a 100). Si la oferta es para un puesto manual o no relacionado con el perfil de desarrollo del candidato (como operario de cementerio, reponedor, personal de limpieza, etc.), el Match Score DEBE ser muy bajo (por debajo de 10).
-        2. Identifica las tecnologías y herramientas requeridas en la oferta (tech_stack) a partir del texto de la descripción. Extrae tecnologías reales y no inventes ni uses un stack estático.
-        3. Escribe consejos breves, personalizados y accionables para adaptar el currículum del candidato a esta oferta específica (por ejemplo, destacar sus proyectos relacionados, enfocar sus estudios de CFGS en las tecnologías demandadas, etc.). Los consejos DEBEN ser específicos para esta oferta y no repetitivos.
-        4. Identifica o calcula el salario anual bruto estimado (estimated_salary) en euros. Si el texto no menciona el salario, la IA DEBE estimar un salario anual bruto realista para este puesto en España considerando las tecnologías requeridas, la modalidad y la experiencia solicitada (ej. 28000 para juniors, 35000 para mid, etc.).
-        5. Determina la modalidad de trabajo (work_mode) de la oferta en una de estas opciones exactas: 'Presencial', 'Remoto' o 'Híbrido' (teletrabajo parcial).
-        6. Determina los años de experiencia requeridos (required_experience) basándote en TODA la información disponible de la oferta:
-           - Si la oferta dice explícitamente 'X años de experiencia', devuelve X.
-           - Si menciona un rango como '2-4 años', devuelve el número más bajo del rango.
-           - Si pone 'junior' o 'trainee' o 'becario' devuelve 0.
-           - Si pone 'mid-level', 'intermedio' o 'pleno' devuelve 3.
-           - Si pone 'senior' sin número concreto devuelve 5.
-           - Si habla de 'experiencia mínima' o 'al menos X años', devuelve X.
-           - Si no menciona nada ni hay pistas, devuelve 0.
-           - Máximo 20.
-           {f'PISTA DEL SCRAPER: el texto fue pre-analizado y se detectó un valor de {experience_hint} años.' if experience_hint > 0 else ''}
+        1. MATCH SCORE: Calcula una puntuación de compatibilidad (0 a 100). Si la oferta es para un puesto manual o no relacionado con el perfil de desarrollo del candidato (como operario de cementerio, reponedor, personal de limpieza, etc.), el Match Score DEBE ser muy bajo (por debajo de 10).
+        2. TECH STACK: Identifica las tecnologías y herramientas requeridas en la oferta a partir del texto. Extrae tecnologías reales.
+        3. TAILORED_ADVICE: Escribe consejos breves, personalizados y accionables para adaptar el CV a ESTA oferta específica.
+        4. ESTIMATED_SALARY: Calcula el salario anual bruto estimado en euros. Si el texto no lo menciona, estima un salario realista para este puesto en España.
+        5. WORK_MODE: Modalidad de trabajo exacta: 'Presencial', 'Remoto' o 'Híbrido'.
+        6. REQUIRED_EXPERIENCE: Años de experiencia requeridos (0=junior, 3=mid, 5=senior sin número).
+        7. COVER_LETTER: Genera una carta de presentación personalizada en español (150-250 palabras, 3-4 párrafos). Sé específico: menciona tecnologías concretas del CV relevantes para ESTA oferta. Tono profesional pero cercano. No uses frases genéricas como "Me dirijo a ustedes".
+        8. CV SUMMARY: Resumen profesional de 3-4 líneas optimizado para ESTE puesto.
+        9. CV_EXPERIENCE_ADAPTED: Reorganiza la experiencia laboral adaptando las descripciones para resaltar lo más relevante para ESTA oferta.
+        10. CV_SKILLS: Solo las habilidades más relevantes para este puesto ordenadas por relevancia.
+        11. CV_PROJECTS: Proyectos reformulados para encajar mejor con el puesto.
 
         Currículum del candidato:
         ---
@@ -284,8 +300,20 @@ Un cordial saludo."""
         {offer_description}
         """
 
-        response = self.model.generate_content(prompt)
-        return response.text
+        import time
+        from google.api_core.exceptions import ResourceExhausted
+
+        for attempt in range(5):
+            try:
+                response = self.model.generate_content(prompt)
+                return response.text
+            except ResourceExhausted:
+                wait_time = (2 ** attempt) * 3 + 2
+                print(f"\n[Gemini] Cuota excedida en cover_letter. Esperando {wait_time}s (intento {attempt+1}/5)...")
+                time.sleep(wait_time)
+            except Exception as e:
+                raise e
+        raise RuntimeError("No se pudo generar cover_letter tras 5 intentos.")
 
     def analyze_skills_gap(self, cv_text: str, jobs_data: list) -> SkillsGap:
         """
@@ -402,9 +430,28 @@ Un cordial saludo."""
         }}
         """
 
-        response_text = self._generate_with_retry(prompt, None)
-        data = json.loads(response_text)
-        return data
+        import time
+        from google.api_core.exceptions import ResourceExhausted
+
+        for attempt in range(5):
+            try:
+                generation_config = genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2
+                )
+                response = self.model.generate_content(
+                    prompt,
+                    generation_config=generation_config
+                )
+                data = json.loads(response.text)
+                return data
+            except ResourceExhausted:
+                wait_time = (2 ** attempt) * 3 + 2
+                print(f"\n[Gemini] Cuota excedida en custom_cv. Esperando {wait_time}s (intento {attempt+1}/5)...")
+                time.sleep(wait_time)
+            except Exception as e:
+                raise e
+        raise RuntimeError("No se pudo generar custom_cv tras 5 intentos.")
 
     def generate_market_report(self, cv_text: str, jobs_data: list) -> str:
         """
@@ -494,5 +541,17 @@ Un cordial saludo."""
         Responde SOLO con el HTML del informe, sin explicaciones.
         """
 
-        response = self.model.generate_content(prompt)
-        return response.text
+        import time
+        from google.api_core.exceptions import ResourceExhausted
+
+        for attempt in range(5):
+            try:
+                response = self.model.generate_content(prompt)
+                return response.text
+            except ResourceExhausted:
+                wait_time = (2 ** attempt) * 3 + 2
+                print(f"\n[Gemini] Cuota excedida en market_report. Esperando {wait_time}s (intento {attempt+1}/5)...")
+                time.sleep(wait_time)
+            except Exception as e:
+                raise e
+        raise RuntimeError("No se pudo generar market_report tras 5 intentos.")
