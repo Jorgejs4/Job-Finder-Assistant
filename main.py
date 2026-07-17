@@ -45,16 +45,16 @@ class RateLimiter:
             time.sleep(min(wait_time, 1.0))
 
     def backoff(self):
-        """Called on 429 — triple the interval temporarily."""
+        """Called on 429 — quadruple the interval temporarily."""
         with self.lock:
-            self.min_interval = min(self.min_interval * 3, 60.0)
+            self.min_interval = min(self.min_interval * 4, 120.0)
             print(f"\n[RateLimit] 429 detectado. Intervalo aumentado a {self.min_interval:.0f}s")
 
     def reset_interval(self):
-        """Reset to base interval after a successful call."""
+        """Slowly reduce interval after successful calls."""
         with self.lock:
             if self.min_interval > self.base_interval:
-                self.min_interval = max(self.base_interval, self.min_interval / 2)
+                self.min_interval = max(self.base_interval, self.min_interval * 0.7)
                 print(f"\n[RateLimit] Éxito. Intervalo reducido a {self.min_interval:.1f}s")
 
 
@@ -318,7 +318,7 @@ def main():
 
     # ── FASE 2: Análisis Gemini secuencial + Notion ──
     t2 = time.time()
-    rate_limiter = RateLimiter(min_interval=6.0)
+    rate_limiter = RateLimiter(min_interval=10.0)
     new_jobs_added = 0
     analyzed_count = 0
     high_match_jobs = []
