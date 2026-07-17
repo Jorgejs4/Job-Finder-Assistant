@@ -34,15 +34,19 @@ class RateLimiter:
         self.lock = threading.Lock()
 
     def wait(self):
+        sleep_time = 0
         with self.lock:
             now = time.time()
             self.timestamps = [t for t in self.timestamps if now - t < self.period]
             if len(self.timestamps) >= self.max_calls:
                 sleep_time = self.period - (now - self.timestamps[0])
-                if sleep_time > 0:
-                    print(f"\n[RateLimit] Gemini al límite ({self.max_calls}/{self.period}s). Esperando {sleep_time:.1f}s...")
-                    time.sleep(sleep_time)
-            self.timestamps.append(time.time())
+            else:
+                self.timestamps.append(time.time())
+        if sleep_time > 0:
+            print(f"\n[RateLimit] Gemini al límite ({self.max_calls}/{self.period}s). Esperando {sleep_time:.1f}s...")
+            time.sleep(sleep_time)
+            with self.lock:
+                self.timestamps.append(time.time())
 
 
 def _analyze_single_job(args):
