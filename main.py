@@ -376,12 +376,22 @@ def main():
     top_jobs = results.get_top_jobs(10)
     email_errors = results.run_data.get("errors", [])
 
+    # Stats de la ejecución anterior para comparar
+    prev_stats = None
+    if len(results.data.get("runs", [])) > 1:
+        prev_run = results.data["runs"][1]
+        prev_stats = {
+            "total_added": prev_run.get("_total_added", 0),
+            "analyzed": prev_run.get("_analyzed_count", 0),
+        }
+
     notifier.send_summary(
         jobs_added=new_jobs_added,
         jobs_analyzed=analyzed_count,
         scraper_stats=scraper_stats,
         top_jobs=top_jobs,
         errors=email_errors,
+        previous_run_stats=prev_stats,
     )
 
     # Webhook notifications

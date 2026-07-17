@@ -44,6 +44,7 @@ class EmailNotifier:
         scraper_stats: Dict[str, Dict[str, Any]],
         top_jobs: List[Dict[str, Any]],
         errors: List[str],
+        previous_run_stats: Dict[str, Any] = None,
     ):
         if not self.enabled:
             print("[Email] ❌ Notificación deshabilitada — faltan variables de entorno")
@@ -53,7 +54,7 @@ class EmailNotifier:
         date_str = datetime.now().strftime("%d/%m/%Y %H:%M")
         subject = f"[Job Scraper] Resumen {date_str} — {jobs_added} ofertas nuevas"
 
-        html = self._build_html(date_str, jobs_added, jobs_analyzed, scraper_stats, top_jobs, errors)
+        html = self._build_html(date_str, jobs_added, jobs_analyzed, scraper_stats, top_jobs, errors, previous_run_stats)
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -99,6 +100,7 @@ class EmailNotifier:
         scraper_stats: Dict[str, Dict[str, Any]],
         top_jobs: List[Dict[str, Any]],
         errors: List[str],
+        previous_run_stats: Dict[str, Any] = None,
     ) -> str:
         scraper_rows = ""
         for name, stats in scraper_stats.items():
@@ -116,14 +118,18 @@ class EmailNotifier:
         for j in top_jobs[:10]:
             score = j.get("match_score", 0)
             color = "#22c55e" if score >= 70 else "#eab308" if score >= 50 else "#ef4444"
+            salary = j.get("salary", "")
+            salary_str = f"{int(salary):,}€".replace(",", ".") if salary else "N/A"
+            work_mode = j.get("work_mode", "N/A")
             top_jobs_html += f"""
             <tr>
                 <td style="padding:6px;border-bottom:1px solid #eee">{j.get('title', 'N/A')}</td>
                 <td style="padding:6px;border-bottom:1px solid #eee">{j.get('company', 'N/A')}</td>
-                <td style="padding:6px;border-bottom:1px solid #eee">{j.get('source', 'N/A')}</td>
                 <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">
                     <span style="background:{color};color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">{score}%</span>
                 </td>
+                <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">{salary_str}</td>
+                <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">{work_mode}</td>
                 <td style="padding:6px;border-bottom:1px solid #eee">
                     <a href="{j.get('link', '#')}" style="color:#3b82f6">Ver</a>
                 </td>
@@ -185,8 +191,9 @@ class EmailNotifier:
                         <tr style="background:#f3f4f6">
                             <th style="padding:6px;text-align:left">Puesto</th>
                             <th style="padding:6px;text-align:left">Empresa</th>
-                            <th style="padding:6px;text-align:left">Fuente</th>
                             <th style="padding:6px;text-align:center">Match</th>
+                            <th style="padding:6px;text-align:right">Salario</th>
+                            <th style="padding:6px;text-align:center">Modalidad</th>
                             <th style="padding:6px;text-align:left">Enlace</th>
                         </tr>
                     </thead>
@@ -194,8 +201,9 @@ class EmailNotifier:
                 </table>
             </div>
 
-            <div style="background:#f9fafb;padding:16px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;text-align:center;font-size:12px;color:#9ca3af">
-                Generado automáticamente por Job Scraper Assistant
+            <div style="background:#f9fafb;padding:16px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;text-align:center">
+                <a href="https://job-finder-assistant.streamlit.app" style="display:inline-block;background:#3b82f6;color:#fff;padding:8px 20px;border-radius:6px;text-decoration:none;font-weight:600;margin-bottom:8px">Ver Dashboard</a>
+                <div style="font-size:12px;color:#9ca3af;margin-top:8px">Generado automáticamente por Job Scraper Assistant</div>
             </div>
         </body>
         </html>
