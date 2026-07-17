@@ -25,9 +25,11 @@ from notion_sync import NotionSync
 
 
 class RateLimiter:
-    """Thread-safe rate limiter. Ensures min_interval seconds between ANY two Gemini calls."""
+    """Thread-safe rate limiter. Ensures min_interval seconds between ANY two Gemini calls.
+    Auto-backs off on 429 errors."""
 
-    def __init__(self, min_interval=10.0):
+    def __init__(self, min_interval=6.0):
+        self.base_interval = min_interval
         self.min_interval = min_interval
         self.last_call_time = 0.0
         self.lock = threading.Lock()
@@ -40,12 +42,24 @@ class RateLimiter:
                 if wait_time <= 0:
                     self.last_call_time = now
                     return
-            print(f"\n[RateLimit] Esperando {wait_time:.1f}s entre llamadas Gemini...", end="", flush=True)
             time.sleep(min(wait_time, 1.0))
+
+    def backoff(self):
+        """Called on 429 — triple the interval temporarily."""
+        with self.lock:
+            self.min_interval = min(self.min_interval * 3, 60.0)
+            print(f"\n[RateLimit] 429 detectado. Intervalo aumentado a {self.min_interval:.0f}s")
+
+    def reset_interval(self):
+        """Reset to base interval after a successful call."""
+        with self.lock:
+            if self.min_interval > self.base_interval:
+                self.min_interval = max(self.base_interval, self.min_interval / 2)
+                print(f"\n[RateLimit] Éxito. Intervalo reducido a {self.min_interval:.1f}s")
 
 
 def _analyze_single_job(args):
-    """Worker function for parallel Gemini analysis. Returns (job, match_result, error)."""
+    """Worker function for Gemini analysis. Returns (job, match_result, error)."""
     gemini, job, cv_text, rate_limiter = args
     try:
         rate_limiter.wait()
@@ -57,7 +71,12 @@ def _analyze_single_job(args):
             offer_description=desc_for_match,
             experience_hint=experience_hint,
         )
+        rate_limiter.reset_interval()
         return job, match_result, None
+    except RuntimeError as e:
+        if "429" in str(e):
+            rate_limiter.backoff()
+        return job, None, str(e)
     except Exception as e:
         return job, None, str(e)
 
@@ -297,98 +316,95 @@ def main():
         pre_filtered.append(job)
     print(f"[PreFiltro] {len(pre_filtered)} ofertas tras pre-dedup (se eliminaron {skipped['duplicado']} duplicados exactos)")
 
-    # ── FASE 2: Análisis Gemini paralelo + Notion secuencial ──
+    # ── FASE 2: Análisis Gemini secuencial + Notion ──
     t2 = time.time()
-    rate_limiter = RateLimiter(min_interval=10.0)
+    rate_limiter = RateLimiter(min_interval=6.0)
     new_jobs_added = 0
     analyzed_count = 0
     high_match_jobs = []
 
-    work_args = [(gemini, job, cv_text, rate_limiter) for job in pre_filtered]
+    for idx, job in enumerate(pre_filtered, 1):
+        if analyzed_count >= 200:
+            print(f"\nLímite de 200 nuevas ofertas alcanzado.")
+            break
 
-    with ThreadPoolExecutor(max_workers=2) as gemini_pool:
-        futures = {gemini_pool.submit(_analyze_single_job, args): args[1] for args in work_args}
+        print(f"\n[{idx}/{len(pre_filtered)}] {job['title']} @ {job['company']} [{job.get('source', '')}]", flush=True)
 
-        for future in as_completed(futures):
-            if analyzed_count >= 200:
-                print(f"\nLímite de 200 nuevas ofertas alcanzado.")
-                break
+        job, match_result, error = _analyze_single_job((gemini, job, cv_text, rate_limiter))
 
-            job, match_result, error = future.result(timeout=120)
+        if error:
+            print(f"  - [Error] {error}")
+            skipped["notion_error"] += 1
+            continue
 
-            if error:
-                print(f"  - [Error] {job['title']} @ {job['company']}: {error}")
-                skipped["notion_error"] += 1
-                continue
+        print(f"  - match: {match_result.match_score}%", flush=True)
 
-            print(f"  - [{job['title']}] {job['company']} — match: {match_result.match_score}%", flush=True)
+        if match_result.match_score < 35:
+            print(f"    [IA] Baja compatibilidad ({match_result.match_score}%). Saltando.")
+            skipped["bajo_match"] += 1
+            continue
 
-            if match_result.match_score < 35:
-                print(f"    [IA] Baja compatibilidad ({match_result.match_score}%). Saltando.")
+        if config.MIN_SALARY and match_result.estimated_salary and not match_result.salary_is_estimate:
+            if match_result.estimated_salary < config.MIN_SALARY:
+                print(f"    [Filtro] Salario {match_result.estimated_salary}€ < mínimo {config.MIN_SALARY}€.")
                 skipped["bajo_match"] += 1
                 continue
 
-            if config.MIN_SALARY and match_result.estimated_salary and not match_result.salary_is_estimate:
-                if match_result.estimated_salary < config.MIN_SALARY:
-                    print(f"    [Filtro] Salario {match_result.estimated_salary}€ < mínimo {config.MIN_SALARY}€.")
-                    skipped["bajo_match"] += 1
-                    continue
+        max_exp = config.YEARS_OF_EXPERIENCE + 2
+        if max_exp > 0 and match_result.required_experience > max_exp:
+            print(f"    [Filtro] Experiencia {match_result.required_experience} años > máximo {max_exp}.")
+            skipped["ubicacion"] += 1
+            continue
 
-            max_exp = config.YEARS_OF_EXPERIENCE + 2
-            if max_exp > 0 and match_result.required_experience > max_exp:
-                print(f"    [Filtro] Experiencia {match_result.required_experience} años > máximo {max_exp}.")
+        work_mode = match_result.work_mode
+        if work_mode != "Remoto" and desired_cities:
+            job_loc = job.get("location", "").lower()
+            matches_city = any(city in job_loc for city in desired_cities)
+            if not matches_city:
+                print(f"    [Filtro] {work_mode} fuera de ciudades deseadas.")
                 skipped["ubicacion"] += 1
                 continue
 
-            work_mode = match_result.work_mode
-            if work_mode != "Remoto" and desired_cities:
-                job_loc = job.get("location", "").lower()
-                matches_city = any(city in job_loc for city in desired_cities)
-                if not matches_city:
-                    print(f"    [Filtro] {work_mode} fuera de ciudades deseadas.")
-                    skipped["ubicacion"] += 1
-                    continue
+        job["match_score"] = match_result.match_score
+        job["tech_stack"] = match_result.tech_stack
+        job["tailored_advice"] = match_result.tailored_advice
+        job["salary"] = str(match_result.estimated_salary)
+        job["work_mode"] = match_result.work_mode
+        job["salary_is_estimate"] = match_result.salary_is_estimate
+        job["required_experience"] = match_result.required_experience
 
-            job["match_score"] = match_result.match_score
-            job["tech_stack"] = match_result.tech_stack
-            job["tailored_advice"] = match_result.tailored_advice
-            job["salary"] = str(match_result.estimated_salary)
-            job["work_mode"] = match_result.work_mode
-            job["salary_is_estimate"] = match_result.salary_is_estimate
-            job["required_experience"] = match_result.required_experience
+        if match_result.cover_letter:
+            job["cover_letter"] = match_result.cover_letter
+            print(f"    [IA] Carta de presentación generada")
 
-            if match_result.cover_letter:
-                job["cover_letter"] = match_result.cover_letter
-                print(f"    [IA] Carta de presentación generada")
+        if notion_sync._find_prop("CV") and match_result.cv_skills:
+            try:
+                cv_content = {
+                    "name": "",
+                    "contact": "",
+                    "summary": match_result.cv_summary or "",
+                    "experience": match_result.cv_experience_adapted or [],
+                    "education": [],
+                    "skills": match_result.cv_skills or [],
+                    "projects": match_result.cv_projects or [],
+                }
+                cv_path = cv_gen.generate_from_data(cv_content, job["title"], job.get("company", ""))
+                if cv_path:
+                    slug = os.path.basename(cv_path)
+                    cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                    job["custom_cv_url"] = cv_url
+                    print(f"    [CV] PDF personalizado generado")
+            except Exception as e:
+                print(f"    [CV] Error generando CV: {e}")
 
-            if notion_sync._find_prop("CV") and match_result.cv_skills:
-                try:
-                    cv_content = {
-                        "name": "",
-                        "contact": "",
-                        "summary": match_result.cv_summary or "",
-                        "experience": match_result.cv_experience_adapted or [],
-                        "education": [],
-                        "skills": match_result.cv_skills or [],
-                        "projects": match_result.cv_projects or [],
-                    }
-                    cv_path = cv_gen.generate_from_data(cv_content, job["title"], job.get("company", ""))
-                    if cv_path:
-                        slug = os.path.basename(cv_path)
-                        cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
-                        job["custom_cv_url"] = cv_url
-                        print(f"    [CV] PDF personalizado generado")
-                except Exception as e:
-                    print(f"    [CV] Error generando CV: {e}")
-
-            success = notion_sync.add_job_to_notion(job)
-            if success:
-                new_jobs_added += 1
-                analyzed_count += 1
-                high_match_jobs.append(job)
-                print(f"    [OK] Añadida a Notion (match: {match_result.match_score}%)")
-            else:
-                skipped["notion_error"] += 1
+        success = notion_sync.add_job_to_notion(job)
+        if success:
+            new_jobs_added += 1
+            analyzed_count += 1
+            high_match_jobs.append(job)
+            print(f"    [OK] Añadida a Notion (match: {match_result.match_score}%)")
+        else:
+            skipped["notion_error"] += 1
 
     t3 = time.time()
     print(f"\n[Timing] Análisis IA + Notion: {t3 - t2:.1f}s")
