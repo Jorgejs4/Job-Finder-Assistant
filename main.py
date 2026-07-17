@@ -25,28 +25,23 @@ from notion_sync import NotionSync
 
 
 class RateLimiter:
-    """Thread-safe sliding window rate limiter for Gemini API (15 RPM free tier)."""
+    """Thread-safe rate limiter. Ensures min_interval seconds between ANY two Gemini calls."""
 
-    def __init__(self, max_calls=14, period=60):
-        self.max_calls = max_calls
-        self.period = period
-        self.timestamps = []
+    def __init__(self, min_interval=10.0):
+        self.min_interval = min_interval
+        self.last_call_time = 0.0
         self.lock = threading.Lock()
 
     def wait(self):
-        sleep_time = 0
-        with self.lock:
-            now = time.time()
-            self.timestamps = [t for t in self.timestamps if now - t < self.period]
-            if len(self.timestamps) >= self.max_calls:
-                sleep_time = self.period - (now - self.timestamps[0])
-            else:
-                self.timestamps.append(time.time())
-        if sleep_time > 0:
-            print(f"\n[RateLimit] Gemini al límite ({self.max_calls}/{self.period}s). Esperando {sleep_time:.1f}s...")
-            time.sleep(sleep_time)
+        while True:
             with self.lock:
-                self.timestamps.append(time.time())
+                now = time.time()
+                wait_time = self.min_interval - (now - self.last_call_time)
+                if wait_time <= 0:
+                    self.last_call_time = now
+                    return
+            print(f"\n[RateLimit] Esperando {wait_time:.1f}s entre llamadas Gemini...", end="", flush=True)
+            time.sleep(min(wait_time, 1.0))
 
 
 def _analyze_single_job(args):
@@ -304,14 +299,14 @@ def main():
 
     # ── FASE 2: Análisis Gemini paralelo + Notion secuencial ──
     t2 = time.time()
-    rate_limiter = RateLimiter(max_calls=14, period=60)
+    rate_limiter = RateLimiter(min_interval=10.0)
     new_jobs_added = 0
     analyzed_count = 0
     high_match_jobs = []
 
     work_args = [(gemini, job, cv_text, rate_limiter) for job in pre_filtered]
 
-    with ThreadPoolExecutor(max_workers=5) as gemini_pool:
+    with ThreadPoolExecutor(max_workers=2) as gemini_pool:
         futures = {gemini_pool.submit(_analyze_single_job, args): args[1] for args in work_args}
 
         for future in as_completed(futures):
