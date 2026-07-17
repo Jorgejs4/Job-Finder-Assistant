@@ -1,6 +1,6 @@
 # Asistente Inteligente de Empleo con IA y Notion
 
-Recopila automáticamente ofertas de empleo de **9 plataformas**, analiza la compatibilidad con tu currículum usando **Gemini IA**, y sincroniza todo en **Notion** con un resumen por email.
+Recopila automáticamente ofertas de empleo de **9 plataformas**, analiza la compatibilidad con tu currículum usando **Gemini IA**, genera **CVs personalizados con foto**, y sincroniza todo en **Notion** con un resumen por email.
 
 Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma local con Docker.
 
@@ -22,25 +22,37 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 
 ---
 
-## Características
+## Características principales
 
+### Pipeline completo
 1. **Análisis de Perfil:** Lee tu CV (PDF, DOCX, TXT o JSON) y extrae roles recomendados y habilidades clave.
 2. **Scraping en 9 fuentes:** Con curl_cffi para evadir anti-bot (Cloudflare, Distil Networks).
-3. **Scoring IA:** Gemini calcula match %, stack tecnológico, salario estimado y consejos personalizados.
-4. **Notion Sync:** Sube ofertas evitando duplicadas, con borrado automático si marcas "Eliminar".
-5. **Email de resumen:** Recibe un email HTML con estadísticas por plataforma, top ofertas y errores.
-6. **Resultados persistentes:** Cada ejecución guarda JSON + CSV con métricas por scraper.
-7. **Dashboard interactivo:** Streamlit con KPIs, gráficos, filtros, comparador y exportación CSV.
-8. **Tests automatizados:** Verifican que todos los scrapers responden correctamente.
-9. **Búsqueda multilingüe:** Busca automáticamente en español (InfoJobs, TecnoEmpleo) e inglés (LinkedIn, RemoteOK).
-10. **Dedup fuzzy matching:** Detecta duplicados cross-scraper con similitud de texto (no solo URL exacta).
-11. **Tracker de aplicaciones:** Pipeline en Notion: Nuevo → Revisado → Interesado → Aplicado → Entrevista → Oferta → Rechazado.
-12. **Carta de presentación IA:** Genera cartas personalizadas por oferta con Gemini.
-13. **Skills gap analysis:** Detecta qué habilidades faltan en tu CV vs demanda del mercado.
-14. **Informe de mercado:** Tendencias de tech, salarios, empresas que contratan.
-15. **Inteligencia salarial:** Estadísticas de salario por modalidad y plataforma en el dashboard.
-16. **Comparador de ofertas:** Compara 2-3 ofertas lado a lado en el dashboard.
-17. **Webhooks:** Notificaciones en tiempo real a Slack, Discord o URL genérica para ofertas de alto match.
+3. **Scoring IA:** Gemini calcula match %, stack tecnológico, salario estimado, carta de presentación y CV personalizado en **una sola llamada** (ahorra cuota).
+4. **CV personalizado:** Genera PDF + HTML con foto del CV original, skills agrupadas por categoría, experience con métricas cuantificadas, ATS-compatible.
+5. **Notion Sync:** Sube ofertas evitando duplicadas, con borrado automático si marcas "Eliminar".
+6. **Email de resumen:** Recibe un email HTML con estadísticas por plataforma, top ofertas, errores y comparación con ejecución anterior.
+7. **Feedback de CVs:** Formulario en dashboard para pedir modificaciones al CV. Se regenera automáticamente en la próxima ejecución.
+8. **Dedup fuzzy matching:** Detecta duplicados cross-scraper con bucketing por título+empresa (O(n×k) en vez de O(n×m)).
+9. **Filtro pre-IA:** 83 keywords no-tech eliminadas antes de llamar a Gemini (ahorra cuota).
+10. **Inteligencia salarial:** MIN_SALARY + YEARS_OF_EXPERIENCE filtran antes del análisis IA.
+
+### Análisis IA
+11. **Carta de presentación IA:** Genera cartas personalizadas por oferta (150-250 palabras).
+12. **Skills gap analysis:** Detecta qué habilidades faltan en tu CV vs demanda del mercado.
+13. **Informe de mercado:** Tendencias de tech, salarios, empresas que contratan.
+14. **Análisis paralelo:** 3 workers Gemini con `ThreadPoolExecutor` y `stop_event` para parada inmediata en 429.
+
+### Dashboard
+15. **Preview HTML del CV:** Visualiza el CV generado directamente en el dashboard (con foto) antes de descargar.
+16. **Descarga PDF:** Botón para descargar el CV en PDF ATS-compatible.
+17. **Formulario de feedback:** Escribe qué cambiar del CV y se regenera automáticamente.
+18. **KPIs y gráficos:** Ofertas, scrapers, pipeline, comparador de ofertas, inteligencia salarial.
+
+### Infraestructura
+19. **Parada en 429:** Si se agota la cuota de Gemini, el programa PARA inmediatamente (sin reintentos innecesarios) y envía email de aviso.
+20. **Rate limiter adaptativo:** 10s base entre llamadas Gemini, backoff en 429 (x4 hasta 120s), recuperación lenta (x0.7).
+21. **Tests automatizados:** 19 tests unitarios verificando scrapers, Gemini, CV generator y feedback manager.
+22. **GitHub Actions:** CI/CD con 120min timeout, git pull --rebase para evitar conflictos de data.json.
 
 ---
 
@@ -104,30 +116,42 @@ python market_report.py --output report.html
 python market_report.py --email
 ```
 
+### Rellenar CVs y cartas en Notion
+```bash
+# Rellena todos los campos vacíos (cartas + CVs)
+python fill_empty_fields.py
+
+# Solo cartas de presentación
+python fill_empty_fields.py --only-cartas
+
+# Solo CVs personalizados
+python fill_empty_fields.py --only-cvs
+
+# Modo dry-run (sin cambios)
+python fill_empty_fields.py --dry-run
+```
+
 ---
 
 ## Dashboard
 
-Dashboard público desplegado en **Streamlit Cloud**:
-
-🔗 **https://jorgejs4-job-finder-assistant-dashboard-xxxxx.streamlit.app**
-
-> Si el enlace no funciona, desplégalo tú mismo: ve a [share.streamlit.io](https://share.streamlit.io), conecta el repo `Jorgejs4/Job-Finder-Assistant`, selecciona `dashboard.py` como archivo principal y haz click en "Deploy".
+Dashboard interactivo con **Streamlit**:
 
 ### Qué muestra
 
-- **KPIs:** Ofertas encontradas, añadidas a Notion, analizadas por IA, scrapers OK/fallidos
-- **Pipeline de aplicaciones:** Funnel visual del estado de cada oferta (7 colores)
-- **Inteligencia salarial:** Promedio, mediana, min, max + desglose por modalidad y plataforma
-- **Comparador de ofertas:** Selecciona 2-3 ofertas y compáralas lado a lado con tabla + consejos
-- **Gráficos:** Evolución de ofertas por ejecución, scrapers OK vs fallidos
-- **Tabla de scrapers:** Estado de cada plataforma (OK, vacío, fallido) y número de ofertas
-- **Ofertas:** Tabla con todos los resultados, filtrable por fuente, match, modalidad y estado
-- **Exportación:** Botón para descargar el CSV filtrado
+- **Preview de CVs:** Visualiza el HTML del CV generado con foto, skills agrupadas y métricas. Descarga el PDF con un click.
+- **Feedback de CVs:** Formulario para pedir cambios al CV (ej: "más detalle en Spring Boot"). Se procesa automáticamente en la próxima ejecución.
+- **KPIs:** Ofertas encontradas, añadidas a Notion, analizadas por IA, scrapers OK/fallidos.
+- **Pipeline de aplicaciones:** Funnel visual del estado de cada oferta (7 colores).
+- **Inteligencia salarial:** Promedio, mediana, min, max + desglose por modalidad y plataforma.
+- **Comparador de ofertas:** Selecciona 2-3 ofertas y compáralas lado a lado.
+- **Gráficos:** Evolución de ofertas, scrapers OK vs fallidos, distribución salarial.
+- **Tabla de scrapers:** Estado de cada plataforma y número de ofertas.
+- **Exportación:** Botón para descargar el CSV filtrado.
 
 ### Cómo funciona
 
-El dashboard lee los datos directamente desde el repositorio en GitHub (archivo `results/data.json`). Cada ejecución del scraper actualiza este archivo automáticamente, así que el dashboard siempre muestra los datos más recientes sin necesidad de redesplegar.
+El dashboard lee los datos directamente desde el repositorio en GitHub (archivo `results/data.json`). Cada ejecución del scraper actualiza este archivo automáticamente.
 
 ### Lanzarlo localmente
 
@@ -139,27 +163,66 @@ Abrir **http://localhost:8501** en el navegador.
 
 ---
 
+## Sistema de CVs personalizados
+
+### Cómo funciona el flujo
+
+```
+cv.pdf (foto extraída) + Gemini (contenido mejorado) + Template HTML
+        ↓                                           ↓
+   photo.png                              cv_{hash}.html (preview en dashboard)
+        ↓                                           ↓
+   fpdf2 + photo                          st.components.v1.html() → visualización
+        ↓                                           ↓
+   cv_{hash}.pdf (descarga)              Feedback form → feedback.json
+        ↓                                           ↓
+   Notion "CV" URL property              Próxima ejecución: regenera con feedback
+```
+
+### Calidad del CV
+
+El CV generado sigue **10 reglas de un CV técnico profesional**:
+
+1. **Legibilidad en 30-60 segundos** — títulos claros, buen espacio en blanco.
+2. **Perfil técnico claro** — cargo objetivo + años + especialización + tech principal.
+3. **Skills agrupadas por categoría** — Backend, Cloud, CI/CD (no lista plana mixta).
+4. **Logros cuantificados** — métricas con %, tiempo, usuarios, volumen.
+5. **Conocimientos profundos** — no solo "Java + Spring", sino arquitectura completa.
+6. **Proyectos relevantes** — no CRUD básico, sino apps completas y open source.
+7. **Adaptado a la oferta** — tecnologías de la oferta destacadas.
+8. **ATS-compatible** — texto plano, títulos estándar, keywords de la oferta.
+9. **Evolución profesional** — muestra progresión en complejidad técnica.
+10. **Foto incluida** — extraída del CV original con PyMuPDF.
+
+### Feedback循环
+
+1. Abres el dashboard y ves el CV en HTML (preview con foto).
+2. Si no te gusta, escribes qué cambiar en el formulario de feedback.
+3. La próxima ejecución del cron, Gemini regenera el CV con tu feedback.
+4. Notion se actualiza con la nueva URL del PDF.
+
+---
+
 ## Tests automatizados
 
-Los tests verifican que los 9 scrapers y todas las features responden correctamente. Se ejecutan automáticamente en GitHub Actions antes de cada run del scraper.
+19 tests unitarios verifican:
+
+- Scrapers (9 plataformas)
+- Gemini models (OfferMatch, ProfileAnalysis, CVContent)
+- Gemini mock (match_offer, analyze_cv)
+- CV Generator (generate_from_data con HTML + PDF)
+- Results Manager (save/load)
+- Feedback Manager (save/retrieve, mark_done, has_pending)
 
 ### Ejecutar tests localmente
 
 ```bash
+# Todos los tests
+python -m pytest tests/test_unit.py -v
+
 # Tests de scrapers (sin gastar cuota de Gemini)
 MOCK_GEMINI=true python tests/test_scrapers.py
-
-# Test de conexión Gemini (gasta 1 llamada)
-python test_gemini.py
 ```
-
-### Qué verifican
-
-- Cada scraper puede conectarse y devolver ofertas
-- Detección de scrapers caídos o bloqueados
-- Límite de 50 ofertas por plataforma
-- Detección de duplicados dentro de un mismo scraper
-- Genera `results/test_report.json` con el reporte completo
 
 ---
 
@@ -180,7 +243,7 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 | `YEARS_OF_EXPERIENCE` | No | Años de experiencia (ej: `3`) |
 | `MIN_SALARY` | No | Salario mínimo anual (ej: `35000`) |
 | `SMTP_GMAIL_USER` | No | Email de Gmail para notificaciones |
-| `SMTP_GMAIL_PASSWORD` | No | Contraseña de aplicación de Gmail |
+| `SMTP_GMAIL_PASSWORD` | No | Contraseña de aplicación de Gmail (16 chars) |
 | `NOTIFY_EMAIL` | No | Email destino del resumen |
 | `WEBHOOK_URL` | No | URL de webhook (Slack, Discord o genérico) |
 | `WEBHOOK_MIN_MATCH` | No | Match mínimo para webhook (default: 80) |
@@ -204,25 +267,57 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 
 ### Campos opcionales en Notion
 
-Para usar las funciones avanzadas, añade estos campos a tu base de datos:
-
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `Estado` | Select | Pipeline: Nuevo, Revisado, Interesado, Aplicado, Entrevista, Oferta, Rechazado |
-| `Carta Presentación` | Rich text | Carta de presentación generada por IA para cada oferta |
+| `Carta Presentación` | Rich text | Carta de presentación generada por IA |
+| `CV` | URL | Enlace al PDF del CV personalizado |
 | `Exp` | Number | Años de experiencia requeridos |
 | `Origen Salario` | Select | "Estimado (IA)" o "Directo" |
 
 ### Flujo de ejecución
 
-El workflow se ejecuta **dos veces al día (8:00 y 20:00 UTC)**:
+El workflow se ejecuta **dos veces al día (9:00 y 21:00 hora española)**:
 
 1. **Tests** → Verifica que los scrapers responden (con Gemini mock)
-2. **Scraper** → Ejecuta el pipeline completo (scraping → IA → Notion → email → webhooks)
-3. **Artifacts** → Guarda resultados JSON por 90 días
-4. **Commit** → Actualiza `results/data.json` en el repositorio (para el dashboard)
+2. **Feedback** → Procesa feedback pendiente de CVs anteriores
+3. **Scraping** → Ejecuta los 9 scrapers en paralelo (8 workers HTTP)
+4. **Dedup fuzzy** → Elimina duplicados cross-scraper con bucketing por título+empresa
+5. **Filtro keywords** → Elimina ofertas no-tech (83 keywords)
+6. **Análisis IA** → Gemini analiza ofertas con 3 workers paralelos + rate limiter
+7. **CV generation** → Genera HTML + PDF con foto y prompt de 10 reglas
+8. **Notion sync** → Sube ofertas + cartas + CVs
+9. **Email** → Resumen HTML con top ofertas y comparación con ejecución anterior
+10. **Commit** → Actualiza `results/data.json` y `results/cvs/` en el repositorio
+
+Si Gemini devuelve 429 (cuota agotada), el programa **para inmediatamente** y envía email de aviso. No pierde tiempo reintentando innecesariamente (1 reintento máximo).
 
 También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion Sync > Run workflow**.
+
+---
+
+## Dependencias
+
+```
+google-generativeai    # Gemini IA
+notion-client          # API de Notion
+beautifulsoup4         # HTML parsing
+httpx                  # HTTP client
+pydantic               # Data models
+python-dotenv          # Environment variables
+pypdf                  # PDF text extraction
+python-docx            # DOCX extraction
+selectolax             # Fast HTML parsing
+curl_cffi              # Anti-bot HTTP
+streamlit              # Dashboard
+pandas                 # Data analysis
+thefuzz                # Fuzzy matching
+python-Levenshtein     # Fast fuzzy
+fpdf2                  # PDF generation
+PyMuPDF                # Photo extraction from CV
+Pillow                 # Image processing
+Jinja2                 # HTML templates
+```
 
 ---
 
@@ -235,7 +330,53 @@ Cada ejecución acumula datos en `results/data.json` (único archivo, máx. 100 
 | `runs[].run_id` | ID de la ejecución (YYYYMMDD_HHMMSS) |
 | `runs[].timestamp` | Fecha/hora ISO de la ejecución |
 | `runs[].scraper_stats` | Ofertas por plataforma, estado OK/fallido |
-| `runs[].jobs` | Todas las ofertas encontradas con match, salario, stack... |
+| `runs[].jobs` | Todas las ofertas encontradas con match, salario, stack, cover_letter, custom_cv_url... |
 | `runs[].errors` | Errores durante la ejecución |
+| `results/cvs/` | CVs generados (HTML + PDF + foto) |
+| `results/feedback.json` | Feedback pendiente de procesar |
 
-El archivo se actualiza automáticamente tras cada ejecución en GitHub Actions.
+---
+
+## Estructura del proyecto
+
+```
+job_scraper_ai/
+├── main.py                    # Pipeline principal
+├── dashboard.py               # Dashboard Streamlit
+├── config.py                  # Configuración y preferencias
+├── notion_sync.py             # Sync con Notion
+├── fill_empty_fields.py       # Backfill de CVs y cartas
+├── skills_gap.py              # Análisis de skills faltantes
+├── market_report.py           # Informe de mercado
+├── cv.pdf                     # Tu CV original (para extraer foto + texto)
+├── templates/
+│   └── cv_template.html       # Template HTML del CV (Jinja2)
+├── scrapers/                  # 9 scrapers de plataformas
+│   ├── infojobs_scraper.py
+│   ├── linkedin_scraper.py
+│   ├── indeed_scraper.py
+│   ├── remoteok_scraper.py
+│   ├── remotive_scraper.py
+│   ├── tecnobs_scraper.py
+│   ├── jobfluent_scraper.py
+│   ├── jooble_scraper.py
+│   └── getonbrd_scraper.py
+├── utils/
+│   ├── gemini_client.py       # Cliente Gemini (match, CV, cover letter)
+│   ├── cv_generator.py        # Generador de CV (HTML + PDF + foto)
+│   ├── cv_parser.py           # Parser de CV (PDF, DOCX, TXT)
+│   ├── photo_extractor.py     # Extracción de foto del CV con PyMuPDF
+│   ├── feedback_manager.py    # Gestión de feedback de CVs
+│   ├── results.py             # Gestión de resultados (data.json)
+│   ├── notifications.py       # Email notifications
+│   └── webhooks.py            # Webhook notifications
+├── tests/
+│   ├── test_unit.py           # 19 tests unitarios
+│   └── test_scrapers.py       # Tests de scrapers
+├── results/
+│   ├── data.json              # Datos acumulados (dashboard)
+│   ├── cvs/                   # CVs generados (HTML + PDF + foto)
+│   └── feedback.json          # Feedback pendiente
+└── .github/workflows/
+    └── scraper.yml            # CI/CD (cron 2x/día)
+```
