@@ -277,6 +277,22 @@ def main():
                 time.sleep(2)
                 continue
 
+            # Filtro por salario mínimo (solo si la oferta indica salario explícito)
+            if config.MIN_SALARY and match_result.estimated_salary and not match_result.salary_is_estimate:
+                if match_result.estimated_salary < config.MIN_SALARY:
+                    print(f"  - [Filtro] Salario {match_result.estimated_salary}€ < mínimo {config.MIN_SALARY}€. Saltando.")
+                    skipped["bajo_match"] += 1
+                    time.sleep(2)
+                    continue
+
+            # Filtro por experiencia máxima (exigir más de tu experiencia + margen)
+            max_exp = config.YEARS_OF_EXPERIENCE + 2
+            if max_exp > 0 and match_result.required_experience > max_exp:
+                print(f"  - [Filtro] Experiencia requerida {match_result.required_experience} años > máximo {max_exp}. Saltando.")
+                skipped["ubicacion"] += 1
+                time.sleep(2)
+                continue
+
             work_mode = match_result.work_mode
             if work_mode != "Remoto" and desired_cities:
                 job_loc = job.get("location", "").lower()
