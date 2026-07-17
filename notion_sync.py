@@ -139,20 +139,32 @@ class NotionSync:
         urls = []
         start_cursor = None
         while True:
-            body = {"page_size": 100}
-            if start_cursor:
-                body["start_cursor"] = start_cursor
-            response = self.notion.databases.query(
-                database_id=self.database_id, **body
-            )
-            for page in response.get("results", []):
-                url_prop = page.get("properties", {}).get("URL", {})
-                url_val = url_prop.get("url")
-                if url_val:
-                    urls.append(url_val)
-            if not response.get("has_more"):
+            try:
+                body = {"page_size": 100}
+                if start_cursor:
+                    body["start_cursor"] = start_cursor
+
+                if self.data_source_id:
+                    response = self.notion.data_sources.query(
+                        data_source_id=self.data_source_id, **body
+                    )
+                else:
+                    response = self.notion.request(
+                        path=f"databases/{self.database_id}/query",
+                        method="POST",
+                        body=body
+                    )
+
+                for page in response.get("results", []):
+                    url_val = page.get("properties", {}).get("URL", {}).get("url")
+                    if url_val:
+                        urls.append(url_val)
+                if not response.get("has_more"):
+                    break
+                start_cursor = response.get("next_cursor")
+            except Exception as e:
+                print(f"[Notion] Error obteniendo URLs: {e}")
                 break
-            start_cursor = response.get("next_cursor")
         return urls
 
     def get_all_jobs_for_fuzzy(self) -> list:
