@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="{{ language | default('es') }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta de Presentación — {{ name }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 25mm 20mm 25mm 20mm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #1f2937;
+    line-height: 1.7;
+    background: #fff;
+    font-size: 12pt;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #1e40af;
+  }
+  .header-left { flex: 1; }
+  .header-right { flex-shrink: 0; margin-left: 20px; }
+  .header-right img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+  }
+  .name {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .contact {
+    font-size: 9pt;
+    color: #6b7280;
+    margin-top: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .contact span { margin-right: 10px; }
+
+  .date {
+    font-size: 11pt;
+    color: #374151;
+    margin-bottom: 24px;
+    text-align: right;
+  }
+
+  .recipient {
+    font-size: 11pt;
+    color: #374151;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .recipient strong {
+    color: #111827;
+  }
+
+  .body {
+    font-size: 11pt;
+    color: #374151;
+    text-align: justify;
+  }
+  .body p {
+    margin-bottom: 14px;
+  }
+
+  .closing {
+    margin-top: 28px;
+    font-size: 11pt;
+    color: #374151;
+  }
+  .closing .greeting {
+    margin-bottom: 24px;
+  }
+  .closing .signature {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  @media print {
+    body { font-size: 11pt; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="name">{{ name }}</div>
+    {% if contact %}
+    <div class="contact">
+      {% for part in contact.split('|') %}
+        <span>{{ part.strip() }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% if photo_base64 %}
+  <div class="header-right">
+    <img src="data:image/png;base64,{{ photo_base64 }}" alt="Foto">
+  </div>
+  {% endif %}
+</div>
+
+<div class="date">{{ date }}</div>
+
+<div class="recipient">
+  <strong>{{ company }}</strong><br>
+  {% if location %}{{ location }}<br>{% endif %}
+  {{ role_title }}
+</div>
+
+<div class="body">
+  {% for paragraph in paragraphs %}
+    <p>{{ paragraph }}</p>
+  {% endfor %}
+</div>
+
+<div class="closing">
+  <div class="greeting">{{ closing_greeting }}</div>
+  <div class="signature">{{ name }}</div>
+</div>
+
+</body>
+</html>
