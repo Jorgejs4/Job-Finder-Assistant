@@ -113,12 +113,15 @@ class CVCustomization(BaseModel):
 class CVExperience(BaseModel):
     """Experiencia, skills y proyectos. 3 campos estructurados."""
     cv_experience_adapted: List[dict] = Field(
+        default_factory=list,
         description="Experiencia laboral reordenada. Cada item: {role: str, company: str, period: str, description: str}"
     )
     cv_skills: List[str] = Field(
+        default_factory=list,
         description="Habilidades más relevantes para este puesto, ordenadas por relevancia."
     )
     cv_projects: List[dict] = Field(
+        default_factory=list,
         description="Proyectos reformulados. Cada item: {name: str, description: str}"
     )
 
@@ -155,15 +158,19 @@ class SkillsGap(BaseModel):
 
 class InterviewPrep(BaseModel):
     technical_questions: List[dict] = Field(
+        default_factory=list,
         description="Lista de 5-8 preguntas técnicas probables con respuestas sugeridas. Cada item: {question: str, answer: str}"
     )
     behavioral_questions: List[dict] = Field(
+        default_factory=list,
         description="Lista de 3-5 preguntas comportamentales (STAR method) con respuestas sugeridas. Cada item: {question: str, answer: str}"
     )
     key_topics: List[str] = Field(
+        default_factory=list,
         description="Lista de 3-5 temas clave que el candidato debe repasar para esta entrevista."
     )
     preparation_tips: List[str] = Field(
+        default_factory=list,
         description="Lista de 3-5 consejos específicos para preparar esta entrevista concreta."
     )
 

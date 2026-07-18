@@ -61,6 +61,22 @@ jobs:
         CV_PATH: 'cv.pdf'
       run: |
         mkdir -p results
+
+        # Background job: commit results every 5 min so dashboard shows progress
+        (
+          while true; do
+            sleep 300
+            if [ -f results/data.json ]; then
+              git add results/data.json results/cvs/ 2>/dev/null || true
+              if ! git diff --cached --quiet; then
+                git commit -m "📊 Analysis progress [skip ci]" || true
+                git push origin main || true
+              fi
+            fi
+          done
+        ) &
+        COMMIT_PID=$!
+
         docker run --rm \
           -e PYTHONUNBUFFERED=1 \
           -v "$(pwd)/results:/app/results" \
@@ -74,6 +90,8 @@ jobs:
           -e CV_PATH="$CV_PATH" \
           job-scraper:latest \
           python analyze_pending.py --limit "${{ github.event.inputs.limit || '0' }}" --workers "${{ github.event.inputs.workers || '1' }}"
+
+        kill $COMMIT_PID 2>/dev/null || true
 
     - name: Commit results to repo
       if: always()
