@@ -249,7 +249,7 @@ class CVGenerator:
         if summary:
             self._section(pdf, "PERFIL PROFESIONAL")
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 5, summary)
+            pdf.multi_cell(0, 5, summary, new_x="LMARGIN", new_y="NEXT")
             pdf.ln(3)
 
         # -- Experiencia con bullet points --
@@ -273,11 +273,9 @@ class CVGenerator:
                     pdf.set_font("Helvetica", "", 10)
                     if isinstance(desc, list):
                         for bullet in desc:
-                            pdf.cell(5, 5, "")
-                            pdf.set_font("Helvetica", "", 10)
-                            pdf.multi_cell(0, 5, f"- {bullet}")
+                            pdf.multi_cell(0, 5, f"  - {bullet}", new_x="LMARGIN", new_y="NEXT")
                     else:
-                        pdf.multi_cell(0, 5, desc)
+                        pdf.multi_cell(0, 5, desc, new_x="LMARGIN", new_y="NEXT")
                 pdf.ln(2)
 
         # -- Formación --
@@ -308,12 +306,11 @@ class CVGenerator:
                     else:
                         skills_str = str(items)
                     pdf.set_font("Helvetica", "B", 10)
-                    pdf.cell(0, 5, f"{category}:", new_x="LMARGIN", new_y="NEXT")
+                    pdf.multi_cell(0, 5, f"{category}:", new_x="LMARGIN", new_y="NEXT")
                     pdf.set_font("Helvetica", "", 10)
-                    pdf.cell(5, 5, "")
-                    pdf.multi_cell(0, 5, skills_str)
+                    pdf.multi_cell(0, 5, f"  {skills_str}", new_x="LMARGIN", new_y="NEXT")
             elif isinstance(skills, list):
-                pdf.multi_cell(0, 5, " | ".join(skills))
+                pdf.multi_cell(0, 5, " | ".join(skills), new_x="LMARGIN", new_y="NEXT")
             pdf.ln(3)
 
         # -- Proyectos relevantes --
@@ -327,7 +324,7 @@ class CVGenerator:
                 pdf.cell(0, 6, proj_name, new_x="LMARGIN", new_y="NEXT")
                 if proj_desc:
                     pdf.set_font("Helvetica", "", 10)
-                    pdf.multi_cell(0, 5, proj_desc)
+                    pdf.multi_cell(0, 5, proj_desc, new_x="LMARGIN", new_y="NEXT")
                 pdf.ln(1)
 
         pdf.output(output_path)
