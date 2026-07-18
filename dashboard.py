@@ -50,7 +50,6 @@ def load_data():
 def aggregate_all_jobs(runs):
     """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL."""
     jobs_by_url = {}
-    run_by_job = {}
     for run in runs:
         run_id = run.get("run_id", "")
         run_ts = run.get("timestamp", "")
@@ -122,28 +121,31 @@ with tab_mis_ofertas:
             all_sources = sorted(set(j.get("source", "N/A") for j in all_jobs))
             source_filter = st.multiselect("Fuente", all_sources, default=all_sources)
         with f2:
-            all_modes = sorted(set(j.get("work_mode", "N/A") for j in all_jobs if j.get("work_mode")))
+            all_modes_raw = set()
+            for j in all_jobs:
+                wm = j.get("work_mode", "")
+                if wm and wm != "N/A":
+                    all_modes_raw.add(wm)
+            all_modes = sorted(all_modes_raw)
             mode_filter = st.multiselect("Modalidad", all_modes, default=all_modes)
         with f3:
             all_statuses = [s for s in config.APPLICATION_STATUSES if any(j.get("status") == s for j in all_jobs)]
             status_filter = st.multiselect("Estado", config.APPLICATION_STATUSES, default=all_statuses)
         with f4:
-            min_score = st.slider("Match mínimo", 0, 100, 35)
+            min_score = st.slider("Match mínimo", 0, 100, 25)
 
-        f5, f6, f7 = st.columns(3)
+        f5, f6, f7, f8 = st.columns(4)
         with f5:
-            salaries = [parse_salary(j.get("salary")) for j in all_jobs]
-            salaries = [s for s in salaries if s]
-            if salaries:
-                sal_range = st.slider(
-                    "Rango salarial (€)",
-                    min_value=min(salaries),
-                    max_value=max(salaries),
-                    value=(min(salaries), max(salaries)),
-                    step=1000,
-                )
-            else:
-                sal_range = (0, 999999)
+            all_salaries = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary"))]
+            sal_max = max(all_salaries) if all_salaries else 150000
+            sal_min_val = min(all_salaries) if all_salaries else 0
+            sal_range = st.slider(
+                "Rango salarial (€)",
+                min_value=0,
+                max_value=max(150000, sal_max + 10000),
+                value=(0, sal_max + 10000),
+                step=1000,
+            )
         with f6:
             all_techs = defaultdict(int)
             for j in all_jobs:
@@ -152,33 +154,64 @@ with tab_mis_ofertas:
             top_techs = [t for t, _ in sorted(all_techs.items(), key=lambda x: x[1], reverse=True)[:30]]
             tech_filter = st.multiselect("Tech stack", top_techs, default=[])
         with f7:
-            max_exp_options = sorted(set(j.get("required_experience", 0) for j in all_jobs if j.get("required_experience")))
-            exp_filter = st.slider("Experiencia máx (años)", 0, max(max_exp_options) if max_exp_options else 20, max(max_exp_options) if max_exp_options else 20)
+            exp_values = sorted(set(j.get("required_experience", 0) for j in all_jobs))
+            max_exp = max(exp_values) if exp_values else 10
+            exp_slider_max = max(max_exp, 10)
+            exp_filter = st.slider("Experiencia máx (años)", 0, exp_slider_max, exp_slider_max)
+        with f8:
+            all_locations = set()
+            for j in all_jobs:
+                loc = j.get("location", "")
+                if loc and loc.strip():
+                    all_locations.add(loc.strip())
+            location_options = sorted(all_locations)
+            location_filter = st.multiselect("Ubicación", location_options, default=[])
 
         search_text = st.text_input("🔎 Buscar por título, empresa o ubicación", placeholder="Ej: Python, Sevilla, Remote...")
 
-    filtered = [j for j in all_jobs if
-                j.get("source", "N/A") in source_filter and
-                (j.get("work_mode", "N/A") in mode_filter if j.get("work_mode") else True) and
-                (j.get("status", "Nuevo") in status_filter if j.get("status") else True) and
-                (j.get("match_score", 0) or 0) >= min_score and
-                (j.get("required_experience", 0) or 0) <= exp_filter]
+    filtered = []
+    for j in all_jobs:
+        if j.get("source", "N/A") not in source_filter:
+            continue
 
-    if salaries:
-        filtered = [j for j in filtered if
-                    (parse_salary(j.get("salary")) or 0) >= sal_range[0] and
-                    (parse_salary(j.get("salary")) or 999999) <= sal_range[1]]
+        wm = j.get("work_mode", "")
+        if wm and wm != "N/A" and wm not in mode_filter:
+            continue
 
-    if tech_filter:
-        filtered = [j for j in filtered if
-                    any(t in tech_filter for t in j.get("tech_stack", []))]
+        job_status = j.get("status", "Nuevo")
+        if job_status not in status_filter:
+            continue
 
-    if search_text.strip():
-        q = search_text.lower()
-        filtered = [j for j in filtered if
-                    q in j.get("title", "").lower() or
-                    q in j.get("company", "").lower() or
-                    q in j.get("location", "").lower()]
+        match = j.get("match_score") or 0
+        if match < min_score:
+            continue
+
+        exp = j.get("required_experience") or 0
+        if exp > exp_filter:
+            continue
+
+        sal = parse_salary(j.get("salary"))
+        if sal is not None:
+            if sal < sal_range[0] or sal > sal_range[1]:
+                continue
+
+        if tech_filter:
+            job_techs = j.get("tech_stack", [])
+            if not any(t in tech_filter for t in job_techs):
+                continue
+
+        if location_filter:
+            jloc = j.get("location", "").strip()
+            if jloc not in location_filter:
+                continue
+
+        if search_text.strip():
+            q = search_text.lower()
+            searchable = f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
+            if q not in searchable:
+                continue
+
+        filtered.append(j)
 
     filtered.sort(key=lambda x: (x.get("match_score") or 0), reverse=True)
 
@@ -188,7 +221,8 @@ with tab_mis_ofertas:
         title = j.get("title", "N/A")
         company = j.get("company", "N/A")
         match = j.get("match_score", 0)
-        salary = j.get("salary", "N/A")
+        salary = j.get("salary", "")
+        salary_is_est = j.get("salary_is_estimate", True)
         mode = j.get("work_mode", "N/A")
         status = j.get("status", "Nuevo")
         source = j.get("source", "N/A")
@@ -202,24 +236,36 @@ with tab_mis_ofertas:
 
         header_parts = [f"**{title}** @ {company}"]
         header_parts.append(f"🎯 {match}%")
-        if salary and salary != "N/A":
-            header_parts.append(f"💰 {salary}€")
+        if salary:
+            sal_label = f"{salary}€"
+            if salary_is_est:
+                sal_label += " ≈"
+            header_parts.append(f"💰 {sal_label}")
         header_parts.append(f"📍 {mode}")
         header_parts.append(f"🏢 {source}")
         header_parts.append(f"[{status}]")
 
         with st.expander(" | ".join(header_parts)):
-            m1, m2, m3, m4 = st.columns(4)
+            m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Match", f"{match}%")
-            m2.metric("Salario", f"{salary}€" if salary and salary != "N/A" else "N/A")
+            if salary:
+                sal_display = f"{salary}€"
+                sal_source = "Aproximación IA" if salary_is_est else "Oferta"
+                m2.metric("Salario", sal_display, help=f"Fuente: {sal_source}")
+            else:
+                m2.metric("Salario", "No especificado")
             m3.metric("Modalidad", mode)
             m4.metric("Experiencia", f"{exp} años" if exp else "Junior")
+            m5.metric("Fuente", source)
+
+            if j.get("location"):
+                st.markdown(f"**Ubicación:** {j['location']}")
 
             if techs:
                 st.markdown(f"**Stack:** {', '.join(techs)}")
 
             if link:
-                st.link_button("🔗 Ver oferta", link)
+                st.link_button("🔗 Ver oferta original", link)
 
             if advice:
                 with st.expander("💡 Consejos personalizados"):
@@ -233,6 +279,7 @@ with tab_mis_ofertas:
             if cv_url:
                 st.divider()
                 st.subheader("📄 CV Personalizado")
+
                 if cv_html_file:
                     cv_html_path = os.path.join(RESULTS_DIR, "cvs", cv_html_file)
                     if os.path.exists(cv_html_path):
@@ -241,16 +288,19 @@ with tab_mis_ofertas:
                         components.html(html_content, height=800, scrolling=True)
                     else:
                         st.info("Preview HTML no disponible (generado en ejecución anterior)")
-                st.link_button("📥 Descargar CV en PDF", cv_url)
 
-                st.divider()
-                has_pending = feedback_mgr.has_pending(title, company)
-                if has_pending:
-                    st.warning("⏳ Feedback pendiente de procesar")
+                c_dl, c_fb = st.columns([1, 1])
+                with c_dl:
+                    st.link_button("📥 Descargar CV en PDF", cv_url)
+                with c_fb:
+                    has_pending = feedback_mgr.has_pending(title, company)
+                    if has_pending:
+                        st.warning("⏳ Feedback pendiente de procesar")
+
                 with st.form(key=f"fb_{title}_{company}", clear_on_submit=True):
                     st.markdown("**¿Quieres modificar algo del CV?**")
                     fb = st.text_area(
-                        "Describe qué cambiar",
+                        "Describe qué cambiar (ej: 'Más detalle en Spring Boot', 'Cambiar resumen para DevOps')",
                         key=f"fbt_{title}_{company}",
                         height=80,
                     )
@@ -301,14 +351,12 @@ with tab_pipeline:
 
     if all_jobs:
         st.subheader("Ofertas por estado")
-        jobs_with_status = [j for j in all_jobs if j.get("status")]
-        if jobs_with_status:
-            for status in config.APPLICATION_STATUSES:
-                status_jobs = [j for j in all_jobs if j.get("status") == status]
-                if status_jobs:
-                    with st.expander(f"{status} ({len(status_jobs)})"):
-                        for j in status_jobs[:20]:
-                            st.write(f"• {j.get('title', 'N/A')} @ {j.get('company', 'N/A')} ({j.get('match_score', 0)}%)")
+        for status in config.APPLICATION_STATUSES:
+            status_jobs = [j for j in all_jobs if j.get("status") == status]
+            if status_jobs:
+                with st.expander(f"{status} ({len(status_jobs)})"):
+                    for j in status_jobs[:20]:
+                        st.write(f"• {j.get('title', 'N/A')} @ {j.get('company', 'N/A')} ({j.get('match_score', 0)}%)")
 
 # ═══════════════════════════════════════════════════════════════
 # TAB 3: ESTADÍSTICAS — Datos agregados de TODAS las ofertas
@@ -320,24 +368,24 @@ with tab_stats:
         st.info("No hay datos suficientes.")
         st.stop()
 
-    # --- Inteligencia Salarial ---
     st.markdown("### 💰 Inteligencia Salarial")
-    all_salaries = []
+    all_sal_data = []
     mode_salaries = defaultdict(list)
     source_salaries = defaultdict(list)
     for j in all_jobs:
         s = parse_salary(j.get("salary"))
         if s:
-            all_salaries.append(s)
-            mode_salaries[j.get("work_mode", "N/A")].append(s)
+            all_sal_data.append(s)
+            wm = j.get("work_mode") or "No especificado"
+            mode_salaries[wm].append(s)
             source_salaries[j.get("source", "N/A")].append(s)
 
-    if all_salaries:
+    if all_sal_data:
         sc1, sc2, sc3, sc4 = st.columns(4)
-        sc1.metric("Promedio", f"{sum(all_salaries) // len(all_salaries):,}€".replace(",", "."))
-        sc2.metric("Mediano", f"{statistics.median(all_salaries):,.0f}€".replace(",", "."))
-        sc3.metric("Mínimo", f"{min(all_salaries):,}€".replace(",", "."))
-        sc4.metric("Máximo", f"{max(all_salaries):,}€".replace(",", "."))
+        sc1.metric("Promedio", f"{sum(all_sal_data) // len(all_sal_data):,}€".replace(",", "."))
+        sc2.metric("Mediano", f"{statistics.median(all_sal_data):,.0f}€".replace(",", "."))
+        sc3.metric("Mínimo", f"{min(all_sal_data):,}€".replace(",", "."))
+        sc4.metric("Máximo", f"{max(all_sal_data):,}€".replace(",", "."))
 
         with st.expander("Salario por modalidad"):
             mode_data = []
@@ -361,10 +409,20 @@ with tab_stats:
                     "Ofertas": len(sals),
                 })
             st.dataframe(pd.DataFrame(src_data), use_container_width=True, hide_index=True)
+
+        with st.expander("Salario por fuente (Directo vs Estimado)"):
+            direct = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary")) and not j.get("salary_is_estimate", True)]
+            estimated = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary")) and j.get("salary_is_estimate", True)]
+            src_comp = []
+            if direct:
+                src_comp.append({"Tipo": "Directo (de la oferta)", "Ofertas": len(direct), "Promedio": f"{sum(direct)//len(direct):,}€".replace(",", "."), "Mínimo": f"{min(direct):,}€".replace(",", "."), "Máximo": f"{max(direct):,}€".replace(",", ".")})
+            if estimated:
+                src_comp.append({"Tipo": "Estimado (IA)", "Ofertas": len(estimated), "Promedio": f"{sum(estimated)//len(estimated):,}€".replace(",", "."), "Mínimo": f"{min(estimated):,}€".replace(",", "."), "Máximo": f"{max(estimated):,}€".replace(",", ".")})
+            if src_comp:
+                st.dataframe(pd.DataFrame(src_comp), use_container_width=True, hide_index=True)
     else:
         st.info("No hay datos de salario disponibles")
 
-    # --- Skills Gap ---
     st.markdown("### 🎯 Skills Gap")
     all_techs = defaultdict(int)
     for j in all_jobs:
@@ -380,7 +438,6 @@ with tab_stats:
 
     if all_techs:
         demanded = sorted(all_techs.items(), key=lambda x: x[1], reverse=True)
-
         if cv_skills_lower:
             gap = []
             have = []
@@ -402,19 +459,19 @@ with tab_stats:
             st.dataframe(pd.DataFrame(tech_data), use_container_width=True, hide_index=True)
             st.bar_chart(pd.DataFrame(tech_data).set_index("Skill")["Ofertas"])
 
-    # --- Market overview ---
     st.markdown("### 📈 Resumen del mercado")
     remote_count = len([j for j in all_jobs if j.get("work_mode") == "Remoto"])
     mode_counts = defaultdict(int)
     source_counts = defaultdict(int)
     for j in all_jobs:
-        mode_counts[j.get("work_mode", "N/A")] += 1
+        wm = j.get("work_mode") or "No especificado"
+        mode_counts[wm] += 1
         source_counts[j.get("source", "N/A")] += 1
 
     mc1, mc2, mc3, mc4 = st.columns(4)
     mc1.metric("Total ofertas", len(all_jobs))
     mc2.metric("% Remoto", f"{remote_count/len(all_jobs)*100:.0f}%")
-    mc3.metric("Salario mediano", f"{statistics.median(all_salaries):,.0f}€".replace(",", ".") if all_salaries else "N/A")
+    mc3.metric("Salario mediano", f"{statistics.median(all_sal_data):,.0f}€".replace(",", ".") if all_sal_data else "N/A")
     mc4.metric("Plataformas", len(source_counts))
 
     chart_c1, chart_c2 = st.columns(2)
@@ -431,7 +488,6 @@ with tab_stats:
 with tab_ejecuciones:
     st.subheader("📈 Ejecuciones")
 
-    # KPIs última ejecución
     stats = latest.get("scraper_stats", {})
     total_found = sum(s.get("found", 0) for s in stats.values())
     scrapers_ok = sum(1 for s in stats.values() if not s.get("failed"))
@@ -453,7 +509,6 @@ with tab_ejecuciones:
         for e in errors:
             st.write(f"• {e}")
 
-    # Scrapers status
     st.markdown("#### Scrapers")
     scraper_data = []
     for name, s in stats.items():
@@ -465,7 +520,6 @@ with tab_ejecuciones:
         })
     st.dataframe(pd.DataFrame(scraper_data), use_container_width=True, hide_index=True)
 
-    # Historial
     if len(runs) > 1:
         st.markdown("#### Historial")
         history = []
