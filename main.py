@@ -476,10 +476,10 @@ def main():
                 job["salary_is_estimate"] = details.salary_is_estimate
                 job["required_experience"] = details.required_experience
 
-            # Llamada 3: CV + cover letter
+            # Llamada 3a: CV + cover letter (text)
             try:
                 rate_limiter.wait()
-                cv_data = gemini.customize_cv(
+                cv_text_data = gemini.customize_cv_text(
                     cv_text=cv_text,
                     offer_title=job["title"],
                     offer_description=desc_for_match,
@@ -487,13 +487,27 @@ def main():
                     language=language,
                 )
                 rate_limiter.reset_interval()
-                job["cover_letter"] = cv_data.cover_letter
-                job["cv_summary"] = cv_data.cv_summary
-                job["cv_experience_adapted"] = cv_data.cv_experience_adapted
-                job["cv_skills"] = cv_data.cv_skills
-                job["cv_projects"] = cv_data.cv_projects
+                job["cover_letter"] = cv_text_data.cover_letter
+                job["cv_summary"] = cv_text_data.cv_summary
             except Exception as e:
-                print(f"    [CV customize] Error: {e}")
+                print(f"    [CV text] Error: {e}")
+
+            # Llamada 3b: experience + skills + projects
+            try:
+                rate_limiter.wait()
+                cv_exp_data = gemini.customize_cv_data(
+                    cv_text=cv_text,
+                    offer_title=job["title"],
+                    offer_description=desc_for_match,
+                    match_result=match_result,
+                    language=language,
+                )
+                rate_limiter.reset_interval()
+                job["cv_experience_adapted"] = cv_exp_data.cv_experience_adapted
+                job["cv_skills"] = cv_exp_data.cv_skills
+                job["cv_projects"] = cv_exp_data.cv_projects
+            except Exception as e:
+                print(f"    [CV data] Error: {e}")
 
             language = config.detect_language(job.get("source", ""), job.get("title", ""), job.get("description", "") or job["title"])
             job["language"] = language

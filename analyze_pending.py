@@ -152,10 +152,10 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
         updates["required_experience"] = 0
         updates["tailored_advice"] = "No se pudieron generar consejos."
 
-    # Llamada 3: cover letter + CV content (5 campos)
+    # Llamada 3a: cover letter + cv summary
     rate_limiter.wait()
     try:
-        cv_data = gemini.customize_cv(
+        cv_text_data = gemini.customize_cv_text(
             cv_text=cv_text,
             offer_title=job["title"],
             offer_description=desc,
@@ -163,14 +163,29 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
             language=language,
         )
         rate_limiter.reset_interval()
-        updates["cover_letter"] = cv_data.cover_letter
-        updates["cv_summary"] = cv_data.cv_summary
-        updates["cv_experience_adapted"] = cv_data.cv_experience_adapted
-        updates["cv_skills"] = cv_data.cv_skills
-        updates["cv_projects"] = cv_data.cv_projects
+        updates["cover_letter"] = cv_text_data.cover_letter
+        updates["cv_summary"] = cv_text_data.cv_summary
     except Exception as e:
         rate_limiter.backoff()
-        print(f"    [CV customize error] {e}")
+        print(f"    [CV text error] {e}")
+
+    # Llamada 3b: experience + skills + projects
+    rate_limiter.wait()
+    try:
+        cv_exp_data = gemini.customize_cv_data(
+            cv_text=cv_text,
+            offer_title=job["title"],
+            offer_description=desc,
+            match_result=match_result,
+            language=language,
+        )
+        rate_limiter.reset_interval()
+        updates["cv_experience_adapted"] = cv_exp_data.cv_experience_adapted
+        updates["cv_skills"] = cv_exp_data.cv_skills
+        updates["cv_projects"] = cv_exp_data.cv_projects
+    except Exception as e:
+        rate_limiter.backoff()
+        print(f"    [CV data error] {e}")
 
     return updates
 

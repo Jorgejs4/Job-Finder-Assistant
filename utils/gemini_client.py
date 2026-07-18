@@ -102,13 +102,16 @@ class OfferMatchDetails(BaseModel):
     )
 
 class CVCustomization(BaseModel):
-    """Contenido CV/cover letter generado por separado."""
+    """Carta de presentación + resumen. Solo 2 campos de texto."""
     cover_letter: str = Field(
         description="Carta de presentación personalizada, 150-250 palabras, 3-4 párrafos. Tono profesional pero cercano."
     )
     cv_summary: str = Field(
         description="Resumen profesional de 3-4 líneas optimizado para este puesto."
     )
+
+class CVExperience(BaseModel):
+    """Experiencia, skills y proyectos. 3 campos estructurados."""
     cv_experience_adapted: List[dict] = Field(
         description="Experiencia laboral reordenada. Cada item: {role: str, company: str, period: str, description: str}"
     )
@@ -436,19 +439,13 @@ class GeminiClient:
         data = json.loads(response_text)
         return OfferMatchDetails(**data)
 
-    def customize_cv(self, cv_text: str, offer_title: str, offer_description: str, match_result: OfferMatchBasic, language: str = "es") -> CVCustomization:
-        """
-        Genera carta de presentación + contenido CV personalizado.
-        Llamada separada de match_offer para no sobrecargar flash-lite.
-        """
+    def customize_cv_text(self, cv_text: str, offer_title: str, offer_description: str, match_result: OfferMatchBasic, language: str = "es") -> CVCustomization:
+        """Llamada 3a: genera cover letter + cv summary (2 campos de texto)."""
         import os
         if os.getenv("MOCK_GEMINI") == "true":
             return CVCustomization(
-                cover_letter=f"Estimado equipo de reclutamiento,\n\nMe dirijo a ustedes para presentar mi candidatura a la posición de {offer_title}. Con mi formación en desarrollo de software y mi experiencia práctica, estoy preparado para contribuir a su equipo.\n\nMi perfil combina conocimientos técnicos sólidos con una mentalidad de aprendizaje continuo.\n\nQuedo a su disposición para ampliar cualquier información.\n\nUn cordial saludo.",
-                cv_summary="Desarrollador de software junior con formación en desarrollo de aplicaciones multiplataforma y experiencia en proyectos de IA.",
-                cv_experience_adapted=[],
-                cv_skills=match_result.tech_stack[:5],
-                cv_projects=[],
+                cover_letter=f"Estimado equipo de reclutamiento,\n\nMe dirijo a ustedes para presentar mi candidatura a la posición de {offer_title}.\n\nUn cordial saludo.",
+                cv_summary="Desarrollador de software con formación en desarrollo de aplicaciones multiplataforma.",
             )
 
         lang_name = "español" if language == "es" else "English"
@@ -456,47 +453,66 @@ class GeminiClient:
         techs_str = ", ".join(match_result.tech_stack[:8])
 
         prompt = f"""
-        Eres un experto en redacción de CVs y cartas de presentación profesionales.
-        Genera el contenido personalizado para este candidato y esta oferta.
+        Genera carta de presentación y resumen profesional para este candidato.
 
-        CONTEXTO DEL ANÁLISIS:
-        - Match Score: {match_result.match_score}/100
-        - Tecnologías clave de la oferta: {techs_str}
+        CONTEXTO: Match {match_result.match_score}/100. Tech: {techs_str}
 
-        Genera EXACTAMENTE estos 5 campos:
-
-        1. COVER_LETTER: Carta de presentación personalizada en {lang_name} (150-250 palabras, 3-4 párrafos).
-           - Sé específico: menciona tecnologías concretas del CV relevantes para ESTA oferta
-           - Tono profesional pero cercano
+        1. COVER_LETTER: Carta personalizada en {lang_name} (150-250 palabras, 3-4 párrafos).
+           - Menciona tecnologías concretas del CV relevantes para ESTA oferta
            - No uses frases genéricas como {no_phrase}
-           - Enfócate en POR QUÉ el candidato es buen fit para ESTE puesto
-           - Termina con un call-to-action natural
+           - Termina con call-to-action
 
-        2. CV_SUMMARY: Resumen profesional de 3-4 líneas optimizado para ESTE puesto. En {lang_name}.
+        2. CV_SUMMARY: Resumen de 3-4 líneas optimizado para ESTE puesto. En {lang_name}.
 
-        3. CV_EXPERIENCE_ADAPTED: Reorganiza la experiencia laboral adaptando las descripciones para resaltar lo más relevante para ESTA oferta. En {lang_name}.
-           Cada item: {{"role": str, "company": str, "period": str, "description": str (2-3 líneas con logros y tech relevantes)}}
-
-        4. CV_SKILLS: Solo las habilidades más relevantes para este puesto, ordenadas por relevancia.
-
-        5. CV_PROJECTS: Proyectos reformulados para encajar mejor con el puesto. En {lang_name}.
-           Cada item: {{"name": str, "description": str (1-2 líneas)}}
-
-        Currículum del candidato:
-        ---
+        CV: ---
         {cv_text}
         ---
 
-        Oferta de Empleo:
-        Puesto: {offer_title}
-        Descripción:
+        Oferta: {offer_title}
         {offer_description}
         """
 
         response_text = self._generate_with_retry(prompt, CVCustomization)
-        
         data = json.loads(response_text)
         return CVCustomization(**data)
+
+    def customize_cv_data(self, cv_text: str, offer_title: str, offer_description: str, match_result: OfferMatchBasic, language: str = "es") -> CVExperience:
+        """Llamada 3b: genera experiencia, skills y proyectos (3 campos estructurados)."""
+        import os
+        if os.getenv("MOCK_GEMINI") == "true":
+            return CVExperience(
+                cv_experience_adapted=[],
+                cv_skills=match_result.tech_stack[:5],
+                cv_projects=[],
+            )
+
+        lang_name = "español" if language == "es" else "English"
+        techs_str = ", ".join(match_result.tech_stack[:8])
+
+        prompt = f"""
+        Reorganiza la experiencia, skills y proyectos del candidato para esta oferta.
+
+        CONTEXTO: Match {match_result.match_score}/100. Tech: {techs_str}
+
+        1. CV_EXPERIENCE_ADAPTED: Reorganiza experiencia en {lang_name}.
+           Cada item: {{"role": str, "company": str, "period": str, "description": str (2-3 líneas)}}
+
+        2. CV_SKILLS: Habilidades más relevantes ordenadas por relevancia.
+
+        3. CV_PROJECTS: Proyectos reformulados en {lang_name}.
+           Cada item: {{"name": str, "description": str (1-2 líneas)}}
+
+        CV: ---
+        {cv_text}
+        ---
+
+        Oferta: {offer_title}
+        {offer_description}
+        """
+
+        response_text = self._generate_with_retry(prompt, CVExperience)
+        data = json.loads(response_text)
+        return CVExperience(**data)
 
     def generate_cover_letter(self, cv_text: str, offer_title: str, company: str, offer_description: str, language: str = "es") -> str:
         """
