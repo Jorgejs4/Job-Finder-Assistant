@@ -125,8 +125,8 @@ with tab_mis_ofertas:
             all_modes = sorted(set(j.get("work_mode", "N/A") for j in all_jobs if j.get("work_mode")))
             mode_filter = st.multiselect("Modalidad", all_modes, default=all_modes)
         with f3:
-            all_statuses = sorted(set(j.get("status", "Nuevo") for j in all_jobs if j.get("status")))
-            status_filter = st.multiselect("Estado", all_statuses, default=all_statuses if all_statuses else config.APPLICATION_STATUSES)
+            all_statuses = [s for s in config.APPLICATION_STATUSES if any(j.get("status") == s for j in all_jobs)]
+            status_filter = st.multiselect("Estado", config.APPLICATION_STATUSES, default=all_statuses)
         with f4:
             min_score = st.slider("Match mínimo", 0, 100, 35)
 
