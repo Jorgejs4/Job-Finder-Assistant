@@ -61,6 +61,8 @@ jobs:
         CV_PATH: 'cv.pdf'
       run: |
         mkdir -p results
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
 
         # Background job: commit results every 5 min so dashboard shows progress
         (
