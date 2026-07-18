@@ -5,6 +5,7 @@ Ejecutar con: streamlit run dashboard.py
 """
 import os
 import sys
+import hashlib
 from pathlib import Path
 from collections import defaultdict
 
@@ -393,6 +394,7 @@ with tab_mis_ofertas:
 
             if link:
                 st.link_button("🔗 Ver oferta original", link)
+                _job_key = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
                 ics_int = create_interview_event(title, company, link)
                 with open(ics_int, "rb") as f:
                     st.download_button(
@@ -400,7 +402,7 @@ with tab_mis_ofertas:
                         f.read(),
                         file_name=os.path.basename(ics_int),
                         mime="text/calendar",
-                        key=f"ics_int_{link[:20]}",
+                        key=f"ics_int_{_job_key}",
                     )
 
             if advice:
@@ -596,8 +598,9 @@ with tab_pipeline:
                 company_fu = j.get('company', '')
                 st.write(f"• **{title_fu}** @ {company_fu} — hace {j['_days_applied']} días")
                 fc1, fc2 = st.columns([1, 1])
+                _fu_key = hashlib.md5(f"{title_fu}{company_fu}".encode()).hexdigest()[:10]
                 with fc1:
-                    st.link_button("🔗 Ver oferta", j.get("link", ""), key=f"fu_{j.get('link', '')[:30]}")
+                    st.link_button("🔗 Ver oferta", j.get("link", ""), key=f"fu_{_fu_key}")
                 with fc2:
                     ics_path = create_followup_event(title_fu, company_fu, j.get("link", ""), j["_days_applied"])
                     with open(ics_path, "rb") as f:
@@ -606,7 +609,7 @@ with tab_pipeline:
                             f.read(),
                             file_name=os.path.basename(ics_path),
                             mime="text/calendar",
-                            key=f"ics_fu_{j.get('link', '')[:20]}",
+                            key=f"ics_fu_{_fu_key}",
                         )
 
     if all_jobs:
