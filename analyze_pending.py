@@ -105,12 +105,13 @@ def write_job_back(data, url, updated_job):
 
 
 def analyze_single(gemini, cv_text, job, rate_limiter):
-    """Analiza un job con Gemini. Devuelve dict con los campos actualizados."""
-    rate_limiter.wait()
+    """Analiza un job con Gemini. 3 llamadas separadas: basic, details, cv."""
     desc = job.get("description") or job.get("title", "")
     experience_hint = job.get("experience_hint", 0)
     language = config.detect_language(job.get("source", ""), job.get("title", ""), desc)
 
+    # Llamada 1: match score + tech_stack + work_mode (3 campos)
+    rate_limiter.wait()
     match_result = gemini.match_offer(
         cv_text=cv_text,
         offer_title=job["title"],
@@ -123,15 +124,35 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
     updates = {
         "match_score": match_result.match_score,
         "tech_stack": match_result.tech_stack,
-        "tailored_advice": match_result.tailored_advice,
-        "salary": str(match_result.estimated_salary),
         "work_mode": match_result.work_mode,
-        "salary_is_estimate": match_result.salary_is_estimate,
-        "required_experience": match_result.required_experience,
         "language": language,
     }
 
-    # Llamada 2: CV + cover letter (separado para no saturar flash-lite)
+    # Llamada 2: salary + experience + advice (4 campos)
+    rate_limiter.wait()
+    try:
+        details = gemini.match_details(
+            cv_text=cv_text,
+            offer_title=job["title"],
+            offer_description=desc,
+            match_result=match_result,
+            language=language,
+        )
+        rate_limiter.reset_interval()
+        updates["estimated_salary"] = details.estimated_salary
+        updates["salary"] = str(details.estimated_salary)
+        updates["salary_is_estimate"] = details.salary_is_estimate
+        updates["required_experience"] = details.required_experience
+        updates["tailored_advice"] = details.tailored_advice
+    except Exception as e:
+        rate_limiter.backoff()
+        print(f"    [Details error] {e}")
+        updates["salary"] = "0"
+        updates["salary_is_estimate"] = True
+        updates["required_experience"] = 0
+        updates["tailored_advice"] = "No se pudieron generar consejos."
+
+    # Llamada 3: cover letter + CV content (5 campos)
     rate_limiter.wait()
     try:
         cv_data = gemini.customize_cv(

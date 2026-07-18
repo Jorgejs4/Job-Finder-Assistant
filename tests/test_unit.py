@@ -95,14 +95,12 @@ class TestGeminiModels:
     """Tests para los modelos de Gemini."""
 
     def test_offer_match_fields(self):
-        from utils.gemini_client import OfferMatch
-        fields = list(OfferMatch.model_fields.keys())
+        from utils.gemini_client import OfferMatchBasic
+        fields = list(OfferMatchBasic.model_fields.keys())
         assert "match_score" in fields
         assert "tech_stack" in fields
         assert "work_mode" in fields
-        assert "estimated_salary" in fields
-        assert "required_experience" in fields
-        assert len(fields) == 7
+        assert len(fields) == 3
 
     def test_profile_analysis_fields(self):
         from utils.gemini_client import ProfileAnalysis
@@ -128,9 +126,7 @@ class TestGeminiMock:
         assert result.match_score > 0
         assert result.match_score <= 100
         assert result.work_mode in ["Presencial", "Remoto", "Híbrido"]
-        assert result.estimated_salary > 0
         assert len(result.tech_stack) > 0
-        assert len(result.tailored_advice) > 0
 
     def test_mock_analyze_cv(self):
         from utils.gemini_client import GeminiClient

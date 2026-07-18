@@ -74,45 +74,49 @@ class ProfileAnalysis(BaseModel):
         description="Un breve resumen profesional del candidato en español."
     )
 
-class OfferMatch(BaseModel):
+class OfferMatchBasic(BaseModel):
+    """Evaluación básica: match score, stack y modalidad. Solo 3 campos para flash-lite."""
     match_score: int = Field(
         description="Puntuación de coincidencia del 0 al 100 de qué tan bien encaja el CV en la oferta. Sé riguroso y objetivo, puntuando bajo si el rol no coincide en absoluto."
     )
     tech_stack: List[str] = Field(
-        description="Lista de tecnologías y herramientas requeridas por la oferta (ej: ['Docker', 'AWS', 'FastAPI']). Extrae las tecnologías reales mencionadas en la oferta, no pongas siempre las mismas."
-    )
-    tailored_advice: str = Field(
-        description="Consejos concretos en español para modificar o adaptar el CV para esta oferta específica de forma personalizada (ej: 'Resalta tu experiencia con Java en tu rol anterior y menciona tu proyecto de Vercel'). Debe ser personalizado según el puesto."
-    )
-    estimated_salary: int = Field(
-        description="Salario estimado anual bruto en euros (EUR) para esta oferta. Si la oferta indica el salario o rango (ej: '30.000€ - 35.000€' o '2.500€/mes'), calcula el salario anual bruto correspondiente como un entero (ej: 32000). Si la oferta NO especifica ningún salario, la IA debe estimar un salario anual bruto de mercado realista para este puesto en España considerando el rol, las tecnologías requeridas, la modalidad y la experiencia solicitada, y devolverlo como un entero (ej: 28000). No devuelvas null ni 0."
+        description="Lista de tecnologías y herramientas requeridas por la oferta (ej: ['Docker', 'AWS', 'FastAPI']). Extrae las tecnologías reales mencionadas en la oferta."
     )
     work_mode: str = Field(
         description="Modalidad de trabajo detectada en la oferta. Debe ser exactamente uno de estos valores: 'Presencial', 'Remoto', 'Híbrido'."
     )
+
+class OfferMatchDetails(BaseModel):
+    """Detalles de la oferta: salario, experiencia y consejos."""
+    estimated_salary: int = Field(
+        description="Salario estimado anual bruto en euros (EUR). Si la oferta NO especifica salario, estima uno realista para este puesto en España."
+    )
     salary_is_estimate: bool = Field(
-        description="True si el salario fue estimado por la IA porque la oferta original no mencionaba ningún salario ni rango salarial. False si la oferta original sí especificaba explícitamente un salario o rango."
+        description="True si el salario fue estimado porque la oferta no lo mencionaba."
     )
     required_experience: int = Field(
-        description="Número de años de experiencia laboral que pide la empresa para el puesto. Si la oferta menciona explícitamente los años (ej: '3 años de experiencia'), devuelve ese número. Si solo pone 'junior' o no menciona experiencia, devuelve 0. Si pone 'senior' sin número concreto, devuelve 5. Máximo 20."
+        description="Años de experiencia que pide la empresa (0=junior, 5=senior sin número). Máximo 20."
+    )
+    tailored_advice: str = Field(
+        description="Consejos concretos en español para adaptar el CV a esta oferta específica."
     )
 
 class CVCustomization(BaseModel):
-    """Contenido CV/cover letter generado por separado para no sobrecargar flash-lite."""
+    """Contenido CV/cover letter generado por separado."""
     cover_letter: str = Field(
-        description="Carta de presentación personalizada en español, 150-250 palabras, 3-4 párrafos. Tono profesional pero cercano, mencionando tecnologías específicas del candidato relevantes para ESTA oferta."
+        description="Carta de presentación personalizada, 150-250 palabras, 3-4 párrafos. Tono profesional pero cercano."
     )
     cv_summary: str = Field(
-        description="Resumen profesional de 3-4 líneas optimizado para este puesto específico."
+        description="Resumen profesional de 3-4 líneas optimizado para este puesto."
     )
     cv_experience_adapted: List[dict] = Field(
-        description="Experiencia laboral reordenada y adaptada. Cada item: {role: str, company: str, period: str, description: str (2-3 líneas con logros y tech relevantes)}"
+        description="Experiencia laboral reordenada. Cada item: {role: str, company: str, period: str, description: str}"
     )
     cv_skills: List[str] = Field(
-        description="Solo las habilidades más relevantes para este puesto, ordenadas por relevancia."
+        description="Habilidades más relevantes para este puesto, ordenadas por relevancia."
     )
     cv_projects: List[dict] = Field(
-        description="Proyectos relevantes reformulados para encajar con el puesto. Cada item: {name: str, description: str (1-2 líneas)}"
+        description="Proyectos reformulados. Cada item: {name: str, description: str}"
     )
 
 class CVContent(BaseModel):
@@ -285,7 +289,7 @@ class GeminiClient:
         data = json.loads(response_text)
         return ProfileAnalysis(**data)
 
-    def match_offer(self, cv_text: str, offer_title: str, offer_description: str, experience_hint: int = 0, language: str = "es") -> OfferMatch:
+    def match_offer(self, cv_text: str, offer_title: str, offer_description: str, experience_hint: int = 0, language: str = "es") -> OfferMatchBasic:
         """
         Compara el CV con una oferta de empleo y devuelve un Match Score, 
         el stack tecnológico detectado, modalidad, salario y consejos de optimización.
@@ -352,15 +356,11 @@ class GeminiClient:
             else:
                 tailored_advice = f"Destaca tus conocimientos en {', '.join(tech_stack[:3])} en tu CV. Resalta los proyectos de tu portafolio relacionados con estas herramientas."
                 
-            print(f"  - [Smart Mock] Match: {match_score}%, Stack: {tech_stack}, Mod: {work_mode}, Sal: {estimated_salary}€")
-            return OfferMatch(
+            print(f"  - [Smart Mock] Match: {match_score}%, Stack: {tech_stack}, Mod: {work_mode}")
+            return OfferMatchBasic(
                 match_score=match_score,
                 tech_stack=tech_stack,
-                tailored_advice=tailored_advice,
-                estimated_salary=estimated_salary,
                 work_mode=work_mode,
-                salary_is_estimate=len(re.findall(r'(\d{2})[\s.]?(\d{3})', offer_description)) == 0,
-                required_experience=experience_hint,
             )
 
         lang_name = "español" if language == "es" else "English"
@@ -374,11 +374,7 @@ class GeminiClient:
 
         1. MATCH_SCORE: Puntuación de compatibilidad (0-100). Si el puesto es manual o no relacionado con desarrollo (operario, limpieza, etc.), pon por debajo de 10.
         2. TECH_STACK: Tecnologías y herramientas requeridas en la oferta. Extrae tecnologías reales del texto.
-        3. TAILORED_ADVICE: Consejos personalizados en {lang_name} para adaptar el CV a ESTA oferta. Sé concreto.
-        4. ESTIMATED_SALARY: Salario anual bruto estimado en {salary_hint}. Si no se menciona, estima uno realista para {country_hint}.
-        5. WORK_MODE: Modalidad exacta: {mode_values}.
-        6. SALARY_IS_ESTIMATE: True si estimaste el salario porque la oferta no lo mencionaba.
-        7. REQUIRED_EXPERIENCE: Años de experiencia que pide la empresa (0=junior, 3=mid, 5=senior sin número). Máximo 20.
+        3. WORK_MODE: Modalidad exacta: {mode_values}.
 
         Currículum del candidato:
         ---
@@ -391,12 +387,56 @@ class GeminiClient:
         {offer_description}
         """
 
-        response_text = self._generate_with_retry(prompt, OfferMatch)
+        response_text = self._generate_with_retry(prompt, OfferMatchBasic)
         
         data = json.loads(response_text)
-        return OfferMatch(**data)
+        return OfferMatchBasic(**data)
 
-    def customize_cv(self, cv_text: str, offer_title: str, offer_description: str, match_result: OfferMatch, language: str = "es") -> CVCustomization:
+    def match_details(self, cv_text: str, offer_title: str, offer_description: str, match_result: OfferMatchBasic, language: str = "es") -> OfferMatchDetails:
+        """
+        Genera detalles de la oferta: salario, experiencia y consejos.
+        Llamada separada de match_basic para no saturar flash-lite.
+        """
+        import os
+        if os.getenv("MOCK_GEMINI") == "true":
+            import re
+            salary_match = re.search(r'(\d{2})[\s.]?(\d{3})', offer_description)
+            estimated_salary = int(salary_match.group(1) + salary_match.group(2)) if salary_match else 28000
+            return OfferMatchDetails(
+                estimated_salary=estimated_salary,
+                salary_is_estimate=not bool(salary_match),
+                required_experience=0,
+                tailored_advice=f"Adapta tu CV destacando experiencia con {', '.join(match_result.tech_stack[:3])}.",
+            )
+
+        lang_name = "español" if language == "es" else "English"
+        salary_hint = "euros (EUR)" if language == "es" else "US dollars (USD)"
+        country_hint = "España" if language == "es" else "the country where the job is located"
+
+        prompt = f"""
+        Analiza esta oferta de empleo y genera SOLO lo siguiente:
+
+        1. ESTIMATED_SALARY: Salario anual bruto estimado en {salary_hint}. Si no se menciona, estima uno realista para {country_hint}. Devuelve un número entero.
+        2. SALARY_IS_ESTIMATE: True si estimaste el salario porque la oferta no lo mencionaba.
+        3. REQUIRED_EXPERIENCE: Años de experiencia que pide la empresa (0=junior, 5=senior sin número). Máximo 20.
+        4. TAILORED_ADVICE: Consejos concretos en {lang_name} para adaptar el CV a esta oferta. Sé específico y personalizado.
+
+        Contexto del análisis previo:
+        - Match Score: {match_result.match_score}/100
+        - Tecnologías de la oferta: {', '.join(match_result.tech_stack[:8])}
+
+        Oferta de Empleo:
+        Puesto: {offer_title}
+        Descripción:
+        {offer_description}
+        """
+
+        response_text = self._generate_with_retry(prompt, OfferMatchDetails)
+        
+        data = json.loads(response_text)
+        return OfferMatchDetails(**data)
+
+    def customize_cv(self, cv_text: str, offer_title: str, offer_description: str, match_result: OfferMatchBasic, language: str = "es") -> CVCustomization:
         """
         Genera carta de presentación + contenido CV personalizado.
         Llamada separada de match_offer para no sobrecargar flash-lite.

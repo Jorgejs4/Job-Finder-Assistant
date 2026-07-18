@@ -59,17 +59,19 @@ class RateLimiter:
 
 
 def _analyze_single_job(args):
-    """Worker function for Gemini analysis. Returns (job, match_result, error)."""
+    """Worker function for Gemini analysis. Returns (job, match_result, details_result, error)."""
     gemini, job, cv_text, rate_limiter, stop_event = args
     if stop_event.is_set():
-        return job, None, "Stop signal received"
+        return job, None, None, "Stop signal received"
     try:
-        rate_limiter.wait()
-        if stop_event.is_set():
-            return job, None, "Stop signal received"
         desc_for_match = job.get("description") or job["title"]
         experience_hint = job.get("experience_hint", 0)
         language = config.detect_language(job.get("source", ""), job.get("title", ""), desc_for_match)
+
+        # Llamada 1: match basic (3 campos)
+        rate_limiter.wait()
+        if stop_event.is_set():
+            return job, None, None, "Stop signal received"
         match_result = gemini.match_offer(
             cv_text=cv_text,
             offer_title=job["title"],
@@ -78,13 +80,27 @@ def _analyze_single_job(args):
             language=language,
         )
         rate_limiter.reset_interval()
-        return job, match_result, None
+
+        # Llamada 2: details (4 campos)
+        rate_limiter.wait()
+        if stop_event.is_set():
+            return job, match_result, None, "Stop signal received"
+        details = gemini.match_details(
+            cv_text=cv_text,
+            offer_title=job["title"],
+            offer_description=desc_for_match,
+            match_result=match_result,
+            language=language,
+        )
+        rate_limiter.reset_interval()
+
+        return job, match_result, details, None
     except RuntimeError as e:
         if "429" in str(e):
             rate_limiter.backoff()
-        return job, None, str(e)
+        return job, None, None, str(e)
     except Exception as e:
-        return job, None, str(e)
+        return job, None, None, str(e)
 
 
 def run_scraper(scraper, role, locations):
@@ -416,7 +432,7 @@ def main():
             if stop_event.is_set():
                 break
 
-            job, match_result, error = future.result()
+            job, match_result, details, error = future.result()
 
             if error:
                 if "429" in error:
@@ -433,13 +449,13 @@ def main():
                 skipped["bajo_match"] += 1
                 continue
 
-            if config.MIN_SALARY and match_result.estimated_salary and not match_result.salary_is_estimate:
-                if match_result.estimated_salary < config.MIN_SALARY:
+            if config.MIN_SALARY and details and details.estimated_salary and not details.salary_is_estimate:
+                if details.estimated_salary < config.MIN_SALARY:
                     skipped["bajo_match"] += 1
                     continue
 
             max_exp = config.YEARS_OF_EXPERIENCE + 2
-            if max_exp > 0 and match_result.required_experience > max_exp:
+            if max_exp > 0 and details and details.required_experience > max_exp:
                 skipped["ubicacion"] += 1
                 continue
 
@@ -453,13 +469,14 @@ def main():
 
             job["match_score"] = match_result.match_score
             job["tech_stack"] = match_result.tech_stack
-            job["tailored_advice"] = match_result.tailored_advice
-            job["salary"] = str(match_result.estimated_salary)
             job["work_mode"] = match_result.work_mode
-            job["salary_is_estimate"] = match_result.salary_is_estimate
-            job["required_experience"] = match_result.required_experience
+            if details:
+                job["tailored_advice"] = details.tailored_advice
+                job["salary"] = str(details.estimated_salary)
+                job["salary_is_estimate"] = details.salary_is_estimate
+                job["required_experience"] = details.required_experience
 
-            # Llamada 2: CV + cover letter (separado para flash-lite)
+            # Llamada 3: CV + cover letter
             try:
                 rate_limiter.wait()
                 cv_data = gemini.customize_cv(
@@ -487,7 +504,7 @@ def main():
                         "title": job["title"],
                         "company": job.get("company", ""),
                         "tech_stack": job.get("tech_stack", []),
-                        "tailored_advice": match_result.tailored_advice or "",
+                        "tailored_advice": details.tailored_advice if details else "",
                     }
                     html_path, pdf_path, cl_pdf_path = cv_gen.generate(
                         gemini, cv_text, job_data_for_cv,
