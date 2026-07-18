@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Dashboard interactivo para el Job Scraper Assistant.
+Dashboard interactivo — Panel de gestión de ofertas de empleo.
 Ejecutar con: streamlit run dashboard.py
-En Streamlit Cloud: leerá data.json desde GitHub API.
 """
 import os
 import sys
 from pathlib import Path
+from collections import defaultdict
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -28,13 +28,12 @@ st.set_page_config(
 
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
 
-# Intentar cargar data.json: local primero, luego GitHub API
+
 def load_data():
     data_path = os.path.join(RESULTS_DIR, "data.json")
     if os.path.exists(data_path):
         with open(data_path, "r", encoding="utf-8") as f:
             return json.load(f)
-    # Fallback: descargar desde GitHub API
     github_repo = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
     url = f"https://api.github.com/repos/{github_repo}/contents/results/data.json"
     try:
@@ -47,11 +46,55 @@ def load_data():
         pass
     return {"runs": []}
 
+
+def aggregate_all_jobs(runs):
+    """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL."""
+    jobs_by_url = {}
+    run_by_job = {}
+    for run in runs:
+        run_id = run.get("run_id", "")
+        run_ts = run.get("timestamp", "")
+        for job in run.get("jobs", []):
+            url = job.get("link", "")
+            if not url:
+                continue
+            if url in jobs_by_url:
+                existing = jobs_by_url[url]
+                if run_ts > existing.get("_last_seen", ""):
+                    existing["_last_seen"] = run_ts
+                    existing["_last_run_id"] = run_id
+                if run_ts < existing.get("_first_seen", ""):
+                    existing["_first_seen"] = run_ts
+                for key in ["cover_letter", "custom_cv_url", "custom_cv_html",
+                            "match_score", "tech_stack", "tailored_advice",
+                            "salary", "work_mode", "salary_is_estimate",
+                            "required_experience", "status"]:
+                    if job.get(key):
+                        existing[key] = job[key]
+            else:
+                job["_first_seen"] = run_ts
+                job["_last_seen"] = run_ts
+                job["_last_run_id"] = run_id
+                jobs_by_url[url] = job
+    return list(jobs_by_url.values())
+
+
+def parse_salary(val):
+    if not val:
+        return None
+    try:
+        return int(str(val).replace(".", "").replace(",", ""))
+    except (ValueError, TypeError):
+        return None
+
+
 data = load_data()
 runs = data.get("runs", [])
+all_jobs = aggregate_all_jobs(runs)
+feedback_mgr = FeedbackManager()
 
 st.title("🔍 Job Scraper Dashboard")
-st.caption(f"Última carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+st.caption(f"{len(all_jobs)} ofertas de {len(runs)} ejecuciones | Última carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
 if not runs:
     st.warning("No hay ejecuciones registradas. Ejecuta `python main.py` primero.")
@@ -59,435 +102,395 @@ if not runs:
 
 latest = runs[0]
 
-# --- KPIs principales ---
-st.header("📊 Resumen de la última ejecución")
-stats = latest.get("scraper_stats", {})
-total_found = sum(s.get("found", 0) for s in stats.values())
-scrapers_ok = sum(1 for s in stats.values() if not s.get("failed"))
-scrapers_fail = sum(1 for s in stats.values() if s.get("failed"))
-added = latest.get("_total_added", 0)
-analyzed = latest.get("_analyzed_count", 0)
+tab_mis_ofertas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
+    ["💼 Mis Ofertas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
+)
 
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("Ofertas encontradas", total_found)
-col2.metric("Añadidas a Notion", added)
-col3.metric("Analizadas por IA", analyzed)
-col4.metric("Scrapers OK", scrapers_ok)
-col5.metric("Scrapers fallidos", scrapers_fail, delta=f"-{scrapers_fail}" if scrapers_fail else None, delta_color="inverse")
+# ═══════════════════════════════════════════════════════════════
+# TAB 1: MIS OFERTAS — Panel principal
+# ═══════════════════════════════════════════════════════════════
+with tab_mis_ofertas:
+    if not all_jobs:
+        st.info("No hay ofertas disponibles.")
+        st.stop()
 
-# --- Pipeline de Aplicaciones ---
-st.header("🔄 Pipeline de Aplicaciones")
-jobs = latest.get("jobs", [])
-if jobs:
+    st.subheader(f"💼 {len(all_jobs)} ofertas disponibles")
+
+    with st.expander("🔍 Filtros avanzados", expanded=True):
+        f1, f2, f3, f4 = st.columns(4)
+        with f1:
+            all_sources = sorted(set(j.get("source", "N/A") for j in all_jobs))
+            source_filter = st.multiselect("Fuente", all_sources, default=all_sources)
+        with f2:
+            all_modes = sorted(set(j.get("work_mode", "N/A") for j in all_jobs if j.get("work_mode")))
+            mode_filter = st.multiselect("Modalidad", all_modes, default=all_modes)
+        with f3:
+            all_statuses = sorted(set(j.get("status", "Nuevo") for j in all_jobs if j.get("status")))
+            status_filter = st.multiselect("Estado", all_statuses, default=all_statuses if all_statuses else config.APPLICATION_STATUSES)
+        with f4:
+            min_score = st.slider("Match mínimo", 0, 100, 35)
+
+        f5, f6, f7 = st.columns(3)
+        with f5:
+            salaries = [parse_salary(j.get("salary")) for j in all_jobs]
+            salaries = [s for s in salaries if s]
+            if salaries:
+                sal_range = st.slider(
+                    "Rango salarial (€)",
+                    min_value=min(salaries),
+                    max_value=max(salaries),
+                    value=(min(salaries), max(salaries)),
+                    step=1000,
+                )
+            else:
+                sal_range = (0, 999999)
+        with f6:
+            all_techs = defaultdict(int)
+            for j in all_jobs:
+                for t in j.get("tech_stack", []):
+                    all_techs[t] += 1
+            top_techs = [t for t, _ in sorted(all_techs.items(), key=lambda x: x[1], reverse=True)[:30]]
+            tech_filter = st.multiselect("Tech stack", top_techs, default=[])
+        with f7:
+            max_exp_options = sorted(set(j.get("required_experience", 0) for j in all_jobs if j.get("required_experience")))
+            exp_filter = st.slider("Experiencia máx (años)", 0, max(max_exp_options) if max_exp_options else 20, max(max_exp_options) if max_exp_options else 20)
+
+        search_text = st.text_input("🔎 Buscar por título, empresa o ubicación", placeholder="Ej: Python, Sevilla, Remote...")
+
+    filtered = [j for j in all_jobs if
+                j.get("source", "N/A") in source_filter and
+                (j.get("work_mode", "N/A") in mode_filter if j.get("work_mode") else True) and
+                (j.get("status", "Nuevo") in status_filter if j.get("status") else True) and
+                (j.get("match_score", 0) or 0) >= min_score and
+                (j.get("required_experience", 0) or 0) <= exp_filter]
+
+    if salaries:
+        filtered = [j for j in filtered if
+                    (parse_salary(j.get("salary")) or 0) >= sal_range[0] and
+                    (parse_salary(j.get("salary")) or 999999) <= sal_range[1]]
+
+    if tech_filter:
+        filtered = [j for j in filtered if
+                    any(t in tech_filter for t in j.get("tech_stack", []))]
+
+    if search_text.strip():
+        q = search_text.lower()
+        filtered = [j for j in filtered if
+                    q in j.get("title", "").lower() or
+                    q in j.get("company", "").lower() or
+                    q in j.get("location", "").lower()]
+
+    filtered.sort(key=lambda x: (x.get("match_score") or 0), reverse=True)
+
+    st.write(f"**{len(filtered)}** ofertas tras filtros")
+
+    for j in filtered:
+        title = j.get("title", "N/A")
+        company = j.get("company", "N/A")
+        match = j.get("match_score", 0)
+        salary = j.get("salary", "N/A")
+        mode = j.get("work_mode", "N/A")
+        status = j.get("status", "Nuevo")
+        source = j.get("source", "N/A")
+        exp = j.get("required_experience", 0)
+        link = j.get("link", "")
+        techs = j.get("tech_stack", [])
+        advice = j.get("tailored_advice", "")
+        cover_letter = j.get("cover_letter", "")
+        cv_url = j.get("custom_cv_url", "")
+        cv_html_file = j.get("custom_cv_html", "")
+
+        header_parts = [f"**{title}** @ {company}"]
+        header_parts.append(f"🎯 {match}%")
+        if salary and salary != "N/A":
+            header_parts.append(f"💰 {salary}€")
+        header_parts.append(f"📍 {mode}")
+        header_parts.append(f"🏢 {source}")
+        header_parts.append(f"[{status}]")
+
+        with st.expander(" | ".join(header_parts)):
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Match", f"{match}%")
+            m2.metric("Salario", f"{salary}€" if salary and salary != "N/A" else "N/A")
+            m3.metric("Modalidad", mode)
+            m4.metric("Experiencia", f"{exp} años" if exp else "Junior")
+
+            if techs:
+                st.markdown(f"**Stack:** {', '.join(techs)}")
+
+            if link:
+                st.link_button("🔗 Ver oferta", link)
+
+            if advice:
+                with st.expander("💡 Consejos personalizados"):
+                    st.write(advice)
+
+            if cover_letter:
+                st.divider()
+                st.subheader("📝 Carta de Presentación")
+                st.markdown(cover_letter)
+
+            if cv_url:
+                st.divider()
+                st.subheader("📄 CV Personalizado")
+                if cv_html_file:
+                    cv_html_path = os.path.join(RESULTS_DIR, "cvs", cv_html_file)
+                    if os.path.exists(cv_html_path):
+                        with open(cv_html_path, "r", encoding="utf-8") as f:
+                            html_content = f.read()
+                        components.html(html_content, height=800, scrolling=True)
+                    else:
+                        st.info("Preview HTML no disponible (generado en ejecución anterior)")
+                st.link_button("📥 Descargar CV en PDF", cv_url)
+
+                st.divider()
+                has_pending = feedback_mgr.has_pending(title, company)
+                if has_pending:
+                    st.warning("⏳ Feedback pendiente de procesar")
+                with st.form(key=f"fb_{title}_{company}", clear_on_submit=True):
+                    st.markdown("**¿Quieres modificar algo del CV?**")
+                    fb = st.text_area(
+                        "Describe qué cambiar",
+                        key=f"fbt_{title}_{company}",
+                        height=80,
+                    )
+                    submitted = st.form_submit_button("Enviar feedback")
+                    if submitted and fb.strip():
+                        feedback_mgr.save_feedback(title, company, fb.strip())
+                        st.success("Feedback guardado. Se procesará en la próxima ejecución.")
+                        st.rerun()
+                    elif submitted:
+                        st.warning("Escribe algo antes de enviar.")
+
+    if filtered:
+        csv_data = pd.DataFrame(filtered)
+        display_cols = ["title", "company", "source", "match_score", "salary",
+                        "work_mode", "required_experience", "status", "link"]
+        display_cols = [c for c in display_cols if c in csv_data.columns]
+        csv_export = csv_data[display_cols].to_csv(index=False).encode("utf-8")
+        st.download_button("📥 Exportar CSV", csv_export,
+                           file_name=f"ofertas_{datetime.now().strftime('%Y%m%d')}.csv",
+                           mime="text/csv")
+
+# ═══════════════════════════════════════════════════════════════
+# TAB 2: PIPELINE — Estado de aplicaciones
+# ═══════════════════════════════════════════════════════════════
+with tab_pipeline:
+    st.subheader("🔄 Pipeline de Aplicaciones")
+
     status_counts = {}
     for status in config.APPLICATION_STATUSES:
-        count = len([j for j in jobs if j.get("status") == status])
-        status_counts[status] = count
+        status_counts[status] = len([j for j in all_jobs if j.get("status") == status])
+    total = len(all_jobs)
 
-    status_cols = st.columns(len(config.APPLICATION_STATUSES))
+    cols = st.columns(len(config.APPLICATION_STATUSES))
+    colors = ["#4CAF50", "#8BC34A", "#CDDC39", "#FFC107", "#FF9800", "#2196F3", "#F44336"]
     for i, status in enumerate(config.APPLICATION_STATUSES):
-        status_cols[i].metric(status, status_counts.get(status, 0))
+        count = status_counts.get(status, 0)
+        cols[i].metric(status, count)
 
-    total_jobs = len(jobs)
-    if total_jobs > 0:
-        progress_html = '<div style="display:flex; gap:2px; height:30px; border-radius:6px; overflow:hidden; margin:10px 0;">'
-        colors = ["#4CAF50", "#8BC34A", "#CDDC39", "#FFC107", "#FF9800", "#2196F3", "#F44336"]
+    if total > 0:
+        bar_html = '<div style="display:flex; gap:2px; height:36px; border-radius:6px; overflow:hidden; margin:10px 0;">'
         for i, status in enumerate(config.APPLICATION_STATUSES):
             count = status_counts.get(status, 0)
-            pct = (count / total_jobs * 100) if total_jobs > 0 else 0
+            pct = (count / total * 100) if total > 0 else 0
             if pct > 0:
-                progress_html += f'<div style="width:{pct}%; background:{colors[i]}; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:bold;">{count}</div>'
-        progress_html += '</div>'
-        st.markdown(progress_html, unsafe_allow_html=True)
-else:
-    st.info("No hay ofertas para mostrar el pipeline.")
+                bar_html += f'<div style="width:{pct}%; background:{colors[i]}; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:bold;">{count}</div>'
+        bar_html += '</div>'
+        st.markdown(bar_html, unsafe_allow_html=True)
 
-# --- Inteligencia Salarial ---
-st.header("💰 Inteligencia Salarial")
-if jobs:
-    salaries = [j.get("salary") for j in jobs if j.get("salary")]
-    if salaries:
-        salaries_num = []
-        for s in salaries:
-            try:
-                salaries_num.append(int(str(s).replace(".", "").replace(",", "")))
-            except (ValueError, TypeError):
-                pass
-        
-        if salaries_num:
-            avg_sal = sum(salaries_num) // len(salaries_num)
-            min_sal = min(salaries_num)
-            max_sal = max(salaries_num)
-            median_sal = statistics.median(salaries_num)
+    if all_jobs:
+        st.subheader("Ofertas por estado")
+        jobs_with_status = [j for j in all_jobs if j.get("status")]
+        if jobs_with_status:
+            for status in config.APPLICATION_STATUSES:
+                status_jobs = [j for j in all_jobs if j.get("status") == status]
+                if status_jobs:
+                    with st.expander(f"{status} ({len(status_jobs)})"):
+                        for j in status_jobs[:20]:
+                            st.write(f"• {j.get('title', 'N/A')} @ {j.get('company', 'N/A')} ({j.get('match_score', 0)}%)")
 
-            sal_col1, sal_col2, sal_col3, sal_col4 = st.columns(4)
-            sal_col1.metric("Salario promedio", f"{avg_sal:,}€".replace(",", "."))
-            sal_col2.metric("Salario mediano", f"{median_sal:,}€".replace(",", "."))
-            sal_col3.metric("Salario mínimo", f"{min_sal:,}€".replace(",", "."))
-            sal_col4.metric("Salario máximo", f"{max_sal:,}€".replace(",", "."))
+# ═══════════════════════════════════════════════════════════════
+# TAB 3: ESTADÍSTICAS — Datos agregados de TODAS las ofertas
+# ═══════════════════════════════════════════════════════════════
+with tab_stats:
+    st.subheader("📊 Estadísticas del mercado laboral")
 
-            # Salario por modalidad
-            st.subheader("Salario por modalidad")
-            mode_salaries = {}
-            for j in jobs:
-                mode = j.get("work_mode", "N/A")
-                sal = j.get("salary")
-                if sal and mode:
-                    try:
-                        sal_num = int(str(sal).replace(".", "").replace(",", ""))
-                        if mode not in mode_salaries:
-                            mode_salaries[mode] = []
-                        mode_salaries[mode].append(sal_num)
-                    except (ValueError, TypeError):
-                        pass
-            
-            if mode_salaries:
-                mode_data = []
-                for mode, sals in mode_salaries.items():
-                    mode_data.append({
-                        "Modalidad": mode,
-                        "Promedio": f"{sum(sals) // len(sals):,}€".replace(",", "."),
-                        "Mínimo": f"{min(sals):,}€".replace(",", "."),
-                        "Máximo": f"{max(sals):,}€".replace(",", "."),
-                        "Ofertas": len(sals),
-                    })
-                st.dataframe(pd.DataFrame(mode_data), use_container_width=True, hide_index=True)
+    if not all_jobs:
+        st.info("No hay datos suficientes.")
+        st.stop()
 
-            # Salario por fuente
-            st.subheader("Salario por plataforma")
-            source_salaries = {}
-            for j in jobs:
-                source = j.get("source", "N/A")
-                sal = j.get("salary")
-                if sal and source:
-                    try:
-                        sal_num = int(str(sal).replace(".", "").replace(",", ""))
-                        if source not in source_salaries:
-                            source_salaries[source] = []
-                        source_salaries[source].append(sal_num)
-                    except (ValueError, TypeError):
-                        pass
-            
-            if source_salaries:
-                source_data = []
-                for source, sals in sorted(source_salaries.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True):
-                    source_data.append({
-                        "Plataforma": source,
-                        "Promedio": f"{sum(sals) // len(sals):,}€".replace(",", "."),
-                        "Rango": f"{min(sals):,}€ - {max(sals):,}€".replace(",", "."),
-                        "Ofertas": len(sals),
-                    })
-                st.dataframe(pd.DataFrame(source_data), use_container_width=True, hide_index=True)
-        else:
-            st.info("No hay datos de salario para analizar")
+    # --- Inteligencia Salarial ---
+    st.markdown("### 💰 Inteligencia Salarial")
+    all_salaries = []
+    mode_salaries = defaultdict(list)
+    source_salaries = defaultdict(list)
+    for j in all_jobs:
+        s = parse_salary(j.get("salary"))
+        if s:
+            all_salaries.append(s)
+            mode_salaries[j.get("work_mode", "N/A")].append(s)
+            source_salaries[j.get("source", "N/A")].append(s)
+
+    if all_salaries:
+        sc1, sc2, sc3, sc4 = st.columns(4)
+        sc1.metric("Promedio", f"{sum(all_salaries) // len(all_salaries):,}€".replace(",", "."))
+        sc2.metric("Mediano", f"{statistics.median(all_salaries):,.0f}€".replace(",", "."))
+        sc3.metric("Mínimo", f"{min(all_salaries):,}€".replace(",", "."))
+        sc4.metric("Máximo", f"{max(all_salaries):,}€".replace(",", "."))
+
+        with st.expander("Salario por modalidad"):
+            mode_data = []
+            for mode, sals in sorted(mode_salaries.items()):
+                mode_data.append({
+                    "Modalidad": mode,
+                    "Promedio": f"{sum(sals) // len(sals):,}€".replace(",", "."),
+                    "Mínimo": f"{min(sals):,}€".replace(",", "."),
+                    "Máximo": f"{max(sals):,}€".replace(",", "."),
+                    "Ofertas": len(sals),
+                })
+            st.dataframe(pd.DataFrame(mode_data), use_container_width=True, hide_index=True)
+
+        with st.expander("Salario por plataforma"):
+            src_data = []
+            for src, sals in sorted(source_salaries.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True):
+                src_data.append({
+                    "Plataforma": src,
+                    "Promedio": f"{sum(sals) // len(sals):,}€".replace(",", "."),
+                    "Rango": f"{min(sals):,}€ - {max(sals):,}€".replace(",", "."),
+                    "Ofertas": len(sals),
+                })
+            st.dataframe(pd.DataFrame(src_data), use_container_width=True, hide_index=True)
     else:
-        st.info("No hay ofertas con salario para analizar")
-else:
-    st.info("No hay ofertas para mostrar inteligencia salarial")
+        st.info("No hay datos de salario disponibles")
 
-# --- Comparador de Ofertas ---
-st.header("⚖️ Comparador de Ofertas")
-if jobs and len(jobs) >= 2:
-    job_options = {f"{j.get('title', 'N/A')} @ {j.get('company', 'N/A')}": j for j in jobs}
-    
-    selected = st.multiselect(
-        "Selecciona 2-3 ofertas para comparar",
-        options=list(job_options.keys()),
-        max_selections=3,
-    )
-    
-    if len(selected) >= 2:
-        compare_jobs = [job_options[s] for s in selected]
-        
-        # Tabla comparativa
-        compare_data = []
-        for j in compare_jobs:
-            compare_data.append({
-                "Puesto": j.get("title", "N/A"),
-                "Empresa": j.get("company", "N/A"),
-                "Match": f"{j.get('match_score', 0)}%",
-                "Salario": f"{j.get('salary', 'N/A')}€" if j.get("salary") else "N/A",
-                "Modalidad": j.get("work_mode", "N/A"),
-                "Experiencia": f"{j.get('required_experience', 0)} años",
-                "Stack": ", ".join(j.get("tech_stack", [])[:5]),
-                "Fuente": j.get("source", "N/A"),
-            })
-        st.dataframe(pd.DataFrame(compare_data), use_container_width=True, hide_index=True)
-        
-        # Consejos de cada oferta
-        st.subheader("Consejos personalizados")
-        for j in compare_jobs:
-            with st.expander(f"💡 {j.get('title', 'N/A')} @ {j.get('company', 'N/A')}"):
-                st.write(j.get("tailored_advice", "Sin consejos disponibles"))
-                
-        # Resumen comparativo
-        st.subheader("📊 Resumen comparativo")
-        scores = [j.get("match_score", 0) for j in compare_jobs]
-        salaries_comp = []
-        for j in compare_jobs:
-            try:
-                salaries_comp.append(int(str(j.get("salary", 0)).replace(".", "").replace(",", "")))
-            except (ValueError, TypeError):
-                pass
-        
-        best_match = compare_jobs[scores.index(max(scores))]
-        best_salary = compare_jobs[salaries_comp.index(max(salaries_comp))] if salaries_comp else None
-        
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.success(f"🏆 **Mejor match:** {best_match.get('title', 'N/A')} ({max(scores)}%)")
-        with col_b:
-            if best_salary:
-                st.success(f"💰 **Mejor salario:** {best_salary.get('title', 'N/A')} ({max(salaries_comp):,}€)".replace(",", "."))
-else:
-    st.info("Selecciona al menos 2 ofertas para comparar")
+    # --- Skills Gap ---
+    st.markdown("### 🎯 Skills Gap")
+    all_techs = defaultdict(int)
+    for j in all_jobs:
+        for tech in j.get("tech_stack", []):
+            all_techs[tech] += 1
 
-# --- Historial ---
-history = []
-for run in runs:
-    st_stats = run.get("scraper_stats", {})
-    history.append({
-        "run_id": run.get("run_id", ""),
-        "timestamp": run.get("timestamp", ""),
-        "total_jobs_found": sum(s.get("found", 0) for s in st_stats.values()),
-        "jobs_added_notion": run.get("_total_added", 0),
-        "jobs_analyzed": run.get("_analyzed_count", 0),
-        "scrapers_ok": sum(1 for s in st_stats.values() if not s.get("failed")),
-        "scrapers_failed": sum(1 for s in st_stats.values() if s.get("failed")),
-        "errors": len(run.get("errors", [])),
-    })
+    cv_skills_lower = set()
+    profile_skills = latest.get("profile_skills", [])
+    if profile_skills:
+        cv_skills_lower = {s.lower().strip() for s in profile_skills}
+        with st.expander("Tus skills del CV", expanded=False):
+            st.write(", ".join(sorted(cv_skills_lower)))
 
-if len(history) > 1:
-    st.header("📈 Historial de ejecuciones")
-    hist_df = pd.DataFrame(history)
-    for col in ["total_jobs_found", "jobs_added_notion", "scrapers_ok", "scrapers_failed"]:
-        if col in hist_df.columns:
-            hist_df[col] = pd.to_numeric(hist_df[col], errors="coerce")
+    if all_techs:
+        demanded = sorted(all_techs.items(), key=lambda x: x[1], reverse=True)
 
-    chart_col1, chart_col2 = st.columns(2)
-    with chart_col1:
-        st.subheader("Ofertas por ejecución")
-        chart_data = hist_df[["timestamp", "total_jobs_found", "jobs_added_notion"]].copy()
-        chart_data["timestamp"] = pd.to_datetime(chart_data["timestamp"]).dt.strftime("%d/%m %H:%M")
-        chart_data = chart_data.set_index("timestamp")
-        st.line_chart(chart_data)
-
-    with chart_col2:
-        st.subheader("Scrapers OK / Fallidos")
-        chart_data2 = hist_df[["timestamp", "scrapers_ok", "scrapers_failed"]].copy()
-        chart_data2["timestamp"] = pd.to_datetime(chart_data2["timestamp"]).dt.strftime("%d/%m %H:%M")
-        chart_data2 = chart_data2.set_index("timestamp")
-        st.bar_chart(chart_data2)
-
-# --- Scrapers ---
-st.header("🤖 Scrapers")
-scraper_df_data = []
-for name, s in stats.items():
-    scraper_df_data.append({
-        "Plataforma": name,
-        "Ofertas": s.get("found", 0),
-        "Estado": "❌ Fallido" if s.get("failed") else "✅ OK",
-        "Error": s.get("error", "") if s.get("failed") else "",
-    })
-st.dataframe(pd.DataFrame(scraper_df_data), use_container_width=True, hide_index=True)
-
-# --- Errores ---
-errors = latest.get("errors", [])
-if errors:
-    st.error(f"**{len(errors)} error(es) en la última ejecución:**")
-    for e in errors:
-        st.write(f"• {e}")
-
-# --- Ofertas ---
-st.header("💼 Ofertas encontradas")
-if jobs:
-    df_jobs = pd.DataFrame(jobs)
-
-    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
-    with filter_col1:
-        source_filter = st.multiselect(
-            "Filtrar por fuente",
-            options=df_jobs["source"].unique() if "source" in df_jobs.columns else [],
-            default=df_jobs["source"].unique() if "source" in df_jobs.columns else [],
-        )
-    with filter_col2:
-        if "match_score" in df_jobs.columns:
-            min_score = st.slider("Match mínimo", 0, 100, 35)
+        if cv_skills_lower:
+            gap = []
+            have = []
+            for tech, count in demanded:
+                pct = round(count / len(all_jobs) * 100, 1)
+                if tech.lower().strip() in cv_skills_lower:
+                    have.append({"Skill": tech, "Ofertas": count, "% mercado": f"{pct}%", "Estado": "✅"})
+                else:
+                    gap.append({"Skill": tech, "Ofertas": count, "% mercado": f"{pct}%", "Estado": "❌"})
+            if gap:
+                st.subheader("Skills que te faltan")
+                st.dataframe(pd.DataFrame(gap), use_container_width=True, hide_index=True)
+                st.bar_chart(pd.DataFrame(gap).set_index("Skill")["Ofertas"])
+            if have:
+                with st.expander(f"Skills que ya tienes ({len(have)})"):
+                    st.dataframe(pd.DataFrame(have), use_container_width=True, hide_index=True)
         else:
-            min_score = 0
-    with filter_col3:
-        if "work_mode" in df_jobs.columns:
-            mode_filter = st.multiselect(
-                "Modalidad",
-                options=["Presencial", "Remoto", "Híbrido"],
-                default=["Presencial", "Remoto", "Híbrido"],
-            )
-        else:
-            mode_filter = []
-    with filter_col4:
-        if "status" in df_jobs.columns:
-            status_filter = st.multiselect(
-                "Estado",
-                options=config.APPLICATION_STATUSES,
-                default=config.APPLICATION_STATUSES,
-            )
-        else:
-            status_filter = []
-
-    filtered = df_jobs.copy()
-    if "source" in filtered.columns:
-        filtered = filtered[filtered["source"].isin(source_filter)]
-    if "match_score" in filtered.columns:
-        filtered = filtered[filtered["match_score"] >= min_score]
-    if mode_filter and "work_mode" in filtered.columns:
-        filtered = filtered[filtered["work_mode"].isin(mode_filter)]
-    if status_filter and "status" in filtered.columns:
-        filtered = filtered[filtered["status"].isin(status_filter)]
-
-    if "match_score" in filtered.columns:
-        filtered = filtered.sort_values("match_score", ascending=False)
-
-    st.write(f"Mostrando **{len(filtered)}** ofertas de **{len(jobs)}** totales")
-
-    display_cols = ["title", "company", "source", "location", "work_mode",
-                    "match_score", "salary", "status", "link"]
-    display_cols = [c for c in display_cols if c in filtered.columns]
-    st.dataframe(filtered[display_cols], use_container_width=True, hide_index=True)
-
-    csv_export = filtered.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Exportar CSV",
-        csv_export,
-        file_name=f"ofertas_{latest.get('run_id', 'export')}.csv",
-        mime="text/csv",
-    )
-
-    # Visor de cartas y CVs
-    st.header("📝 Cartas de Presentación y CVs")
-    jobs_with_content = [j for j in jobs if j.get("cover_letter") or j.get("custom_cv_url")]
-    feedback_mgr = FeedbackManager()
-
-    if jobs_with_content:
-        for j in jobs_with_content:
-            title = j.get("title", "N/A")
-            company = j.get("company", "N/A")
-            with st.expander(f"📄 {title} @ {company}"):
-                if j.get("cover_letter"):
-                    st.subheader("Carta de Presentación")
-                    st.markdown(j["cover_letter"])
-
-                if j.get("custom_cv_url"):
-                    st.subheader("CV Personalizado")
-
-                    # Preview HTML del CV
-                    cv_html_file = j.get("custom_cv_html", "")
-                    if cv_html_file:
-                        cv_html_path = os.path.join(RESULTS_DIR, "cvs", cv_html_file)
-                        if os.path.exists(cv_html_path):
-                            with open(cv_html_path, "r", encoding="utf-8") as f:
-                                html_content = f.read()
-                            components.html(html_content, height=800, scrolling=True)
-                        else:
-                            st.info("Archivo HTML del CV no encontrado (se generó en una ejecución anterior)")
-                    else:
-                        st.info("Preview HTML no disponible (CV generado antes de la actualización)")
-
-                    # Botón de descarga PDF
-                    st.link_button("📥 Descargar CV en PDF", j["custom_cv_url"])
-
-                    # Feedback form
-                    st.divider()
-                    has_pending = feedback_mgr.has_pending(title, company)
-                    if has_pending:
-                        st.warning("⏳ Feedback pendiente de procesar (se procesará en la próxima ejecución)")
-
-                    with st.form(key=f"feedback_{title}_{company}", clear_on_submit=True):
-                        st.markdown("**¿Quieres modificar algo del CV?**")
-                        feedback_text = st.text_area(
-                            "Describe qué quieres cambiar (ej: 'Más detalle en la experiencia con Spring Boot', 'Quitar el proyecto X', 'Cambiar el resumen para enfocarlo en DevOps')",
-                            key=f"fb_{title}_{company}",
-                            height=80,
-                        )
-                        submitted = st.form_submit_button("Enviar feedback")
-                        if submitted and feedback_text.strip():
-                            feedback_mgr.save_feedback(title, company, feedback_text.strip())
-                            st.success("Feedback guardado. Se procesará en la próxima ejecución del cron.")
-                            st.rerun()
-                        elif submitted:
-                            st.warning("Escribe algo de feedback antes de enviar.")
-    else:
-        st.info("No hay cartas de presentación ni CVs generados en esta ejecución.")
-else:
-    st.info("No se encontraron ofertas en esta ejecución.")
-
-# --- Skills Gap y Market Report (tabs) ---
-if jobs:
-    st.header("🎯 Análisis del Mercado")
-    tab1, tab2 = st.tabs(["🔍 Skills Gap", "📊 Market Report"])
-
-    with tab1:
-        st.subheader("Skills más demandadas que no tienes en tu CV")
-        all_techs = {}
-        cv_skills_lower = set()
-        for j in jobs:
-            for tech in j.get("tech_stack", []):
-                all_techs[tech] = all_techs.get(tech, 0) + 1
-
-        if all_techs:
-            tech_data = []
-            for tech, count in sorted(all_techs.items(), key=lambda x: x[1], reverse=True)[:15]:
-                pct = round(count / len(jobs) * 100, 1)
-                tech_data.append({"Skill": tech, "Ofertas": count, "% del total": f"{pct}%"})
+            tech_data = [{"Skill": t, "Ofertas": c, "%": f"{round(c/len(all_jobs)*100, 1)}%"} for t, c in demanded[:20]]
             st.dataframe(pd.DataFrame(tech_data), use_container_width=True, hide_index=True)
-
             st.bar_chart(pd.DataFrame(tech_data).set_index("Skill")["Ofertas"])
-        else:
-            st.info("No hay datos de skills suficientes para analizar.")
 
-    with tab2:
-        st.subheader("Resumen del mercado laboral")
-        salaries_num = []
-        remote_count = 0
-        mode_counts = {}
-        source_counts = {}
-        for j in jobs:
-            sal = j.get("salary")
-            if sal:
-                try:
-                    salaries_num.append(int(str(sal).replace(".", "").replace(",", "")))
-                except (ValueError, TypeError):
-                    pass
-            mode = j.get("work_mode", "N/A")
-            mode_counts[mode] = mode_counts.get(mode, 0) + 1
-            source = j.get("source", "N/A")
-            source_counts[source] = source_counts.get(source, 0) + 1
+    # --- Market overview ---
+    st.markdown("### 📈 Resumen del mercado")
+    remote_count = len([j for j in all_jobs if j.get("work_mode") == "Remoto"])
+    mode_counts = defaultdict(int)
+    source_counts = defaultdict(int)
+    for j in all_jobs:
+        mode_counts[j.get("work_mode", "N/A")] += 1
+        source_counts[j.get("source", "N/A")] += 1
 
-            if mode == "Remoto":
-                remote_count += 1
+    mc1, mc2, mc3, mc4 = st.columns(4)
+    mc1.metric("Total ofertas", len(all_jobs))
+    mc2.metric("% Remoto", f"{remote_count/len(all_jobs)*100:.0f}%")
+    mc3.metric("Salario mediano", f"{statistics.median(all_salaries):,.0f}€".replace(",", ".") if all_salaries else "N/A")
+    mc4.metric("Plataformas", len(source_counts))
 
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total ofertas", len(jobs))
-        m2.metric("% Remoto", f"{remote_count/len(jobs)*100:.0f}%" if jobs else "0%")
-        m3.metric("Salario promedio", f"{statistics.median(salaries_num):,.0f}€".replace(",", ".") if salaries_num else "N/A")
-        m4.metric("Plataformas activas", len(source_counts))
-
-        st.subheader("Ofertas por modalidad")
+    chart_c1, chart_c2 = st.columns(2)
+    with chart_c1:
+        st.subheader("Por modalidad")
         st.bar_chart(pd.DataFrame(list(mode_counts.items()), columns=["Modalidad", "Ofertas"]).set_index("Modalidad"))
-
-        st.subheader("Ofertas por plataforma")
+    with chart_c2:
+        st.subheader("Por plataforma")
         st.bar_chart(pd.DataFrame(list(source_counts.items()), columns=["Plataforma", "Ofertas"]).set_index("Plataforma"))
 
-        if salaries_num:
-            st.subheader("Distribución salarial")
-            st.bar_chart(pd.Series(salaries_num).describe())
+# ═══════════════════════════════════════════════════════════════
+# TAB 4: EJECUCIONES — Historial, scrapers, errores
+# ═══════════════════════════════════════════════════════════════
+with tab_ejecuciones:
+    st.subheader("📈 Ejecuciones")
 
-# --- Seleccionar ejecución ---
-st.header("📋 Ver ejecución anterior")
-if len(runs) > 1:
-    run_ids = [r.get("run_id", "?") for r in runs]
-    selected = st.selectbox("Seleccionar ejecución", run_ids)
-    selected_run = next((r for r in runs if r.get("run_id") == selected), None)
-    if selected_run:
-        st.json(selected_run.get("scraper_stats", {}))
-else:
-    st.info("Solo hay una ejecución registrada.")
+    # KPIs última ejecución
+    stats = latest.get("scraper_stats", {})
+    total_found = sum(s.get("found", 0) for s in stats.values())
+    scrapers_ok = sum(1 for s in stats.values() if not s.get("failed"))
+    scrapers_fail = sum(1 for s in stats.values() if s.get("failed"))
+    added = latest.get("_total_added", 0)
+    analyzed = latest.get("_analyzed_count", 0)
+
+    st.markdown("#### Última ejecución")
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Ofertas encontradas", total_found)
+    k2.metric("Añadidas a Notion", added)
+    k3.metric("Analizadas por IA", analyzed)
+    k4.metric("Scrapers OK", scrapers_ok)
+    k5.metric("Scrapers fallidos", scrapers_fail, delta=f"-{scrapers_fail}" if scrapers_fail else None, delta_color="inverse")
+
+    errors = latest.get("errors", [])
+    if errors:
+        st.error(f"**{len(errors)} error(es):**")
+        for e in errors:
+            st.write(f"• {e}")
+
+    # Scrapers status
+    st.markdown("#### Scrapers")
+    scraper_data = []
+    for name, s in stats.items():
+        scraper_data.append({
+            "Plataforma": name,
+            "Ofertas": s.get("found", 0),
+            "Estado": "❌ Fallido" if s.get("failed") else "✅ OK",
+            "Error": s.get("error", "") if s.get("failed") else "",
+        })
+    st.dataframe(pd.DataFrame(scraper_data), use_container_width=True, hide_index=True)
+
+    # Historial
+    if len(runs) > 1:
+        st.markdown("#### Historial")
+        history = []
+        for run in runs:
+            st_stats = run.get("scraper_stats", {})
+            history.append({
+                "Fecha": run.get("timestamp", "")[:16],
+                "Encontradas": sum(s.get("found", 0) for s in st_stats.values()),
+                "Añadidas": run.get("_total_added", 0),
+                "Analizadas": run.get("_analyzed_count", 0),
+                "Scrapers OK": sum(1 for s in st_stats.values() if not s.get("failed")),
+                "Scrapers FAIL": sum(1 for s in st_stats.values() if s.get("failed")),
+                "Errores": len(run.get("errors", [])),
+            })
+        hist_df = pd.DataFrame(history)
+        st.dataframe(hist_df, use_container_width=True, hide_index=True)
+
+        chart_c1, chart_c2 = st.columns(2)
+        with chart_c1:
+            chart_data = hist_df[["Fecha", "Encontradas", "Añadidas"]].copy()
+            chart_data = chart_data.set_index("Fecha")
+            st.line_chart(chart_data)
+        with chart_c2:
+            chart_data2 = hist_df[["Fecha", "Scrapers OK", "Scrapers FAIL"]].copy()
+            chart_data2 = chart_data2.set_index("Fecha")
+            st.bar_chart(chart_data2)
+    else:
+        st.info("Solo hay una ejecución registrada.")

@@ -494,6 +494,9 @@ def main():
 
     results.set_total_added(new_jobs_added)
     results.set_analyzed_count(analyzed_count)
+    results.run_data["profile_skills"] = profile.key_skills
+    results.run_data["profile_roles"] = profile.recommended_roles
+    results.run_data["profile_summary"] = profile.summary
     results.save()
 
     print("\n" + "=" * 60)

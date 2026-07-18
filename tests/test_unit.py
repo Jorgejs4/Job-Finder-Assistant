@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 os.environ.setdefault("DESIRED_LOCATIONS", "Remoto")
 os.environ.setdefault("MOCK_GEMINI", "true")
 os.environ.setdefault("GEMINI_API_KEY", "test-key-not-real")
+os.environ.setdefault("GEMINI_API_KEYS", "test-key-not-real")
 os.environ.setdefault("NOTION_TOKEN", "test-token")
 os.environ.setdefault("NOTION_DATABASE_ID", "test-db-id")
 

@@ -1,11 +1,63 @@
 import json
+import threading
 import google.generativeai as genai
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import config
 
-# Configurar el SDK de Gemini
-if config.GEMINI_API_KEY:
+
+class KeyPool:
+    """Pool de API keys de Gemini con failover automático en 429."""
+
+    def __init__(self, keys: list):
+        self._keys = list(keys)
+        self._index = 0
+        self._lock = threading.Lock()
+        self._exhausted = False
+        self._configure()
+
+    def _mask_key(self, key: str) -> str:
+        if len(key) <= 8:
+            return "****"
+        return f"{key[:6]}...{key[-4:]}"
+
+    def _configure(self):
+        key = self._keys[self._index]
+        genai.configure(api_key=key)
+        print(f"[Gemini] API key activa: {self._mask_key(key)} (#{self._index + 1}/{len(self._keys)})")
+
+    def current_key(self) -> str:
+        return self._keys[self._index]
+
+    def rotate(self) -> bool:
+        """Rotar a la siguiente key. Devuelve False si todas agotadas."""
+        with self._lock:
+            next_index = self._index + 1
+            if next_index >= len(self._keys):
+                self._exhausted = True
+                print(f"\n[Gemini] Todas las {len(self._keys)} API keys agotadas.")
+                return False
+            self._index = next_index
+            self._configure()
+            return True
+
+    @property
+    def exhausted(self) -> bool:
+        return self._exhausted
+
+    @property
+    def total_keys(self) -> int:
+        return len(self._keys)
+
+    @property
+    def active_index(self) -> int:
+        return self._index
+
+
+# Configurar el SDK de Gemini con la primera key disponible
+if config.GEMINI_API_KEYS:
+    genai.configure(api_key=config.GEMINI_API_KEYS[0])
+elif config.GEMINI_API_KEY:
     genai.configure(api_key=config.GEMINI_API_KEY)
 
 class ProfileAnalysis(BaseModel):
@@ -93,15 +145,28 @@ class SkillsGap(BaseModel):
 
 class GeminiClient:
     def __init__(self):
-        # Permite configurar el modelo desde las variables de entorno (ej. para cambiar a gemini-1.5-flash-latest, etc.)
         import os
         self.model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+
+        # Key pool para rotación/failover
+        keys = config.GEMINI_API_KEYS or ([config.GEMINI_API_KEY] if config.GEMINI_API_KEY else [])
+        if not keys:
+            raise ValueError("No hay API keys de Gemini configuradas.")
+        self.key_pool = KeyPool(keys)
         self.model = genai.GenerativeModel(self.model_name)
+
+    def _on_429(self) -> bool:
+        """Intenta rotar key tras 429. Devuelve True si hay nueva key, False si agotada."""
+        if self.key_pool.rotate():
+            self.model = genai.GenerativeModel(self.model_name)
+            return True
+        return False
 
     def _generate_with_retry(self, prompt: str, schema, max_retries: int = 1) -> str:
         """
         Realiza la llamada a la API de Gemini con reintentos limitados.
-        En自由tier, 1 reintento es suficiente. Si falla, el caller decide qué hacer.
+        En free tier, 1 reintento es suficiente. Si falla, el caller decide qué hacer.
+        Si recibe 429, rota a la siguiente API key antes de reintentar.
         """
         import time
         from google.api_core.exceptions import ResourceExhausted
@@ -121,15 +186,23 @@ class GeminiClient:
                 return response.text
             except ResourceExhausted:
                 if attempt < max_retries:
-                    wait_time = 15
-                    print(f"\n[Gemini] Cuota (429) excedida. Esperando {wait_time}s (intento {attempt+1}/{max_retries})...")
+                    if self._on_429():
+                        wait_time = 5
+                        print(f"\n[Gemini] 429 → key #{self.key_pool.active_index + 1}. Reintentando en {wait_time}s...")
+                    else:
+                        raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
                     time.sleep(wait_time)
                 else:
-                    raise RuntimeError("429 - Cuota Gemini agotada. No se realizaron más análisis.")
+                    if not self.key_pool.exhausted and self._on_429():
+                        wait_time = 5
+                        print(f"\n[Gemini] 429 → key #{self.key_pool.active_index + 1}. Reintentando en {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
             except Exception as e:
                 raise e
                 
-        raise RuntimeError("429 - Cuota Gemini agotada.")
+        raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
 
     def analyze_cv(self, cv_text: str) -> ProfileAnalysis:
         """
@@ -332,13 +405,16 @@ Un cordial saludo."""
                 return response.text
             except ResourceExhausted:
                 if attempt < 1:
-                    print(f"\n[Gemini] Cuota excedida en cover_letter. Esperando 15s...")
-                    time.sleep(15)
+                    if self._on_429():
+                        print(f"\n[Gemini] 429 → cover_letter. Key #{self.key_pool.active_index + 1}. Esperando 5s...")
+                        time.sleep(5)
+                    else:
+                        raise RuntimeError("429 - Todas las API keys agotadas en cover_letter.")
                 else:
-                    raise RuntimeError("429 - Cuota agotada en cover_letter.")
+                    raise RuntimeError("429 - Todas las API keys agotadas en cover_letter.")
             except Exception as e:
                 raise e
-        raise RuntimeError("429 - Cuota agotada en cover_letter.")
+        raise RuntimeError("429 - Todas las API keys agotadas en cover_letter.")
 
     def analyze_skills_gap(self, cv_text: str, jobs_data: list) -> SkillsGap:
         """
@@ -525,13 +601,16 @@ Un cordial saludo."""
                 return data
             except ResourceExhausted:
                 if attempt < 1:
-                    print(f"\n[Gemini] Cuota excedida en cv_content. Esperando 15s...")
-                    time.sleep(15)
+                    if self._on_429():
+                        print(f"\n[Gemini] 429 → cv_content. Key #{self.key_pool.active_index + 1}. Esperando 5s...")
+                        time.sleep(5)
+                    else:
+                        raise RuntimeError("429 - Todas las API keys agotadas en cv_content.")
                 else:
-                    raise RuntimeError("429 - Cuota agotada en cv_content.")
+                    raise RuntimeError("429 - Todas las API keys agotadas en cv_content.")
             except Exception as e:
                 raise e
-        raise RuntimeError("429 - Cuota agotada en cv_content.")
+        raise RuntimeError("429 - Todas las API keys agotadas en cv_content.")
 
     def generate_market_report(self, cv_text: str, jobs_data: list) -> str:
         """
@@ -630,10 +709,13 @@ Un cordial saludo."""
                 return response.text
             except ResourceExhausted:
                 if attempt < 1:
-                    print(f"\n[Gemini] Cuota excedida en market_report. Esperando 15s...")
-                    time.sleep(15)
+                    if self._on_429():
+                        print(f"\n[Gemini] 429 → market_report. Key #{self.key_pool.active_index + 1}. Esperando 5s...")
+                        time.sleep(5)
+                    else:
+                        raise RuntimeError("429 - Todas las API keys agotadas en market_report.")
                 else:
-                    raise RuntimeError("429 - Cuota agotada en market_report.")
+                    raise RuntimeError("429 - Todas las API keys agotadas en market_report.")
             except Exception as e:
                 raise e
-        raise RuntimeError("429 - Cuota agotada en market_report.")
+        raise RuntimeError("429 - Todas las API keys agotadas en market_report.")

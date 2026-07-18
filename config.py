@@ -26,6 +26,14 @@ def _sanitize_db_id(db_id: str) -> str:
 NOTION_DATABASE_ID = _sanitize_db_id(os.getenv("NOTION_DATABASE_ID"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# Múltiples API keys de Gemini para rotación/failover
+_gemini_keys_raw = os.getenv("GEMINI_API_KEYS", "")
+GEMINI_API_KEYS: list = (
+    [k.strip() for k in _gemini_keys_raw.split(",") if k.strip()]
+    if _gemini_keys_raw
+    else ([GEMINI_API_KEY] if GEMINI_API_KEY else [])
+)
+
 # API Keys para fallbacks (opcional)
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 JOOBLE_API_KEY = os.getenv("JOOBLE_API_KEY", "")
@@ -204,9 +212,9 @@ def validate_config():
         missing.append("NOTION_TOKEN")
     if not NOTION_DATABASE_ID:
         missing.append("NOTION_DATABASE_ID")
-    if not GEMINI_API_KEY:
-        missing.append("GEMINI_API_KEY")
-    
+    if not GEMINI_API_KEYS:
+        missing.append("GEMINI_API_KEY o GEMINI_API_KEYS")
+
     if missing:
         raise ValueError(
             f"Faltan variables de entorno requeridas: {', '.join(missing)}. "

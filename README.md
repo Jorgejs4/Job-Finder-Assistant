@@ -46,13 +46,14 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 15. **Preview HTML del CV:** Visualiza el CV generado directamente en el dashboard (con foto) antes de descargar.
 16. **Descarga PDF:** Botón para descargar el CV en PDF ATS-compatible.
 17. **Formulario de feedback:** Escribe qué cambiar del CV y se regenera automáticamente.
-18. **KPIs y gráficos:** Ofertas, scrapers, pipeline, comparador de ofertas, inteligencia salarial.
+18. **Panel de gestión (4 tabs):** Mis Ofertas (filtrado avanzado), Pipeline, Estadísticas, Ejecuciones.
 
 ### Infraestructura
-19. **Parada en 429:** Si se agota la cuota de Gemini, el programa PARA inmediatamente (sin reintentos innecesarios) y envía email de aviso.
-20. **Rate limiter adaptativo:** 10s base entre llamadas Gemini, backoff en 429 (x4 hasta 120s), recuperación lenta (x0.7).
-21. **Tests automatizados:** 19 tests unitarios verificando scrapers, Gemini, CV generator y feedback manager.
-22. **GitHub Actions:** CI/CD con 120min timeout, git pull --rebase para evitar conflictos de data.json.
+19. **Rotación de API keys:** Múltiples keys de Gemini con failover automático. Si una key recibe 429, rota a la siguiente automáticamente. Thread-safe con `KeyPool`.
+20. **Parada en 429:** Si se agotan TODAS las API keys, el programa PARA inmediatamente y envía email de aviso.
+21. **Rate limiter adaptativo:** 10s base entre llamadas Gemini, backoff en 429 (x4 hasta 120s), recuperación lenta (x0.7).
+22. **Tests automatizados:** 19 tests unitarios verificando scrapers, Gemini, CV generator y feedback manager.
+23. **GitHub Actions:** CI/CD con 120min timeout, git pull --rebase para evitar conflictos de data.json.
 
 ---
 
@@ -135,23 +136,18 @@ python fill_empty_fields.py --dry-run
 
 ## Dashboard
 
-Dashboard interactivo con **Streamlit**:
+Dashboard interactivo con **Streamlit**, reimaginado como panel de gestión de ofertas:
 
-### Qué muestra
+### 4 Tabs
 
-- **Preview de CVs:** Visualiza el HTML del CV generado con foto, skills agrupadas y métricas. Descarga el PDF con un click.
-- **Feedback de CVs:** Formulario para pedir cambios al CV (ej: "más detalle en Spring Boot"). Se procesa automáticamente en la próxima ejecución.
-- **KPIs:** Ofertas encontradas, añadidas a Notion, analizadas por IA, scrapers OK/fallidos.
-- **Pipeline de aplicaciones:** Funnel visual del estado de cada oferta (7 colores).
-- **Inteligencia salarial:** Promedio, mediana, min, max + desglose por modalidad y plataforma.
-- **Comparador de ofertas:** Selecciona 2-3 ofertas y compáralas lado a lado.
-- **Gráficos:** Evolución de ofertas, scrapers OK vs fallidos, distribución salarial.
-- **Tabla de scrapers:** Estado de cada plataforma y número de ofertas.
-- **Exportación:** Botón para descargar el CSV filtrado.
+- **💼 Mis Ofertas** — Todas las ofertas de todas las ejecuciones, deduplicadas por URL. 7 filtros: fuente, modalidad, estado, match %, rango salarial, tech stack y búsqueda por texto. Cada oferta es expandible: carta de presentación, CV preview HTML con foto, descarga PDF y formulario de feedback. Exportación CSV.
+- **🔄 Pipeline** — Funnel visual de estados (Nuevo → Rechazado) con barra de colores y métricas. Ofertas agrupadas por estado.
+- **📊 Estadísticas** — Inteligencia salarial completa (promedio, mediana, min, max + desglose por modalidad y plataforma). Skills gap analysis (skills que tienes vs las que faltan). Resumen del mercado (distribución por modalidad, plataforma, % remoto).
+- **📈 Ejecuciones** — KPIs de la última ejecución, tabla de scrapers OK/fallidos, historial con gráficos de evolución.
 
 ### Cómo funciona
 
-El dashboard lee los datos directamente desde el repositorio en GitHub (archivo `results/data.json`). Cada ejecución del scraper actualiza este archivo automáticamente.
+El dashboard lee los datos directamente desde el repositorio en GitHub (archivo `results/data.json`). Agrega TODAS las ofertas de TODAS las ejecuciones y las deduplica por URL (conserva la versión más reciente).
 
 ### Lanzarlo localmente
 
@@ -235,6 +231,7 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 | Secret | Requerido | Descripción |
 |--------|-----------|-------------|
 | `GEMINI_API_KEY` | Sí | API Key de Google AI Studio |
+| `GEMINI_API_KEYS` | No | Múltiples keys separadas por coma para failover automático (ej: `key1,key2,key3`). Si se configura, `GEMINI_API_KEY` se usa como fallback. |
 | `NOTION_TOKEN` | Sí | Token de integración de Notion |
 | `NOTION_DATABASE_ID` | Sí | ID de la base de datos de Notion |
 | `RAPIDAPI_KEY` | No | Fallback JSearch (solo resultados US/UK) |
@@ -265,6 +262,17 @@ En **Settings > Secrets and variables > Actions** de tu repositorio:
 4. Añade `WEBHOOK_URL` como secret en GitHub
 5. Opcional: `WEBHOOK_MIN_MATCH=80` (default) para filtrar por match score
 
+### Rotación de API keys de Gemini (recomendado)
+
+Si tienes múltiples API keys de Google AI Studio, puedes configurarlas para failover automático:
+
+1. Crea varias keys en https://aistudio.google.com/apikey
+2. Añade `GEMINI_API_KEYS=key1,key2,key3` como secret en GitHub (separadas por coma)
+3. Cuando una key agote su cuota (429), el sistema rota automáticamente a la siguiente
+4. Si se agotan todas las keys, el pipeline para y envía email de aviso
+
+**Fallback:** Si solo configuras `GEMINI_API_KEY` (una sola key), funciona igual que antes. `GEMINI_API_KEYS` es opcional pero recomendado para mayor disponibilidad.
+
 ### Campos opcionales en Notion
 
 | Campo | Tipo | Descripción |
@@ -290,7 +298,7 @@ El workflow se ejecuta **dos veces al día (9:00 y 21:00 hora española)**:
 9. **Email** → Resumen HTML con top ofertas y comparación con ejecución anterior
 10. **Commit** → Actualiza `results/data.json` y `results/cvs/` en el repositorio
 
-Si Gemini devuelve 429 (cuota agotada), el programa **para inmediatamente** y envía email de aviso. No pierde tiempo reintentando innecesariamente (1 reintento máximo).
+Si Gemini devuelve 429 (cuota agotada), el programa **intenta rotar a la siguiente API key** automáticamente. Si se agotan TODAS las keys, PARA inmediatamente y envía email de aviso.
 
 También puedes ejecutarlo manualmente desde **Actions > Job Scraper and Notion Sync > Run workflow**.
 

@@ -88,6 +88,7 @@ jobs:
     - name: Run Scraper
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
@@ -106,6 +107,7 @@ jobs:
         docker run --rm \
           -v "$(pwd)/results:/app/results" \
           -e GEMINI_API_KEY="$GEMINI_API_KEY" \
+          -e GEMINI_API_KEYS="$GEMINI_API_KEYS" \
           -e NOTION_TOKEN="$NOTION_TOKEN" \
           -e NOTION_DATABASE_ID="$NOTION_DATABASE_ID" \
           -e RAPIDAPI_KEY="$RAPIDAPI_KEY" \
