@@ -99,9 +99,10 @@ class TestGeminiModels:
         fields = list(OfferMatch.model_fields.keys())
         assert "match_score" in fields
         assert "tech_stack" in fields
-        assert "cover_letter" in fields
-        assert "cv_summary" in fields
-        assert "cv_skills" in fields
+        assert "work_mode" in fields
+        assert "estimated_salary" in fields
+        assert "required_experience" in fields
+        assert len(fields) == 7
 
     def test_profile_analysis_fields(self):
         from utils.gemini_client import ProfileAnalysis

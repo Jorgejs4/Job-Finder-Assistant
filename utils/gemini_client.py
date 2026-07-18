@@ -96,26 +96,6 @@ class OfferMatch(BaseModel):
     required_experience: int = Field(
         description="Número de años de experiencia laboral que pide la empresa para el puesto. Si la oferta menciona explícitamente los años (ej: '3 años de experiencia'), devuelve ese número. Si solo pone 'junior' o no menciona experiencia, devuelve 0. Si pone 'senior' sin número concreto, devuelve 5. Máximo 20."
     )
-    cover_letter: str = Field(
-        default="",
-        description="Carta de presentación personalizada. Se genera por separado."
-    )
-    cv_summary: str = Field(
-        default="",
-        description="Resumen profesional. Se genera por separado."
-    )
-    cv_experience_adapted: List[dict] = Field(
-        default_factory=list,
-        description="Experiencia laboral adaptada. Se genera por separado."
-    )
-    cv_skills: List[str] = Field(
-        default_factory=list,
-        description="Habilidades relevantes. Se generan por separado."
-    )
-    cv_projects: List[dict] = Field(
-        default_factory=list,
-        description="Proyectos reformulados. Se generan por separado."
-    )
 
 class CVCustomization(BaseModel):
     """Contenido CV/cover letter generado por separado para no sobrecargar flash-lite."""
