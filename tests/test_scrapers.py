@@ -32,7 +32,6 @@ ALL_SCRAPERS = {
     "InfoJobs": ("scrapers.infojobs_scraper", "InfoJobsScraper"),
     "LinkedIn": ("scrapers.linkedin_scraper", "LinkedInScraper"),
     "Indeed": ("scrapers.indeed_scraper", "IndeedScraper"),
-    "RemoteOK": ("scrapers.remoteok_scraper", "RemoteOKScraper"),
     "Remotive": ("scrapers.remotive_scraper", "RemotiveScraper"),
     "TecnoJobs": ("scrapers.tecnobs_scraper", "TecnoJobsScraper"),
     "Jobfluent": ("scrapers.jobfluent_scraper", "JobfluentScraper"),

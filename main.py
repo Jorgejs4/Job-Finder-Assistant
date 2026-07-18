@@ -16,7 +16,6 @@ from utils.feedback_manager import FeedbackManager
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
 from scrapers.indeed_scraper import IndeedScraper
-from scrapers.remoteok_scraper import RemoteOKScraper
 from scrapers.remotive_scraper import RemotiveScraper
 from scrapers.tecnobs_scraper import TecnoJobsScraper
 from scrapers.jobfluent_scraper import JobfluentScraper
@@ -157,7 +156,6 @@ def main():
         InfoJobsScraper(),
         LinkedInScraper(),
         IndeedScraper(),
-        RemoteOKScraper(),
         RemotiveScraper(),
         TecnoJobsScraper(),
         JobfluentScraper(),
@@ -272,8 +270,8 @@ def main():
 
     source_priority = {
         "InfoJobs": 0, "LinkedIn": 1, "Indeed": 2,
-        "RemoteOK": 3, "Remotive": 4, "TecnoEmpleo": 5,
-        "Jobfluent": 6, "Jooble": 7, "GetOnBoard": 8, "API Fallback": 9,
+        "Remotive": 3, "TecnoEmpleo": 4,
+        "Jobfluent": 5, "Jooble": 6, "GetOnBoard": 7, "API Fallback": 8,
     }
     jobs_to_process.sort(key=lambda j: source_priority.get(j.get("source", ""), 99))
 

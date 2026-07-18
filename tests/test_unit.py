@@ -73,7 +73,7 @@ class TestConfig:
 
     def test_en_scrapers(self):
         assert "LinkedInScraper" in config.EN_SCRAPERS
-        assert "RemoteOKScraper" in config.EN_SCRAPERS
+        assert "RemoteOKScraper" not in config.EN_SCRAPERS
         assert "InfoJobsScraper" not in config.EN_SCRAPERS
 
     def test_location_map_keys(self):

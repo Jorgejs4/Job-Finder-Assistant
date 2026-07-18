@@ -124,10 +124,10 @@ NON_TECH_KEYWORDS = [
 ]
 
 # Scrapers que buscan en inglés
-EN_SCRAPERS = {"LinkedInScraper", "RemoteOKScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper"}
+EN_SCRAPERS = {"LinkedInScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper"}
 
 # Plataformas que publican ofertas en inglés
-ENGLISH_SOURCES = {"LinkedIn", "RemoteOK", "Remotive"}
+ENGLISH_SOURCES = {"LinkedIn", "Remotive"}
 
 
 def detect_language(source: str, title: str = "", description: str = "") -> str:
