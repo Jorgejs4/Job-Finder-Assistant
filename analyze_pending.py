@@ -49,6 +49,11 @@ class RateLimiter:
         with self._lock:
             self._interval = self._min_interval
 
+    def backoff(self, factor=4.0, max_interval=120.0):
+        with self._lock:
+            self._interval = min(self._interval * factor, max_interval)
+            print(f"[RateLimiter] Backoff → {self._interval:.1f}s")
+
     def backoff(self):
         with self._lock:
             self._interval = min(self._interval * 4, 120)
@@ -239,6 +244,7 @@ def main():
                             rate_limiter.reset_interval()
                             write_job_back(data, url, job)
                         except Exception as e:
+                            rate_limiter.backoff()
                             print(f"    [Entrevista Error] {e}")
 
                         # Investigar empresa (match >= 60)
@@ -255,6 +261,7 @@ def main():
                                 rate_limiter.reset_interval()
                                 write_job_back(data, url, job)
                             except Exception as e:
+                                rate_limiter.backoff()
                                 print(f"    [Empresa Error] {e}")
 
                             # Matching por proyectos
@@ -272,6 +279,7 @@ def main():
                                     rate_limiter.reset_interval()
                                     write_job_back(data, url, job)
                                 except Exception as e:
+                                    rate_limiter.backoff()
                                     print(f"    [Proyectos Error] {e}")
 
                 except RuntimeError as e:
@@ -280,9 +288,11 @@ def main():
                         stop_event.set()
                         break
                     failed += 1
+                    rate_limiter.backoff()
                     print(f"  [Error] {job.get('title', '?')}: {e}")
                 except Exception as e:
                     failed += 1
+                    rate_limiter.backoff()
                     print(f"  [Error] {job.get('title', '?')}: {e}")
 
                 if (analyzed + failed) % SAVE_INTERVAL == 0:
@@ -383,9 +393,11 @@ def main():
                     stop_event.set()
                     break
                 failed += 1
+                rate_limiter.backoff()
                 print(f"  [Error] {job.get('title', '?')}: {e}")
             except Exception as e:
                 failed += 1
+                rate_limiter.backoff()
                 print(f"  [Error] {job.get('title', '?')}: {e}")
 
             if (analyzed + failed) % SAVE_INTERVAL == 0:

@@ -204,14 +204,14 @@ class GeminiClient:
             return True
         return False
 
-    def _generate_with_retry(self, prompt: str, schema, max_retries: int = 1) -> str:
+    def _generate_with_retry(self, prompt: str, schema, max_retries: int = 3) -> str:
         """
-        Realiza la llamada a la API de Gemini con reintentos limitados.
-        En free tier, 1 reintento es suficiente. Si falla, el caller decide qué hacer.
-        Si recibe 429, rota a la siguiente API key antes de reintentar.
+        Realiza la llamada a la API de Gemini con reintentos.
+        Reintenta en 429 (rotando key) y en errores de validación (respuesta incompleta).
         """
         import time
         from google.api_core.exceptions import ResourceExhausted
+        from pydantic import ValidationError
         
         generation_config = genai.GenerationConfig(
             response_mime_type="application/json",
@@ -219,32 +219,35 @@ class GeminiClient:
             temperature=0.2
         )
         
-        for attempt in range(max_retries + 1):
+        last_error = None
+        for attempt in range(max_retries):
             try:
                 response = self.model.generate_content(
                     prompt,
                     generation_config=generation_config
                 )
-                return response.text
+                text = response.text
+                # Validar que el JSON es parseable y completo
+                data = json.loads(text)
+                schema(**data)  # Pydantic validation
+                return text
             except ResourceExhausted:
-                if attempt < max_retries:
-                    if self._on_429():
-                        wait_time = 5
-                        print(f"\n[Gemini] 429 → key #{self.key_pool.active_index + 1}. Reintentando en {wait_time}s...")
-                    else:
-                        raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
+                last_error = "429"
+                if self._on_429():
+                    wait_time = min(5 * (attempt + 1), 30)
+                    print(f"\n[Gemini] 429 → key #{self.key_pool.active_index + 1}. Reintentando en {wait_time}s... (attempt {attempt+1}/{max_retries})")
                     time.sleep(wait_time)
                 else:
-                    if not self.key_pool.exhausted and self._on_429():
-                        wait_time = 5
-                        print(f"\n[Gemini] 429 → key #{self.key_pool.active_index + 1}. Reintentando en {wait_time}s...")
-                        time.sleep(wait_time)
-                        continue
                     raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
+            except (json.JSONDecodeError, ValidationError) as e:
+                last_error = str(e)[:100]
+                wait_time = min(3 * (attempt + 1), 15)
+                print(f"\n[Gemini] Respuesta incompleta/inválida. Reintentando en {wait_time}s... (attempt {attempt+1}/{max_retries})")
+                time.sleep(wait_time)
             except Exception as e:
                 raise e
                 
-        raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
+        raise RuntimeError(f"Gemini falló tras {max_retries} intentos. Último error: {last_error}")
 
     def analyze_cv(self, cv_text: str) -> ProfileAnalysis:
         """
