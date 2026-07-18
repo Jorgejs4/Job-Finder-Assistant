@@ -241,6 +241,39 @@ def main():
                         except Exception as e:
                             print(f"    [Entrevista Error] {e}")
 
+                        # Investigar empresa (match >= 60)
+                        if match >= 60:
+                            try:
+                                rate_limiter.wait()
+                                company_profile = gemini.research_company(
+                                    company_name=job.get("company", ""),
+                                    offer_title=job["title"],
+                                    offer_description=job.get("description", "") or job["title"],
+                                    language=job.get("language", "es"),
+                                )
+                                job["company_profile"] = company_profile.model_dump()
+                                rate_limiter.reset_interval()
+                                write_job_back(data, url, job)
+                            except Exception as e:
+                                print(f"    [Empresa Error] {e}")
+
+                            # Matching por proyectos
+                            if config.USER_PROJECTS:
+                                try:
+                                    rate_limiter.wait()
+                                    project_match = gemini.match_projects(
+                                        cv_text=cv_text,
+                                        offer_title=job["title"],
+                                        offer_description=job.get("description", "") or job["title"],
+                                        user_projects=config.USER_PROJECTS,
+                                        language=job.get("language", "es"),
+                                    )
+                                    job["project_match"] = project_match.model_dump()
+                                    rate_limiter.reset_interval()
+                                    write_job_back(data, url, job)
+                                except Exception as e:
+                                    print(f"    [Proyectos Error] {e}")
+
                 except RuntimeError as e:
                     if "429" in str(e):
                         print(f"\n[CRÍTICO] Todas las API keys agotadas. Parando.")
@@ -310,6 +343,39 @@ def main():
                         write_job_back(data, url, job)
                     except Exception as e:
                         print(f"    [Entrevista Error] {e}")
+
+                    # Investigar empresa (match >= 60)
+                    if match >= 60:
+                        try:
+                            rate_limiter.wait()
+                            company_profile = gemini.research_company(
+                                company_name=job.get("company", ""),
+                                offer_title=job["title"],
+                                offer_description=job.get("description", "") or job["title"],
+                                language=job.get("language", "es"),
+                            )
+                            job["company_profile"] = company_profile.model_dump()
+                            rate_limiter.reset_interval()
+                            write_job_back(data, url, job)
+                        except Exception as e:
+                            print(f"    [Empresa Error] {e}")
+
+                        # Matching por proyectos
+                        if config.USER_PROJECTS:
+                            try:
+                                rate_limiter.wait()
+                                project_match = gemini.match_projects(
+                                    cv_text=cv_text,
+                                    offer_title=job["title"],
+                                    offer_description=job.get("description", "") or job["title"],
+                                    user_projects=config.USER_PROJECTS,
+                                    language=job.get("language", "es"),
+                                )
+                                job["project_match"] = project_match.model_dump()
+                                rate_limiter.reset_interval()
+                                write_job_back(data, url, job)
+                            except Exception as e:
+                                print(f"    [Proyectos Error] {e}")
 
             except RuntimeError as e:
                 if "429" in str(e):

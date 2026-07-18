@@ -301,3 +301,11 @@ def load_preferences():
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
 _webhook_min = os.getenv("WEBHOOK_MIN_MATCH", "80")
 WEBHOOK_MIN_MATCH = int(_webhook_min) if _webhook_min else 80
+
+# Proyectos personales del candidato (para Feature 6: Matching por proyectos)
+USER_PROJECTS = os.getenv("USER_PROJECTS", "")
+
+# Portfolio/Certificaciones (para Feature 11)
+USER_CERTIFICATIONS = os.getenv("USER_CERTIFICATIONS", "")
+USER_PORTFOLIO_URL = os.getenv("USER_PORTFOLIO_URL", "")
+USER_GITHUB = os.getenv("USER_GITHUB", "")

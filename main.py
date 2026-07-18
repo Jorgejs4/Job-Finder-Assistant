@@ -511,6 +511,37 @@ def main():
                 except Exception as e:
                     print(f"    [Entrevista] Error generando interview prep: {e}")
 
+            # Investigar empresa para ofertas con match >= 60
+            if match_result.match_score >= 60:
+                try:
+                    rate_limiter.wait()
+                    company_profile = gemini.research_company(
+                        company_name=job.get("company", ""),
+                        offer_title=job["title"],
+                        offer_description=desc_for_match,
+                        language=language,
+                    )
+                    job["company_profile"] = company_profile.model_dump()
+                    rate_limiter.reset_interval()
+                except Exception as e:
+                    print(f"    [Empresa] Error investigando empresa: {e}")
+
+                # Matching por proyectos para match >= 60
+                if config.USER_PROJECTS:
+                    try:
+                        rate_limiter.wait()
+                        project_match = gemini.match_projects(
+                            cv_text=cv_text,
+                            offer_title=job["title"],
+                            offer_description=desc_for_match,
+                            user_projects=config.USER_PROJECTS,
+                            language=language,
+                        )
+                        job["project_match"] = project_match.model_dump()
+                        rate_limiter.reset_interval()
+                    except Exception as e:
+                        print(f"    [Proyectos] Error en match de proyectos: {e}")
+
             success = notion_sync.add_job_to_notion(job)
             if success:
                 new_jobs_added += 1

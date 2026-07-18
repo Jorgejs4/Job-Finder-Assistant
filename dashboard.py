@@ -19,6 +19,7 @@ import statistics
 from datetime import datetime
 from utils.feedback_manager import FeedbackManager
 import config
+from utils.calendar_integration import create_followup_event, create_interview_event
 
 
 def sync_statuses_from_notion(data):
@@ -101,7 +102,8 @@ def aggregate_all_jobs(runs):
                             "cover_letter_pdf_url", "language", "interview_prep",
                             "match_score", "tech_stack", "tailored_advice",
                             "salary", "work_mode", "salary_is_estimate",
-                            "required_experience", "status"]:
+                            "required_experience", "status",
+                            "company_profile", "project_match"]:
                     if job.get(key):
                         existing[key] = job[key]
             else:
@@ -176,6 +178,18 @@ latest = runs[0]
 tab_mis_ofertas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
     ["💼 Mis Ofertas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
 )
+
+if config.USER_PORTFOLIO_URL or config.USER_CERTIFICATIONS or config.USER_GITHUB:
+    with st.sidebar:
+        st.subheader("📋 Mi Perfil")
+        if config.USER_GITHUB:
+            st.markdown(f"**GitHub:** [{config.USER_GITHUB}](https://github.com/{config.USER_GITHUB})")
+        if config.USER_PORTFOLIO_URL:
+            st.link_button("🌐 Portfolio", config.USER_PORTFOLIO_URL)
+        if config.USER_CERTIFICATIONS:
+            st.markdown("**Certificaciones:**")
+            for cert in config.USER_CERTIFICATIONS.split(","):
+                st.markdown(f"  📜 {cert.strip()}")
 
 # ═══════════════════════════════════════════════════════════════
 # TAB 1: MIS OFERTAS — Panel principal
@@ -379,6 +393,15 @@ with tab_mis_ofertas:
 
             if link:
                 st.link_button("🔗 Ver oferta original", link)
+                ics_int = create_interview_event(title, company, link)
+                with open(ics_int, "rb") as f:
+                    st.download_button(
+                        "📅 Crear evento entrevista",
+                        f.read(),
+                        file_name=os.path.basename(ics_int),
+                        mime="text/calendar",
+                        key=f"ics_int_{link[:20]}",
+                    )
 
             if advice:
                 with st.expander("💡 Consejos personalizados"):
@@ -421,6 +444,64 @@ with tab_mis_ofertas:
                         st.markdown("**Consejos:**")
                         for tip in tips:
                             st.markdown(f"• {tip}")
+
+            company_profile = j.get("company_profile")
+            if company_profile:
+                st.divider()
+                with st.expander(f"🏢 Perfil de {company_profile.get('name', company)}", expanded=False):
+                    cp = company_profile
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.markdown(f"**Sector:** {cp.get('industry', 'N/A')}")
+                        st.markdown(f"**Tamaño:** {cp.get('size', 'N/A')}")
+                        st.markdown(f"**Salario:** {cp.get('salary_range', 'N/A')}")
+                    with c2:
+                        remote = "✅ Sí" if cp.get('remote_friendly') else "❌ No"
+                        st.markdown(f"**Remoto:** {remote}")
+                        techs = ", ".join(cp.get("tech_stack", [])[:8])
+                        st.markdown(f"**Tech stack:** {techs}")
+
+                    if cp.get("culture"):
+                        st.markdown(f"**Cultura:** {cp['culture']}")
+
+                    pros = cp.get("pros", [])
+                    if pros:
+                        st.markdown("**✅ Pros:**")
+                        for p in pros:
+                            st.markdown(f"  • {p}")
+
+                    cons = cp.get("cons", [])
+                    if cons:
+                        st.markdown("**⚠️ A tener en cuenta:**")
+                        for c in cons:
+                            st.markdown(f"  • {c}")
+
+                    rec = cp.get("recommendation", "")
+                    if rec:
+                        st.info(f"💡 {rec}")
+
+            project_match = j.get("project_match")
+            if project_match:
+                st.divider()
+                with st.expander("📁 Match de Proyectos Personales", expanded=False):
+                    pm = project_match
+                    st.metric("Relevancia de proyectos", f"{pm.get('project_relevance', 0)}%")
+
+                    matching = pm.get("matching_projects", [])
+                    if matching:
+                        st.markdown("**Proyectos relevantes:**")
+                        for mp in matching:
+                            st.markdown(f"  ✅ {mp}")
+
+                    missing = pm.get("missing_project_types", [])
+                    if missing:
+                        st.markdown("**Tipos de proyecto que te faltan:**")
+                        for m in missing:
+                            st.markdown(f"  📌 {m}")
+
+                    advice = pm.get("project_advice", "")
+                    if advice:
+                        st.info(f"💡 {advice}")
 
             if cv_url:
                 st.divider()
@@ -511,8 +592,22 @@ with tab_pipeline:
         st.warning(f"⏰ {len(follow_up_needed)} ofertas aplicadas hace 5+ días sin respuesta — considera hacer follow-up")
         with st.expander(f"🔔 Recordatorios pendientes ({len(follow_up_needed)})", expanded=False):
             for j in follow_up_needed:
-                st.write(f"• **{j.get('title','')}** @ {j.get('company','')} — hace {j['_days_applied']} días")
-                st.link_button("🔗 Ver oferta", j.get("link",""), key=f"fu_{j.get('link','')[:30]}")
+                title_fu = j.get('title', '')
+                company_fu = j.get('company', '')
+                st.write(f"• **{title_fu}** @ {company_fu} — hace {j['_days_applied']} días")
+                fc1, fc2 = st.columns([1, 1])
+                with fc1:
+                    st.link_button("🔗 Ver oferta", j.get("link", ""), key=f"fu_{j.get('link', '')[:30]}")
+                with fc2:
+                    ics_path = create_followup_event(title_fu, company_fu, j.get("link", ""), j["_days_applied"])
+                    with open(ics_path, "rb") as f:
+                        st.download_button(
+                            "📅 Recordatorio",
+                            f.read(),
+                            file_name=os.path.basename(ics_path),
+                            mime="text/calendar",
+                            key=f"ics_fu_{j.get('link', '')[:20]}",
+                        )
 
     if all_jobs:
         st.subheader("Ofertas por estado")

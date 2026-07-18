@@ -157,6 +157,34 @@ class InterviewPrep(BaseModel):
         description="Lista de 3-5 consejos específicos para preparar esta entrevista concreta."
     )
 
+
+class CompanyProfile(BaseModel):
+    name: str = Field(description="Nombre de la empresa")
+    industry: str = Field(description="Sector/industria de la empresa")
+    size: str = Field(description="Tamaño aproximado: 'startup' (1-50), 'mediana' (50-500), 'grande' (500+), 'enterprise' (5000+)")
+    tech_stack: List[str] = Field(description="Tecnologías principales que usa la empresa según la oferta")
+    culture: str = Field(description="Cultura laboral descrita (ej: 'orientada a resultados, agile, remoto-first')")
+    pros: List[str] = Field(description="3-5 puntos a favor de trabajar ahí")
+    cons: List[str] = Field(description="2-3 posibles inconvenientes o cosas a tener en cuenta")
+    salary_range: str = Field(description="Rango salarial aproximado para este tipo de puesto en esta empresa")
+    remote_friendly: bool = Field(description="True si la empresa es friendly con remoto")
+    recommendation: str = Field(description="Breve recomendación personalizada (1-2 oraciones) sobre si vale la pena aplicar")
+
+
+class ProjectMatch(BaseModel):
+    project_relevance: int = Field(
+        description="Puntuación de 0-100 indicando cuánto encajan los proyectos personales del candidato con lo que busca la empresa."
+    )
+    matching_projects: List[str] = Field(
+        description="Lista de proyectos del candidato que son relevantes para esta oferta."
+    )
+    missing_project_types: List[str] = Field(
+        description="Tipos de proyecto que el candidato NO tiene pero que serían relevantes para este puesto."
+    )
+    project_advice: str = Field(
+        description="Consejo concreto en 1-2 oraciones sobre qué proyecto personal crear o mejorar para destacar en esta oferta."
+    )
+
 class GeminiClient:
     def __init__(self):
         import os
@@ -841,3 +869,92 @@ Un cordial saludo."""
             except Exception as e:
                 raise e
         raise RuntimeError("429 - Todas las API keys agotadas en market_report.")
+
+    def research_company(self, company_name: str, offer_title: str, offer_description: str, language: str = "es") -> CompanyProfile:
+        """
+        Investiga una empresa basándose en la oferta de empleo y conocimiento general.
+        Devuelve un perfil de empresa con pros, contros, cultura, etc.
+        """
+        import os
+        if os.getenv("MOCK_GEMINI") == "true":
+            return CompanyProfile(
+                name=company_name,
+                industry="Tecnología / Software",
+                size="mediana",
+                tech_stack=["Python", "JavaScript", "Cloud"],
+                culture="Agile, orientada a resultados",
+                pros=["Buena reputación", "Tecnologías modernas"],
+                cons=["Puede exigir disponibilidad alta"],
+                salary_range="25.000€ - 40.000€",
+                remote_friendly=True,
+                recommendation="Empresa interesante para crecer técnicamente."
+            )
+
+        lang_name = "español" if language == "es" else "English"
+
+        prompt = f"""
+        Eres un analista de empresas tech. Investiga la empresa "{company_name}" basándote en la siguiente oferta de empleo y tu conocimiento general.
+
+        Proporciona un perfil completo de la empresa en {lang_name}:
+        - Sector/industria
+        - Tamaño aproximado (startup/mediana/grande/enterprise)
+        - Tecnologías principales que usa
+        - Cultura laboral estimada
+        - Pros de trabajar ahí (3-5 puntos)
+        - Cons o cosas a tener en cuenta (2-3 puntos)
+        - Rango salarial aproximado para este tipo de puesto
+        - Si es remote-friendly
+        - Breve recomendación personalizada
+
+        Oferta de empleo:
+        Puesto: {offer_title}
+        Empresa: {company_name}
+        Descripción:
+        {offer_description[:2000]}
+        """
+
+        response_text = self._generate_with_retry(prompt, CompanyProfile)
+        data = json.loads(response_text)
+        return CompanyProfile(**data)
+
+    def match_projects(self, cv_text: str, offer_title: str, offer_description: str, user_projects: str = "", language: str = "es") -> ProjectMatch:
+        """
+        Analiza cómo encajan los proyectos personales del candidato con la oferta.
+        """
+        import os
+        if os.getenv("MOCK_GEMINI") == "true":
+            return ProjectMatch(
+                project_relevance=60,
+                matching_projects=["Proyecto con IA"],
+                missing_project_types=["Proyecto con cloud"],
+                project_advice="Crea un proyecto que combine las tecnologías de la oferta."
+            )
+
+        lang_name = "español" if language == "es" else "English"
+        projects_text = user_projects if user_projects else "No se han proporcionado proyectos personales específicos."
+
+        prompt = f"""
+        Eres un experto en desarrollo de software y evaluación de portafolios.
+        Analiza los proyectos personales del candidato y evalúa cuánto encajan con la oferta de empleo.
+
+        Proyectos personales del candidato:
+        ---
+        {projects_text}
+        ---
+
+        CV del candidato:
+        ---
+        {cv_text[:3000]}
+        ---
+
+        Oferta de empleo:
+        Puesto: {offer_title}
+        Descripción:
+        {offer_description[:2000]}
+
+        Responde en {lang_name}.
+        """
+
+        response_text = self._generate_with_retry(prompt, ProjectMatch)
+        data = json.loads(response_text)
+        return ProjectMatch(**data)
