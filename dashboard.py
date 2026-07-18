@@ -20,6 +20,39 @@ from datetime import datetime
 from utils.feedback_manager import FeedbackManager
 import config
 
+
+def sync_statuses_from_notion(data):
+    """
+    Sincroniza el Estado de todas las ofertas desde Notion hacia data.json.
+    Actualiza solo los campos que cambiaron en Notion.
+    """
+    try:
+        from notion_sync import NotionSync
+        notion = NotionSync()
+        notion_statuses = notion.get_all_statuses()
+        if not notion_statuses:
+            return 0
+
+        updated = 0
+        for run in data.get("runs", []):
+            for job in run.get("jobs", []):
+                url = job.get("link", "")
+                if not url or url not in notion_statuses:
+                    continue
+                notion_status = notion_statuses[url]
+                current_status = job.get("status", "Nuevo")
+                if notion_status and notion_status != current_status:
+                    job["status"] = notion_status
+                    updated += 1
+
+        if updated:
+            data_path = os.path.join(RESULTS_DIR, "data.json")
+            with open(data_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        return updated
+    except Exception as e:
+        return 0
+
 st.set_page_config(
     page_title="Job Scraper Dashboard",
     page_icon="🔍",
@@ -48,7 +81,7 @@ def load_data():
 
 
 def aggregate_all_jobs(runs):
-    """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL."""
+    """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL y título+empresa."""
     jobs_by_url = {}
     for run in runs:
         run_id = run.get("run_id", "")
@@ -65,6 +98,7 @@ def aggregate_all_jobs(runs):
                 if run_ts < existing.get("_first_seen", ""):
                     existing["_first_seen"] = run_ts
                 for key in ["cover_letter", "custom_cv_url", "custom_cv_html",
+                            "cover_letter_pdf_url", "language", "interview_prep",
                             "match_score", "tech_stack", "tailored_advice",
                             "salary", "work_mode", "salary_is_estimate",
                             "required_experience", "status"]:
@@ -75,7 +109,39 @@ def aggregate_all_jobs(runs):
                 job["_last_seen"] = run_ts
                 job["_last_run_id"] = run_id
                 jobs_by_url[url] = job
-    return list(jobs_by_url.values())
+
+    all_jobs = list(jobs_by_url.values())
+    if not all_jobs:
+        return all_jobs
+
+    def normalize(text):
+        import unicodedata
+        text = text.lower().strip()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(c for c in text if not unicodedata.combining(c))
+        text = text.replace("sr.", "").replace("sr", "").replace("jr.", "").replace("jr", "")
+        text = text.replace("-", " ").replace("_", " ")
+        return " ".join(text.split())
+
+    title_company = {}
+    for j in all_jobs:
+        key = (normalize(j.get("title", "")), normalize(j.get("company", "")))
+        if key not in title_company:
+            title_company[key] = []
+        title_company[key].append(j)
+
+    deduped = []
+    for key, group in title_company.items():
+        if len(group) == 1:
+            deduped.append(group[0])
+        else:
+            best = max(group, key=lambda j: j.get("match_score", 0))
+            sources = [j.get("source", "") for j in group if j.get("source")]
+            if sources:
+                best["_also_on"] = ", ".join(set(sources))
+            deduped.append(best)
+
+    return deduped
 
 
 def parse_salary(val):
@@ -91,6 +157,12 @@ data = load_data()
 runs = data.get("runs", [])
 all_jobs = aggregate_all_jobs(runs)
 feedback_mgr = FeedbackManager()
+
+if config.NOTION_TOKEN and config.NOTION_DATABASE_ID:
+    synced = sync_statuses_from_notion(data)
+    if synced:
+        runs = data.get("runs", [])
+        all_jobs = aggregate_all_jobs(runs)
 
 st.title("🔍 Job Scraper Dashboard")
 st.caption(f"{len(all_jobs)} ofertas de {len(runs)} ejecuciones | Última carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
@@ -255,6 +327,7 @@ with tab_mis_ofertas:
         cover_letter = j.get("cover_letter", "")
         cv_url = j.get("custom_cv_url", "")
         cv_html_file = j.get("custom_cv_html", "")
+        cl_pdf_url = j.get("cover_letter_pdf_url", "")
 
         header_parts = [f"**{title}** @ {company}"]
         header_parts.append(f"🎯 {match}%")
@@ -264,8 +337,26 @@ with tab_mis_ofertas:
                 sal_label += " ≈"
             header_parts.append(f"💰 {sal_label}")
         header_parts.append(f"📍 {mode}")
-        header_parts.append(f"🏢 {source}")
-        header_parts.append(f"[{status}]")
+        source_display = f"🏢 {source}"
+        also_on = j.get("_also_on", "")
+        if also_on:
+            other = [s for s in also_on.split(", ") if s != source]
+            if other:
+                source_display += f" (+{', '.join(other)})"
+        header_parts.append(source_display)
+
+        days_applied = 0
+        if status == "Aplicado" and j.get("_first_seen"):
+            try:
+                first = datetime.fromisoformat(j["_first_seen"])
+                days_applied = (datetime.now() - first).days
+            except (ValueError, TypeError):
+                pass
+
+        if days_applied >= 5:
+            header_parts.append(f"[⏰ {status} — {days_applied}d]")
+        else:
+            header_parts.append(f"[{status}]")
 
         with st.expander(" | ".join(header_parts)):
             m1, m2, m3, m4, m5 = st.columns(5)
@@ -297,6 +388,39 @@ with tab_mis_ofertas:
                 st.divider()
                 st.subheader("📝 Carta de Presentación")
                 st.markdown(cover_letter)
+                if cl_pdf_url:
+                    st.link_button("📥 Descargar Carta en PDF", cl_pdf_url)
+
+            interview_prep = j.get("interview_prep")
+            if interview_prep:
+                st.divider()
+                with st.expander("🎯 Preparación para Entrevista", expanded=False):
+                    tech_qs = interview_prep.get("technical_questions", [])
+                    if tech_qs:
+                        st.markdown("**Preguntas Técnicas:**")
+                        for i, qa in enumerate(tech_qs, 1):
+                            st.markdown(f"**{i}. {qa.get('question', '')}**")
+                            st.markdown(f"→ {qa.get('answer', '')}")
+                            st.markdown("")
+
+                    beh_qs = interview_prep.get("behavioral_questions", [])
+                    if beh_qs:
+                        st.markdown("**Preguntas Comportamentales:**")
+                        for i, qa in enumerate(beh_qs, 1):
+                            st.markdown(f"**{i}. {qa.get('question', '')}**")
+                            st.markdown(f"→ {qa.get('answer', '')}")
+                            st.markdown("")
+
+                    key_topics = interview_prep.get("key_topics", [])
+                    if key_topics:
+                        st.markdown("**Temas Clave:**")
+                        st.markdown(", ".join(key_topics))
+
+                    tips = interview_prep.get("preparation_tips", [])
+                    if tips:
+                        st.markdown("**Consejos:**")
+                        for tip in tips:
+                            st.markdown(f"• {tip}")
 
             if cv_url:
                 st.divider()
@@ -370,6 +494,25 @@ with tab_pipeline:
                 bar_html += f'<div style="width:{pct}%; background:{colors[i]}; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:bold;">{count}</div>'
         bar_html += '</div>'
         st.markdown(bar_html, unsafe_allow_html=True)
+
+    follow_up_needed = []
+    for j in all_jobs:
+        if j.get("status") == "Aplicado" and j.get("_first_seen"):
+            try:
+                first = datetime.fromisoformat(j["_first_seen"])
+                days = (datetime.now() - first).days
+                if days >= 5:
+                    j["_days_applied"] = days
+                    follow_up_needed.append(j)
+            except (ValueError, TypeError):
+                pass
+
+    if follow_up_needed:
+        st.warning(f"⏰ {len(follow_up_needed)} ofertas aplicadas hace 5+ días sin respuesta — considera hacer follow-up")
+        with st.expander(f"🔔 Recordatorios pendientes ({len(follow_up_needed)})", expanded=False):
+            for j in follow_up_needed:
+                st.write(f"• **{j.get('title','')}** @ {j.get('company','')} — hace {j['_days_applied']} días")
+                st.link_button("🔗 Ver oferta", j.get("link",""), key=f"fu_{j.get('link','')[:30]}")
 
     if all_jobs:
         st.subheader("Ofertas por estado")
@@ -503,6 +646,58 @@ with tab_stats:
     with chart_c2:
         st.subheader("Por plataforma")
         st.bar_chart(pd.DataFrame(list(source_counts.items()), columns=["Plataforma", "Ofertas"]).set_index("Plataforma"))
+
+    if len(runs) > 1:
+        st.markdown("### 📈 Tendencias Temporales")
+
+        trend_data = []
+        for run in reversed(runs):
+            run_ts = run.get("timestamp", "")[:10]
+            run_jobs = run.get("jobs", [])
+
+            salaries = []
+            remote_count = 0
+            tech_counts = defaultdict(int)
+            for j in run_jobs:
+                s = parse_salary(j.get("salary"))
+                if s:
+                    salaries.append(s)
+                if j.get("work_mode") == "Remoto":
+                    remote_count += 1
+                for t in j.get("tech_stack", []):
+                    tech_counts[t] += 1
+
+            avg_salary = sum(salaries) // len(salaries) if salaries else 0
+            remote_pct = (remote_count / len(run_jobs) * 100) if run_jobs else 0
+            top3 = [t for t, _ in sorted(tech_counts.items(), key=lambda x: x[1], reverse=True)[:3]]
+
+            trend_data.append({
+                "Fecha": run_ts,
+                "Ofertas": len(run_jobs),
+                "Salario Promedio (€)": avg_salary,
+                "% Remoto": round(remote_pct, 1),
+                "Top Techs": ", ".join(top3) if top3 else "N/A",
+            })
+
+        if trend_data:
+            trend_df = pd.DataFrame(trend_data)
+
+            tc1, tc2 = st.columns(2)
+            with tc1:
+                st.markdown("**Salario promedio por ejecución**")
+                sal_chart = trend_df.set_index("Fecha")[["Salario Promedio (€)"]]
+                st.line_chart(sal_chart)
+            with tc2:
+                st.markdown("**% Remoto por ejecución**")
+                remote_chart = trend_df.set_index("Fecha")[["% Remoto"]]
+                st.line_chart(remote_chart)
+
+            st.markdown("**Ofertas encontradas por ejecución**")
+            offers_chart = trend_df.set_index("Fecha")[["Ofertas"]]
+            st.bar_chart(offers_chart)
+
+            with st.expander("Detalle por ejecución"):
+                st.dataframe(trend_df, use_container_width=True, hide_index=True)
 
 # ═══════════════════════════════════════════════════════════════
 # TAB 4: EJECUCIONES — Historial, scrapers, errores

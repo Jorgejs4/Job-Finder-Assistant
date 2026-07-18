@@ -31,10 +31,10 @@ class CVGenerator:
     def _slug(title: str, company: str) -> str:
         return hashlib.md5(f"{title}-{company}".encode()).hexdigest()[:12]
 
-    def generate(self, gemini_client, cv_text: str, job_data: dict, cv_pdf_path: str = None, feedback: str = None) -> tuple:
+    def generate(self, gemini_client, cv_text: str, job_data: dict, cv_pdf_path: str = None, feedback: str = None, cover_letter: str = None, language: str = "es") -> tuple:
         """
-        Genera CV personalizado (HTML + PDF) usando Gemini.
-        Retorna (html_path, pdf_path) o (None, None) si falla.
+        Genera CV personalizado (HTML + PDF) + Carta de Presentación (PDF) usando Gemini.
+        Retorna (html_path, pdf_path, cover_letter_pdf_path) o (None, None, None) si falla.
         """
         title = job_data.get("title", "")
         company = job_data.get("company", "")
@@ -44,6 +44,7 @@ class CVGenerator:
         slug = self._slug(title, company)
         html_path = os.path.join(self.output_dir, f"cv_{slug}.html")
         pdf_path = os.path.join(self.output_dir, f"cv_{slug}.pdf")
+        cl_pdf_path = os.path.join(self.output_dir, f"cover_{slug}.pdf")
 
         # Extraer foto si tenemos el PDF source
         photo_path = None
@@ -53,15 +54,15 @@ class CVGenerator:
         # Pedir a Gemini que genere el contenido (con feedback si existe)
         try:
             cv_content = gemini_client.generate_cv_content(
-                cv_text, title, company, advice, tech_stack, feedback=feedback
+                cv_text, title, company, advice, tech_stack, feedback=feedback, language=language
             )
         except Exception as e:
             print(f"  - [CV] Error generando contenido con Gemini: {e}")
-            return None, None
+            return None, None, None
 
-        # Renderizar HTML + PDF
+        # Renderizar HTML + PDF del CV
         try:
-            self._render_html(cv_content, photo_path, html_path)
+            self._render_html(cv_content, photo_path, html_path, language=language)
             print(f"  - [CV] HTML generado: {os.path.basename(html_path)}")
         except Exception as e:
             print(f"  - [CV] Error renderizando HTML: {e}")
@@ -74,19 +75,34 @@ class CVGenerator:
             print(f"  - [CV] Error renderizando PDF: {e}")
             pdf_path = None
 
-        return html_path, pdf_path
+        # Generar PDF de Carta de Presentación
+        if cover_letter:
+            try:
+                self._render_cover_letter_pdf(
+                    cover_letter, cv_content, photo_path, cl_pdf_path,
+                    company=company, role_title=title
+                )
+                print(f"  - [Carta] PDF generado: {os.path.basename(cl_pdf_path)}")
+            except Exception as e:
+                print(f"  - [Carta] Error renderizando PDF: {e}")
+                cl_pdf_path = None
+        else:
+            cl_pdf_path = None
 
-    def generate_from_data(self, cv_content: dict, title: str = "", company: str = "", photo_path: str = None) -> tuple:
+        return html_path, pdf_path, cl_pdf_path
+
+    def generate_from_data(self, cv_content: dict, title: str = "", company: str = "", photo_path: str = None, cover_letter: str = None, language: str = "es") -> tuple:
         """
         Genera CV a partir de datos pre-computed (sin Gemini).
-        Retorna (html_path, pdf_path).
+        Retorna (html_path, pdf_path, cover_letter_pdf_path).
         """
         slug = self._slug(title, company)
         html_path = os.path.join(self.output_dir, f"cv_{slug}.html")
         pdf_path = os.path.join(self.output_dir, f"cv_{slug}.pdf")
+        cl_pdf_path = os.path.join(self.output_dir, f"cover_{slug}.pdf")
 
         try:
-            self._render_html(cv_content, photo_path, html_path)
+            self._render_html(cv_content, photo_path, html_path, language=language)
         except Exception as e:
             print(f"  - [CV] Error renderizando HTML: {e}")
             html_path = None
@@ -97,18 +113,61 @@ class CVGenerator:
             print(f"  - [CV] Error renderizando PDF: {e}")
             pdf_path = None
 
-        return html_path, pdf_path
+        if cover_letter:
+            try:
+                self._render_cover_letter_pdf(
+                    cover_letter, cv_content, photo_path, cl_pdf_path,
+                    company=company, role_title=title
+                )
+            except Exception as e:
+                print(f"  - [Carta] Error renderizando PDF: {e}")
+                cl_pdf_path = None
+        else:
+            cl_pdf_path = None
 
-    def regenerate_with_feedback(self, gemini_client, cv_text: str, job_data: dict, feedback: str, cv_pdf_path: str = None) -> tuple:
+        return html_path, pdf_path, cl_pdf_path
+
+    def regenerate_with_feedback(self, gemini_client, cv_text: str, job_data: dict, feedback: str, cv_pdf_path: str = None, cover_letter: str = None, language: str = "es") -> tuple:
         """
         Regenera un CV incorporando el feedback del usuario.
         Sobreescribe HTML + PDF existentes.
-        Retorna (html_path, pdf_path).
+        Retorna (html_path, pdf_path, cover_letter_pdf_path).
         """
         print(f"  - [CV] Regenerando con feedback: {feedback[:80]}...")
-        return self.generate(gemini_client, cv_text, job_data, cv_pdf_path=cv_pdf_path, feedback=feedback)
+        return self.generate(gemini_client, cv_text, job_data, cv_pdf_path=cv_pdf_path, feedback=feedback, cover_letter=cover_letter, language=language)
 
-    def _render_html(self, cv_data: dict, photo_path: str = None, output_path: str = None):
+    def generate_cover_letter_pdf(self, cover_letter_text: str, job_data: dict, cv_pdf_path: str = None) -> str:
+        """
+        Genera solo el PDF de la carta de presentación (sin CV).
+        Retorna la ruta del PDF o None si falla.
+        """
+        title = job_data.get("title", "")
+        company = job_data.get("company", "")
+        slug = self._slug(title, company)
+        cl_pdf_path = os.path.join(self.output_dir, f"cover_{slug}.pdf")
+
+        photo_path = None
+        if cv_pdf_path:
+            photo_path = self._ensure_photo(cv_pdf_path)
+
+        # Usar datos básicos del CV si no tenemos contenido completo
+        cv_content = {
+            "name": job_data.get("candidate_name", ""),
+            "contact": job_data.get("candidate_contact", ""),
+        }
+
+        try:
+            self._render_cover_letter_pdf(
+                cover_letter_text, cv_content, photo_path, cl_pdf_path,
+                company=company, role_title=title
+            )
+            print(f"  - [Carta] PDF generado: {os.path.basename(cl_pdf_path)}")
+            return cl_pdf_path
+        except Exception as e:
+            print(f"  - [Carta] Error renderizando PDF: {e}")
+            return None
+
+    def _render_html(self, cv_data: dict, photo_path: str = None, output_path: str = None, language: str = "es"):
         """Renderiza el CV a HTML usando Jinja2."""
         from jinja2 import Environment, FileSystemLoader
 
@@ -134,6 +193,13 @@ class CVGenerator:
             if isinstance(desc, str):
                 exp["description"] = [b.strip() for b in desc.split("\n") if b.strip()]
 
+        section_names = {
+            "es": {"summary": "Perfil Profesional", "experience": "Experiencia Laboral", "education": "Formación", "skills": "Habilidades", "projects": "Proyectos Relevantes"},
+            "en": {"summary": "Professional Summary", "experience": "Work Experience", "education": "Education", "skills": "Skills", "projects": "Projects"},
+        }.get(language, {
+            "summary": "Perfil Profesional", "experience": "Experiencia Laboral", "education": "Formación", "skills": "Habilidades", "projects": "Proyectos Relevantes"
+        })
+
         html = template.render(
             name=cv_data.get("name", ""),
             contact=cv_data.get("contact", ""),
@@ -143,6 +209,8 @@ class CVGenerator:
             education=cv_data.get("education", []),
             skills=skills,
             projects=cv_data.get("projects", []),
+            language=language,
+            section_names=section_names,
         )
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -273,3 +341,37 @@ class CVGenerator:
         pdf.line(20, pdf.get_y(), 190, pdf.get_y())
         pdf.ln(3)
         pdf.set_text_color(0, 0, 0)
+
+    def _render_cover_letter_pdf(self, cover_letter_text: str, cv_data: dict, photo_path: str = None, output_path: str = None, company: str = "", role_title: str = ""):
+        """Renderiza una carta de presentación a PDF usando WeasyPrint + template HTML."""
+        from jinja2 import Environment, FileSystemLoader
+        from weasyprint import HTML
+
+        templates_dir = os.path.join(Path(__file__).resolve().parent.parent, "templates")
+        env = Environment(loader=FileSystemLoader(templates_dir))
+        template = env.get_template("cover_letter_template.html")
+
+        photo_b64 = None
+        if photo_path and os.path.exists(photo_path):
+            with open(photo_path, "rb") as f:
+                photo_b64 = base64.b64encode(f.read()).decode()
+
+        paragraphs = [p.strip() for p in cover_letter_text.split("\n") if p.strip()]
+
+        from datetime import date
+        today = date.today().strftime("%d de %B de %Y")
+
+        html = template.render(
+            name=cv_data.get("name", ""),
+            contact=cv_data.get("contact", ""),
+            photo_base64=photo_b64,
+            date=today,
+            company=company,
+            role_title=role_title,
+            location="",
+            paragraphs=paragraphs,
+            closing_greeting="Atentamente,",
+            language="es",
+        )
+
+        HTML(string=html).write_pdf(output_path)

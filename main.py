@@ -70,11 +70,13 @@ def _analyze_single_job(args):
             return job, None, "Stop signal received"
         desc_for_match = job.get("description") or job["title"]
         experience_hint = job.get("experience_hint", 0)
+        language = config.detect_language(job.get("source", ""), job.get("title", ""), desc_for_match)
         match_result = gemini.match_offer(
             cv_text=cv_text,
             offer_title=job["title"],
             offer_description=desc_for_match,
             experience_hint=experience_hint,
+            language=language,
         )
         rate_limiter.reset_interval()
         return job, match_result, None
@@ -368,7 +370,7 @@ def main():
                     "tech_stack": found_job.get("tech_stack", []),
                     "tailored_advice": found_job.get("tailored_advice", ""),
                 }
-                html_path, pdf_path = cv_gen.regenerate_with_feedback(
+                html_path, pdf_path, cl_pdf_path = cv_gen.regenerate_with_feedback(
                     gemini, cv_text, job_data_for_cv, fb_text, cv_pdf_path=str(cv_path)
                 )
                 if pdf_path:
@@ -379,6 +381,9 @@ def main():
                         for j in run.get("jobs", []):
                             if j.get("title") == fb_title and j.get("company") == fb_company:
                                 j["custom_cv_url"] = cv_url
+                                if cl_pdf_path:
+                                    cl_slug = os.path.basename(cl_pdf_path)
+                                    j["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
                                 break
                     with open(results.data_path, "w", encoding="utf-8") as f:
                         import json
@@ -459,6 +464,9 @@ def main():
             if match_result.cover_letter:
                 job["cover_letter"] = match_result.cover_letter
 
+            language = config.detect_language(job.get("source", ""), job.get("title", ""), job.get("description", "") or job["title"])
+            job["language"] = language
+
             if notion_sync._find_prop("CV") and match_result.cv_skills:
                 try:
                     job_data_for_cv = {
@@ -467,9 +475,11 @@ def main():
                         "tech_stack": job.get("tech_stack", []),
                         "tailored_advice": match_result.tailored_advice or "",
                     }
-                    html_path, pdf_path = cv_gen.generate(
+                    html_path, pdf_path, cl_pdf_path = cv_gen.generate(
                         gemini, cv_text, job_data_for_cv,
-                        cv_pdf_path=str(cv_path)
+                        cv_pdf_path=str(cv_path),
+                        cover_letter=match_result.cover_letter,
+                        language=language,
                     )
                     if pdf_path:
                         slug = os.path.basename(pdf_path)
@@ -477,8 +487,29 @@ def main():
                         job["custom_cv_url"] = cv_url
                         if html_path:
                             job["custom_cv_html"] = os.path.basename(html_path)
+                        if cl_pdf_path:
+                            cl_slug = os.path.basename(cl_pdf_path)
+                            job["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
                 except Exception as e:
                     print(f"    [CV] Error generando CV: {e}")
+
+            # Generar guía de entrevista para ofertas con match >= 50
+            if match_result.match_score >= 50:
+                try:
+                    rate_limiter.wait()
+                    techs_str = ", ".join(job.get("tech_stack", [])[:10])
+                    interview_prep = gemini.generate_interview_prep(
+                        cv_text=cv_text,
+                        offer_title=job["title"],
+                        company=job.get("company", ""),
+                        tech_stack=techs_str,
+                        offer_description=desc_for_match,
+                        language=language,
+                    )
+                    job["interview_prep"] = interview_prep.model_dump()
+                    rate_limiter.reset_interval()
+                except Exception as e:
+                    print(f"    [Entrevista] Error generando interview prep: {e}")
 
             success = notion_sync.add_job_to_notion(job)
             if success:

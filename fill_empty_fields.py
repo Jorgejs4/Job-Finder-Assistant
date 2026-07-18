@@ -145,7 +145,7 @@ def main():
                     "tech_stack": job["tech_stack"],
                     "tailored_advice": job["advice"],
                 }
-                _, cv_pdf_path = cv_gen.generate(gemini, cv_text, job_data, cv_pdf_path=config.CV_PATH)
+                _, cv_pdf_path, cl_pdf_path = cv_gen.generate(gemini, cv_text, job_data, cv_pdf_path=config.CV_PATH)
                 if cv_pdf_path:
                     slug = os.path.basename(cv_pdf_path)
                     cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"

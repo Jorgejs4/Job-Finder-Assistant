@@ -126,6 +126,27 @@ NON_TECH_KEYWORDS = [
 # Scrapers que buscan en inglés
 EN_SCRAPERS = {"LinkedInScraper", "RemoteOKScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper"}
 
+# Plataformas que publican ofertas en inglés
+ENGLISH_SOURCES = {"LinkedIn", "RemoteOK", "Remotive"}
+
+
+def detect_language(source: str, title: str = "", description: str = "") -> str:
+    """Detecta el idioma de una oferta basándose en la fuente y contenido."""
+    if source in ENGLISH_SOURCES:
+        return "en"
+    if source in ("InfoJobs", "Indeed", "TecnoEmpleo", "TecnoJobsScraper"):
+        return "es"
+    text = f"{title} {description}".lower()
+    english_words = {"experience", "required", "preferred", "remote", "hybrid", "company",
+                     "position", "role", "skills", "years", "knowledge", "responsibilities",
+                     "benefits", "requirements", "qualifications", "team", "project"}
+    spanish_words = {"experiencia", "requerido", "preferente", "remoto", "híbrido", "empresa",
+                     "puesto", "rol", "habilidades", "años", "conocimientos", "responsabilidades",
+                     "beneficios", "requisitos", "cualificaciones", "equipo", "proyecto"}
+    en_count = sum(1 for w in english_words if w in text)
+    es_count = sum(1 for w in spanish_words if w in text)
+    return "en" if en_count > es_count else "es"
+
 # Mapping de ubicaciones: expande nombres cortos a strings completos para cada scraper
 LOCATION_MAP = {
     "sevilla": {

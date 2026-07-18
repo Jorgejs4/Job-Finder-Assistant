@@ -156,7 +156,7 @@ class TestCVGenerator:
             "skills": {"Backend": ["Python", "Docker"]},
             "projects": [],
         }
-        html_path, pdf_path = cv_gen.generate_from_data(cv_content, "Test Job", "Test Co")
+        html_path, pdf_path, cl_pdf_path = cv_gen.generate_from_data(cv_content, "Test Job", "Test Co")
         assert pdf_path is not None
         assert os.path.exists(pdf_path)
         assert os.path.getsize(pdf_path) > 0

@@ -143,6 +143,20 @@ class SkillsGap(BaseModel):
         description="Lista de 3-5 recomendaciones concretas para cerrar las brechas más importantes."
     )
 
+class InterviewPrep(BaseModel):
+    technical_questions: List[dict] = Field(
+        description="Lista de 5-8 preguntas técnicas probables con respuestas sugeridas. Cada item: {question: str, answer: str}"
+    )
+    behavioral_questions: List[dict] = Field(
+        description="Lista de 3-5 preguntas comportamentales (STAR method) con respuestas sugeridas. Cada item: {question: str, answer: str}"
+    )
+    key_topics: List[str] = Field(
+        description="Lista de 3-5 temas clave que el candidato debe repasar para esta entrevista."
+    )
+    preparation_tips: List[str] = Field(
+        description="Lista de 3-5 consejos específicos para preparar esta entrevista concreta."
+    )
+
 class GeminiClient:
     def __init__(self):
         import os
@@ -237,7 +251,7 @@ class GeminiClient:
         data = json.loads(response_text)
         return ProfileAnalysis(**data)
 
-    def match_offer(self, cv_text: str, offer_title: str, offer_description: str, experience_hint: int = 0) -> OfferMatch:
+    def match_offer(self, cv_text: str, offer_title: str, offer_description: str, experience_hint: int = 0, language: str = "es") -> OfferMatch:
         """
         Compara el CV con una oferta de empleo y devuelve un Match Score, 
         el stack tecnológico detectado, modalidad, salario y consejos de optimización.
@@ -320,21 +334,26 @@ class GeminiClient:
                 cv_projects=[],
             )
 
+        lang_name = "español" if language == "es" else "English"
+        salary_hint = "euros (EUR)" if language == "es" else "US dollars (USD)"
+        country_hint = "España" if language == "es" else "the country where the job is located"
+        mode_values = "'Presencial', 'Remoto', 'Híbrido'" if language == "es" else "'On-site', 'Remote', 'Hybrid'"
+
         prompt = f"""
         Eres un reclutador experto y especialista en optimización de CVs. 
         Compara el siguiente currículum con la oferta de empleo provista y genera TODO lo siguiente en una sola respuesta:
 
         1. MATCH SCORE: Calcula una puntuación de compatibilidad (0 a 100). Si la oferta es para un puesto manual o no relacionado con el perfil de desarrollo del candidato (como operario de cementerio, reponedor, personal de limpieza, etc.), el Match Score DEBE ser muy bajo (por debajo de 10).
         2. TECH STACK: Identifica las tecnologías y herramientas requeridas en la oferta a partir del texto. Extrae tecnologías reales.
-        3. TAILORED_ADVICE: Escribe consejos breves, personalizados y accionables para adaptar el CV a ESTA oferta específica.
-        4. ESTIMATED_SALARY: Calcula el salario anual bruto estimado en euros. Si el texto no lo menciona, estima un salario realista para este puesto en España.
-        5. WORK_MODE: Modalidad de trabajo exacta: 'Presencial', 'Remoto' o 'Híbrido'.
+        3. TAILORED_ADVICE: Escribe consejos breves, personalizados y accionables para adaptar el CV a ESTA oferta específica. Responde en {lang_name}.
+        4. ESTIMATED_SALARY: Calcula el salario anual bruto estimado en {salary_hint}. Si el texto no lo menciona, estima un salario realista para este puesto en {country_hint}.
+        5. WORK_MODE: Modalidad de trabajo exacta: {mode_values}.
         6. REQUIRED_EXPERIENCE: Años de experiencia requeridos (0=junior, 3=mid, 5=senior sin número).
-        7. COVER_LETTER: Genera una carta de presentación personalizada en español (150-250 palabras, 3-4 párrafos). Sé específico: menciona tecnologías concretas del CV relevantes para ESTA oferta. Tono profesional pero cercano. No uses frases genéricas como "Me dirijo a ustedes".
-        8. CV SUMMARY: Resumen profesional de 3-4 líneas optimizado para ESTE puesto.
-        9. CV_EXPERIENCE_ADAPTED: Reorganiza la experiencia laboral adaptando las descripciones para resaltar lo más relevante para ESTA oferta.
+        7. COVER_LETTER: Genera una carta de presentación personalizada en {lang_name} (150-250 palabras, 3-4 párrafos). Sé específico: menciona tecnologías concretas del CV relevantes para ESTA oferta. Tono profesional pero cercano. No uses frases genéricas como "Me dirijo a ustedes" (o "I am writing to" en inglés).
+        8. CV SUMMARY: Resumen profesional de 3-4 líneas optimizado para ESTE puesto. En {lang_name}.
+        9. CV_EXPERIENCE_ADAPTED: Reorganiza la experiencia laboral adaptando las descripciones para resaltar lo más relevante para ESTA oferta. En {lang_name}.
         10. CV_SKILLS: Solo las habilidades más relevantes para este puesto ordenadas por relevancia.
-        11. CV_PROJECTS: Proyectos reformulados para encajar mejor con el puesto.
+        11. CV_PROJECTS: Proyectos reformulados para encajar mejor con el puesto. En {lang_name}.
 
         Currículum del candidato:
         ---
@@ -352,7 +371,7 @@ class GeminiClient:
         data = json.loads(response_text)
         return OfferMatch(**data)
 
-    def generate_cover_letter(self, cv_text: str, offer_title: str, company: str, offer_description: str) -> str:
+    def generate_cover_letter(self, cv_text: str, offer_title: str, company: str, offer_description: str, language: str = "es") -> str:
         """
         Genera una carta de presentación personalizada para una oferta específica.
         Devuelve el texto en formato markdown.
@@ -369,15 +388,18 @@ Quedo a su disposición para ampliar cualquier información.
 
 Un cordial saludo."""
 
+        lang_name = "español" if language == "es" else "English"
+        no_phrase = '"Me dirijo a ustedes para..."' if language == "es" else '"I am writing to express my interest in..."'
+
         prompt = f"""
         Eres un experto en redacción de cartas de presentación profesionales.
-        Genera una carta de presentación personalizada en español para esta oferta de empleo.
+        Genera una carta de presentación personalizada en {lang_name} para esta oferta de empleo.
 
         REGLAS:
         - La carta debe tener 3-4 párrafos cortos (máximo 4 oraciones cada uno)
         - Sé específico: menciona tecnologías y experiencias concretas del CV relevantes para ESTA oferta
         - Tono profesional pero cercano, sin ser genérico
-        - No uses frases hechas como "Me dirijo a ustedes para..." o "Quedo a su disposición"
+        - No uses frases hechas como {no_phrase}
         - Enfócate en POR QUÉ el candidato es buen fit para ESTE puesto específico
         - Menciona 2-3 tecnologías específicas que el candidato domina y que pide la oferta
         - Termina con un call-to-action natural
@@ -468,7 +490,7 @@ Un cordial saludo."""
         data = json.loads(response_text)
         return SkillsGap(**data)
 
-    def generate_cv_content(self, cv_text: str, offer_title: str, company: str, advice: str, tech_stack: str, feedback: str = None) -> dict:
+    def generate_cv_content(self, cv_text: str, offer_title: str, company: str, advice: str, tech_stack: str, feedback: str = None, language: str = "es") -> dict:
         """
         Genera contenido de CV de alta calidad para una oferta específica.
         Sigue las 10 reglas de un CV técnico profesional.
@@ -500,8 +522,14 @@ Un cordial saludo."""
         {feedback}
         Incorpora esta feedback en el nuevo CV. Si el usuario pide más detalle en alguna experiencia, añade más bullet points con métricas. Si pide cambiar el tono, adáptalo. Si pide quitar algo, elimínalo."""
 
+        lang_name = "español" if language == "es" else "English"
+        section_names = {
+            "es": {"summary": "PERFIL PROFESIONAL", "experience": "EXPERIENCIA LABORAL", "education": "FORMACIÓN", "skills": "HABILIDADES", "projects": "PROYECTOS RELEVANTES"},
+            "en": {"summary": "PROFESSIONAL SUMMARY", "experience": "WORK EXPERIENCE", "education": "EDUCATION", "skills": "SKILLS", "projects": "PROJECTS"},
+        }[language]
+
         prompt = f"""
-        Eres un experto en creación de CVs técnicos profesionales. Genera un CV de alta calidad optimizado para ESTA oferta de empleo.
+        Eres un experto en creación de CVs técnicos profesionales. Genera un CV de alta calidad optimizado para ESTA oferta de empleo. Responde en {lang_name}.
 
         REGLAS OBLIGATORIAS (las 10 reglas de un CV técnico profesional):
 
@@ -537,7 +565,7 @@ Un cordial saludo."""
 
         8. ADAPTADO A LA OFERTA: Las tecnologías que pide la oferta deben aparecer destacadas si realmente se dominan.
 
-        9. ATS-COMPATIBLE: Texto plano, sin tablas complejas, sin iconos, títulos estándar (Experiencia, Habilidades, Formación), incluir keywords de la oferta.
+        9. ATS-COMPATIBLE: Texto plano, sin tablas complejas, sin iconos, títulos estándar ({section_names['experience']}, {section_names['skills']}, {section_names['education']}), incluir keywords de la oferta.
 
         10. EVOLUCIÓN PROFESIONAL: Mostrar progresión (Junior → Backend → Senior) o mayor complejidad técnica (CRUD → Microservicios → Cloud).
 
@@ -611,6 +639,100 @@ Un cordial saludo."""
             except Exception as e:
                 raise e
         raise RuntimeError("429 - Todas las API keys agotadas en cv_content.")
+
+    def generate_interview_prep(self, cv_text: str, offer_title: str, company: str, tech_stack: str, offer_description: str, language: str = "es") -> InterviewPrep:
+        """
+        Genera una guía de preparación para entrevista basada en la oferta y el CV.
+        Retorna un InterviewPrep con preguntas técnicas, comportamentales, temas clave y consejos.
+        """
+        import os
+        if os.getenv("MOCK_GEMINI") == "true":
+            lang_name = "español" if language == "es" else "English"
+            if language == "es":
+                return InterviewPrep(
+                    technical_questions=[
+                        {"question": "¿Cómo diseñas una API REST escalable?", "answer": "Sigo principios de arquitectura hexagonal, uso caché Redis y balanceo de carga con Nginx."},
+                        {"question": "Explica la diferencia entre SQL y NoSQL", "answer": "SQL es relacional y consistente, NoSQL es flexible y escalable horizontalmente."},
+                    ],
+                    behavioral_questions=[
+                        {"question": "Describe una situación donde tuviste que resolver un problema complejo", "answer": "Migré un monolito a microservicios, reduciendo tiempos de despliegue de 2h a 15min."},
+                    ],
+                    key_topics=[tech.strip() for tech in tech_stack.split(",")[:5]],
+                    preparation_tips=["Revisa la documentación oficial de las tecnologías requeridas", "Prepara ejemplos concretos de tu experiencia"],
+                )
+            else:
+                return InterviewPrep(
+                    technical_questions=[
+                        {"question": "How do you design a scalable REST API?", "answer": "I follow hexagonal architecture principles, use Redis caching and Nginx load balancing."},
+                        {"question": "Explain the difference between SQL and NoSQL", "answer": "SQL is relational and consistent, NoSQL is flexible and horizontally scalable."},
+                    ],
+                    behavioral_questions=[
+                        {"question": "Describe a situation where you had to solve a complex problem", "answer": "I migrated a monolith to microservices, reducing deployment times from 2h to 15min."},
+                    ],
+                    key_topics=[tech.strip() for tech in tech_stack.split(",")[:5]],
+                    preparation_tips=["Review official documentation of required technologies", "Prepare concrete examples from your experience"],
+                )
+
+        lang_name = "español" if language == "es" else "English"
+
+        prompt = f"""
+        Eres un reclutador técnico experto. Genera una guía de preparación para una entrevista para este puesto.
+        Responde en {lang_name}.
+
+        Puesto: {offer_title}
+        Empresa: {company}
+        Tecnologías requeridas: {tech_stack}
+        Descripción de la oferta:
+        {offer_description}
+
+        CV del candidato:
+        ---
+        {cv_text}
+        ---
+
+        Genera:
+        1. 5-8 preguntas técnicas probables que podrían hacerse en esta entrevista, con respuestas sugeridas basadas en el CV
+        2. 3-5 preguntas comportamentales (STAR method) con respuestas sugeridas
+        3. 3-5 temas clave que el candidato debe repasar
+        4. 3-5 consejos específicos para esta oferta concreta
+
+        Responde CON SOLO el JSON con esta estructura exacta:
+        {{
+            "technical_questions": [{{"question": "Pregunta técnica", "answer": "Respuesta sugerida"}}],
+            "behavioral_questions": [{{"question": "Pregunta comportamental", "answer": "Respuesta sugerida"}}],
+            "key_topics": ["Tema 1", "Tema 2"],
+            "preparation_tips": ["Consejo 1", "Consejo 2"]
+        }}
+        """
+
+        import time
+        from google.api_core.exceptions import ResourceExhausted
+
+        for attempt in range(2):
+            try:
+                generation_config = genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    response_schema=InterviewPrep,
+                    temperature=0.2
+                )
+                response = self.model.generate_content(
+                    prompt,
+                    generation_config=generation_config
+                )
+                data = json.loads(response.text)
+                return InterviewPrep(**data)
+            except ResourceExhausted:
+                if attempt < 1:
+                    if self._on_429():
+                        print(f"\n[Gemini] 429 → interview_prep. Key #{self.key_pool.active_index + 1}. Esperando 5s...")
+                        time.sleep(5)
+                    else:
+                        raise RuntimeError("429 - Todas las API keys agotadas en interview_prep.")
+                else:
+                    raise RuntimeError("429 - Todas las API keys agotadas en interview_prep.")
+            except Exception as e:
+                raise e
+        raise RuntimeError("429 - Todas las API keys agotadas en interview_prep.")
 
     def generate_market_report(self, cv_text: str, jobs_data: list) -> str:
         """

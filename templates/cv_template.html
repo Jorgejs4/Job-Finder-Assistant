@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ language | default('es') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -173,14 +173,14 @@
 
 {% if summary %}
 <div class="section">
-  <div class="section-title">Perfil Profesional</div>
+  <div class="section-title">{{ section_names.summary | default('Perfil Profesional') }}</div>
   <div class="summary">{{ summary }}</div>
 </div>
 {% endif %}
 
 {% if experience %}
 <div class="section">
-  <div class="section-title">Experiencia Laboral</div>
+  <div class="section-title">{{ section_names.experience | default('Experiencia Laboral') }}</div>
   {% for exp in experience %}
   <div class="exp-item">
     <div class="exp-header">
@@ -212,7 +212,7 @@
 
 {% if education %}
 <div class="section">
-  <div class="section-title">Formación</div>
+  <div class="section-title">{{ section_names.education | default('Formación') }}</div>
   {% for edu in education %}
   <div class="edu-item">
     <div class="edu-degree">{{ edu.degree }}</div>
@@ -227,7 +227,7 @@
 
 {% if skills %}
 <div class="section">
-  <div class="section-title">Habilidades</div>
+  <div class="section-title">{{ section_names.skills | default('Habilidades') }}</div>
   {% if skills is mapping %}
     <div class="skills-grid">
     {% for category, items in skills.items() %}
@@ -257,7 +257,7 @@
 
 {% if projects %}
 <div class="section">
-  <div class="section-title">Proyectos Relevantes</div>
+  <div class="section-title">{{ section_names.projects | default('Proyectos Relevantes') }}</div>
   {% for proj in projects %}
   <div class="project-item">
     <div class="project-name">{{ proj.name }}</div>

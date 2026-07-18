@@ -581,3 +581,51 @@ class NotionSync:
             print(f"[Notion] CV actualizado para page {page_id[:8]}...")
         except Exception as e:
             print(f"[Notion] Error actualizando CV: {e}")
+
+    def get_all_statuses(self) -> dict:
+        """
+        Lee el Estado de todas las páginas activas en Notion.
+        Devuelve dict {url: status} para sincronización bidireccional.
+        """
+        statuses = {}
+        start_cursor = None
+        while True:
+            try:
+                body = {"page_size": 100}
+                if start_cursor:
+                    body["start_cursor"] = start_cursor
+
+                if self.data_source_id:
+                    resp = self.notion.data_sources.query(
+                        data_source_id=self.data_source_id, **body
+                    )
+                else:
+                    resp = self.notion.request(
+                        path=f"databases/{self.database_id}/query",
+                        method="POST",
+                        body=body
+                    )
+
+                for page in resp.get("results", []):
+                    props = page.get("properties", {})
+                    url = props.get("URL", {}).get("url", "")
+                    if not url:
+                        continue
+
+                    estado = props.get("Estado", {})
+                    status = "Nuevo"
+                    if estado.get("type") == "select":
+                        status = estado.get("select", {}).get("name", "Nuevo")
+                    elif estado.get("type") == "rich_text":
+                        rt = estado.get("rich_text", [])
+                        status = rt[0].get("text", {}).get("content", "Nuevo") if rt else "Nuevo"
+
+                    statuses[url] = status
+
+                if not resp.get("has_more"):
+                    break
+                start_cursor = resp.get("next_cursor")
+            except Exception as e:
+                print(f"[Notion] Error obteniendo estados: {e}")
+                break
+        return statuses

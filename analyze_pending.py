@@ -81,6 +81,7 @@ def aggregate_all_jobs(data):
             else:
                 existing = jobs_by_url[url]
                 for key in ["cover_letter", "custom_cv_url", "custom_cv_html",
+                            "cover_letter_pdf_url",
                             "match_score", "tech_stack", "tailored_advice",
                             "salary", "work_mode", "salary_is_estimate",
                             "required_experience", "status"]:
@@ -103,12 +104,14 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
     rate_limiter.wait()
     desc = job.get("description") or job.get("title", "")
     experience_hint = job.get("experience_hint", 0)
+    language = config.detect_language(job.get("source", ""), job.get("title", ""), desc)
 
     match_result = gemini.match_offer(
         cv_text=cv_text,
         offer_title=job["title"],
         offer_description=desc,
         experience_hint=experience_hint,
+        language=language,
     )
     rate_limiter.reset_interval()
 
@@ -120,6 +123,7 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
         "work_mode": match_result.work_mode,
         "salary_is_estimate": match_result.salary_is_estimate,
         "required_experience": match_result.required_experience,
+        "language": language,
     }
     if match_result.cover_letter:
         updates["cover_letter"] = match_result.cover_letter
@@ -202,17 +206,40 @@ def main():
                                 "tech_stack": job.get("tech_stack", []),
                                 "tailored_advice": updates.get("tailored_advice", ""),
                             }
-                            html_path, pdf_path = cv_gen.generate(
-                                gemini, cv_text, job_data, cv_pdf_path=cv_path
+                            html_path, pdf_path, cl_pdf_path = cv_gen.generate(
+                                gemini, cv_text, job_data, cv_pdf_path=cv_path,
+                                cover_letter=job.get("cover_letter"),
+                                language=job.get("language", "es"),
                             )
                             if pdf_path:
                                 slug = os.path.basename(pdf_path)
                                 job["custom_cv_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
                             if html_path:
                                 job["custom_cv_html"] = os.path.basename(html_path)
+                            if cl_pdf_path:
+                                cl_slug = os.path.basename(cl_pdf_path)
+                                job["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
                             write_job_back(data, url, job)
                         except Exception as e:
                             print(f"    [CV Error] {e}")
+
+                        # Generar guía de entrevista
+                        try:
+                            rate_limiter.wait()
+                            techs_str = ", ".join(job.get("tech_stack", [])[:10])
+                            interview_prep = gemini.generate_interview_prep(
+                                cv_text=cv_text,
+                                offer_title=job["title"],
+                                company=job.get("company", ""),
+                                tech_stack=techs_str,
+                                offer_description=job.get("description", "") or job["title"],
+                                language=job.get("language", "es"),
+                            )
+                            job["interview_prep"] = interview_prep.model_dump()
+                            rate_limiter.reset_interval()
+                            write_job_back(data, url, job)
+                        except Exception as e:
+                            print(f"    [Entrevista Error] {e}")
 
                 except RuntimeError as e:
                     if "429" in str(e):
@@ -249,17 +276,40 @@ def main():
                             "tech_stack": job.get("tech_stack", []),
                             "tailored_advice": updates.get("tailored_advice", ""),
                         }
-                        html_path, pdf_path = cv_gen.generate(
-                            gemini, cv_text, job_data, cv_pdf_path=cv_path
+                        html_path, pdf_path, cl_pdf_path = cv_gen.generate(
+                            gemini, cv_text, job_data, cv_pdf_path=cv_path,
+                            cover_letter=job.get("cover_letter"),
+                            language=job.get("language", "es"),
                         )
                         if pdf_path:
                             slug = os.path.basename(pdf_path)
                             job["custom_cv_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
                         if html_path:
                             job["custom_cv_html"] = os.path.basename(html_path)
+                        if cl_pdf_path:
+                            cl_slug = os.path.basename(cl_pdf_path)
+                            job["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
                         write_job_back(data, url, job)
                     except Exception as e:
                         print(f"    [CV Error] {e}")
+
+                    # Generar guía de entrevista
+                    try:
+                        rate_limiter.wait()
+                        techs_str = ", ".join(job.get("tech_stack", [])[:10])
+                        interview_prep = gemini.generate_interview_prep(
+                            cv_text=cv_text,
+                            offer_title=job["title"],
+                            company=job.get("company", ""),
+                            tech_stack=techs_str,
+                            offer_description=job.get("description", "") or job["title"],
+                            language=job.get("language", "es"),
+                        )
+                        job["interview_prep"] = interview_prep.model_dump()
+                        rate_limiter.reset_interval()
+                        write_job_back(data, url, job)
+                    except Exception as e:
+                        print(f"    [Entrevista Error] {e}")
 
             except RuntimeError as e:
                 if "429" in str(e):
