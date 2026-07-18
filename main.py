@@ -459,13 +459,29 @@ def main():
             job["salary_is_estimate"] = match_result.salary_is_estimate
             job["required_experience"] = match_result.required_experience
 
-            if match_result.cover_letter:
-                job["cover_letter"] = match_result.cover_letter
+            # Llamada 2: CV + cover letter (separado para flash-lite)
+            try:
+                rate_limiter.wait()
+                cv_data = gemini.customize_cv(
+                    cv_text=cv_text,
+                    offer_title=job["title"],
+                    offer_description=desc_for_match,
+                    match_result=match_result,
+                    language=language,
+                )
+                rate_limiter.reset_interval()
+                job["cover_letter"] = cv_data.cover_letter
+                job["cv_summary"] = cv_data.cv_summary
+                job["cv_experience_adapted"] = cv_data.cv_experience_adapted
+                job["cv_skills"] = cv_data.cv_skills
+                job["cv_projects"] = cv_data.cv_projects
+            except Exception as e:
+                print(f"    [CV customize] Error: {e}")
 
             language = config.detect_language(job.get("source", ""), job.get("title", ""), job.get("description", "") or job["title"])
             job["language"] = language
 
-            if notion_sync._find_prop("CV") and match_result.cv_skills:
+            if notion_sync._find_prop("CV") and job.get("cv_skills"):
                 try:
                     job_data_for_cv = {
                         "title": job["title"],
@@ -476,7 +492,7 @@ def main():
                     html_path, pdf_path, cl_pdf_path = cv_gen.generate(
                         gemini, cv_text, job_data_for_cv,
                         cv_pdf_path=str(cv_path),
-                        cover_letter=match_result.cover_letter,
+                        cover_letter=job.get("cover_letter", ""),
                         language=language,
                     )
                     if pdf_path:

@@ -130,8 +130,26 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
         "required_experience": match_result.required_experience,
         "language": language,
     }
-    if match_result.cover_letter:
-        updates["cover_letter"] = match_result.cover_letter
+
+    # Llamada 2: CV + cover letter (separado para no saturar flash-lite)
+    rate_limiter.wait()
+    try:
+        cv_data = gemini.customize_cv(
+            cv_text=cv_text,
+            offer_title=job["title"],
+            offer_description=desc,
+            match_result=match_result,
+            language=language,
+        )
+        rate_limiter.reset_interval()
+        updates["cover_letter"] = cv_data.cover_letter
+        updates["cv_summary"] = cv_data.cv_summary
+        updates["cv_experience_adapted"] = cv_data.cv_experience_adapted
+        updates["cv_skills"] = cv_data.cv_skills
+        updates["cv_projects"] = cv_data.cv_projects
+    except Exception as e:
+        rate_limiter.backoff()
+        print(f"    [CV customize error] {e}")
 
     return updates
 

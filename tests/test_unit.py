@@ -128,8 +128,8 @@ class TestGeminiMock:
         assert result.match_score <= 100
         assert result.work_mode in ["Presencial", "Remoto", "Híbrido"]
         assert result.estimated_salary > 0
-        assert len(result.cover_letter) > 0
-        assert len(result.cv_skills) > 0
+        assert len(result.tech_stack) > 0
+        assert len(result.tailored_advice) > 0
 
     def test_mock_analyze_cv(self):
         from utils.gemini_client import GeminiClient
