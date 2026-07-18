@@ -127,23 +127,22 @@ with tab_mis_ofertas:
                 if wm and wm != "N/A":
                     all_modes_raw.add(wm)
             all_modes = sorted(all_modes_raw)
-            mode_filter = st.multiselect("Modalidad", all_modes, default=all_modes)
+            mode_filter = st.multiselect("Modalidad", all_modes + ["Sin analizar"], default=all_modes + ["Sin analizar"])
         with f3:
             all_statuses = [s for s in config.APPLICATION_STATUSES if any(j.get("status") == s for j in all_jobs)]
             status_filter = st.multiselect("Estado", config.APPLICATION_STATUSES, default=all_statuses)
         with f4:
-            min_score = st.slider("Match mínimo", 0, 100, 25)
+            min_score = st.slider("Match mínimo (solo aplica a ofertas analizadas)", 0, 100, 0)
 
         f5, f6, f7, f8 = st.columns(4)
         with f5:
             all_salaries = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary"))]
             sal_max = max(all_salaries) if all_salaries else 150000
-            sal_min_val = min(all_salaries) if all_salaries else 0
             sal_range = st.slider(
                 "Rango salarial (€)",
                 min_value=0,
                 max_value=max(150000, sal_max + 10000),
-                value=(0, sal_max + 10000),
+                value=(0, max(150000, sal_max + 10000)),
                 step=1000,
             )
         with f6:
@@ -154,7 +153,7 @@ with tab_mis_ofertas:
             top_techs = [t for t, _ in sorted(all_techs.items(), key=lambda x: x[1], reverse=True)[:30]]
             tech_filter = st.multiselect("Tech stack", top_techs, default=[])
         with f7:
-            exp_values = sorted(set(j.get("required_experience", 0) for j in all_jobs))
+            exp_values = sorted(set(j.get("required_experience", 0) for j in all_jobs if j.get("required_experience")))
             max_exp = max(exp_values) if exp_values else 10
             exp_slider_max = max(max_exp, 10)
             exp_filter = st.slider("Experiencia máx (años)", 0, exp_slider_max, exp_slider_max)
@@ -167,6 +166,18 @@ with tab_mis_ofertas:
             location_options = sorted(all_locations)
             location_filter = st.multiselect("Ubicación", location_options, default=[])
 
+        sort_options = {
+            "Match ↓": ("match_score", True),
+            "Match ↑": ("match_score", False),
+            "Salario ↓": ("salary_num", True),
+            "Salario ↑": ("salary_num", False),
+            "Experiencia ↓": ("required_experience", True),
+            "Experiencia ↑": ("required_experience", False),
+            "Recientes ↓": ("_last_seen", True),
+            "Recientes ↑": ("_last_seen", False),
+        }
+        sort_by = st.selectbox("Ordenar por", list(sort_options.keys()), index=0)
+
         search_text = st.text_input("🔎 Buscar por título, empresa o ubicación", placeholder="Ej: Python, Sevilla, Remote...")
 
     filtered = []
@@ -175,23 +186,28 @@ with tab_mis_ofertas:
             continue
 
         wm = j.get("work_mode", "")
-        if wm and wm != "N/A" and mode_filter and wm not in mode_filter:
-            continue
+        is_analyzed = bool(j.get("match_score"))
+        if is_analyzed:
+            if wm and wm != "N/A" and mode_filter and wm not in mode_filter:
+                continue
+        else:
+            if "Sin analizar" not in mode_filter:
+                continue
 
         job_status = j.get("status", "Nuevo")
         if status_filter and job_status not in status_filter:
             continue
 
         match = j.get("match_score") or 0
-        if match < min_score:
+        if is_analyzed and match < min_score:
             continue
 
         exp = j.get("required_experience") or 0
-        if exp > exp_filter:
+        if is_analyzed and exp > exp_filter:
             continue
 
         sal = parse_salary(j.get("salary"))
-        if sal is not None:
+        if sal is not None and sal_range:
             if sal < sal_range[0] or sal > sal_range[1]:
                 continue
 
@@ -213,7 +229,13 @@ with tab_mis_ofertas:
 
         filtered.append(j)
 
-    filtered.sort(key=lambda x: (x.get("match_score") or 0), reverse=True)
+    sort_key, sort_reverse = sort_options[sort_by]
+    def sort_val(j):
+        if sort_key == "salary_num":
+            s = parse_salary(j.get("salary"))
+            return s if s else (0 if sort_reverse else 999999999)
+        return j.get(sort_key) or (0 if sort_reverse else "")
+    filtered.sort(key=sort_val, reverse=sort_reverse)
 
     st.write(f"**{len(filtered)}** ofertas tras filtros")
 
