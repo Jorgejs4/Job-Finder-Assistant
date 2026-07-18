@@ -171,15 +171,15 @@ with tab_mis_ofertas:
 
     filtered = []
     for j in all_jobs:
-        if j.get("source", "N/A") not in source_filter:
+        if source_filter and j.get("source", "N/A") not in source_filter:
             continue
 
         wm = j.get("work_mode", "")
-        if wm and wm != "N/A" and wm not in mode_filter:
+        if wm and wm != "N/A" and mode_filter and wm not in mode_filter:
             continue
 
         job_status = j.get("status", "Nuevo")
-        if job_status not in status_filter:
+        if status_filter and job_status not in status_filter:
             continue
 
         match = j.get("match_score") or 0
