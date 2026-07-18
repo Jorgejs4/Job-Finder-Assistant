@@ -462,7 +462,6 @@ class GeminiClient:
         CONTEXTO DEL ANÁLISIS:
         - Match Score: {match_result.match_score}/100
         - Tecnologías clave de la oferta: {techs_str}
-        - Consejos: {match_result.tailored_advice}
 
         Genera EXACTAMENTE estos 5 campos:
 
