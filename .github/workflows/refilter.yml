@@ -41,10 +41,8 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run refilter
-      env:
-        DESIRED_LOCATIONS: ${{ inputs.city || 'Sevilla' }},Remoto
       run: |
-        python refilter.py --archive --location "${{ inputs.city || 'Sevilla' }}"
+        python refilter.py --location "${{ inputs.city || 'Sevilla' }}"
 
     - name: Commit results
       if: always()
@@ -52,11 +50,11 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         if [ -f results/data.json ]; then
-          git add results/data.json results/data_filtered.json 2>/dev/null || true
+          git add results/data.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes after refilter"
           else
-            git commit -m "Refilter: removed non-${{ inputs.city || 'Sevilla' }} location+mode mismatches [skip ci]"
+            git commit -m "Refilter: archivadas ofertas fuera de ${{ inputs.city || 'Sevilla' }} [skip ci]"
             git push origin main
           fi
         fi

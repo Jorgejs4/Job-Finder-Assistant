@@ -714,3 +714,70 @@ class NotionSync:
                 print(f"[Notion] Error obteniendo estados: {e}")
                 break
         return statuses
+
+    def update_job_eliminar(self, link: str, eliminate: bool) -> bool:
+        """Marca/desmarca el checkbox 'Eliminar' en Notion por URL."""
+        if not link:
+            return False
+        if link.startswith("//"):
+            link = "https:" + link
+        try:
+            results = self._query({"property": "URL", "url": {"equals": link}})
+            if not results:
+                return False
+            page_id = results[0]["id"]
+            prop_name = self._find_prop("Eliminar")
+            if not prop_name:
+                return False
+            self.notion.pages.update(
+                page_id=page_id,
+                properties={prop_name: {"checkbox": eliminate}}
+            )
+            action = "marcado" if eliminate else "desmarcado"
+            print(f"[Notion] Eliminar {action} para {link[:60]}")
+            return True
+        except Exception as e:
+            print(f"[Notion] Error actualizando Eliminar: {e}")
+            return False
+
+    def get_all_archived(self) -> dict:
+        """
+        Lee el checkbox 'Eliminar' de todas las paginas activas en Notion.
+        Devuelve dict {url: bool} para sincronizar archivado bidireccional.
+        """
+        archived = {}
+        start_cursor = None
+        while True:
+            try:
+                body = {"page_size": 100}
+                if start_cursor:
+                    body["start_cursor"] = start_cursor
+
+                if self.data_source_id:
+                    resp = self.notion.data_sources.query(
+                        data_source_id=self.data_source_id, **body
+                    )
+                else:
+                    resp = self.notion.request(
+                        path=f"databases/{self.database_id}/query",
+                        method="POST",
+                        body=body
+                    )
+
+                for page in resp.get("results", []):
+                    props = page.get("properties", {})
+                    url = props.get("URL", {}).get("url", "")
+                    if not url:
+                        continue
+
+                    eliminar = props.get("Eliminar", {})
+                    is_eliminated = eliminar.get("checkbox", False) if eliminar.get("type") == "checkbox" else False
+                    archived[url] = is_eliminated
+
+                if not resp.get("has_more"):
+                    break
+                start_cursor = resp.get("next_cursor")
+            except Exception as e:
+                print(f"[Notion] Error obteniendo archivados: {e}")
+                break
+        return archived

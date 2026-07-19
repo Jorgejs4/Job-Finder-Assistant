@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """
-Re-filtra todas las ofertas en data.json según los criterios de ubicación y modalidad.
+Re-filtra todas las ofertas en data.json segun los criterios de ubicacion y modalidad.
 
 Regla:
-  - Ofertas REMOTO/TELETRABAJO → siempre se incluyen
-  - Ofertas PRESENCIAL/HÍBRIDO → solo si la ubicación coincide con DESIRED_LOCATIONS
+  - Ofertas REMOTO/TELETRABAJO -> siempre se incluyen
+  - Ofertas PRESENCIAL/HIBRIDO -> solo si la ubicacion coincide con la ciudad deseada
+
+Las ofertas que no cumplen se marcan como "archived" en data.json (no se borran).
 
 Uso:
     python refilter.py                  # Ejecuta el refiltrado
-    python refilter.py --dry-run        # Solo muestra qué se eliminaría
-    python refilter.py --archive        # Mueve eliminadas a data_filtered.json
+    python refilter.py --dry-run        # Solo muestra que se archivaria
+    python refilter.py --unarchive      # Desarchiva todo (resetea filtros)
 """
 import os
 import sys
@@ -22,11 +24,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import config
 
 DATA_PATH = Path(__file__).resolve().parent / "results" / "data.json"
-ARCHIVE_PATH = Path(__file__).resolve().parent / "results" / "data_filtered.json"
 
 
 def is_remote(job: dict) -> bool:
-    """Detecta si una oferta es remota/teletrabajo."""
     wm = str(job.get("work_mode", "")).lower()
     if "remot" in wm or "teletrabaj" in wm or "distancia" in wm or "home office" in wm:
         return True
@@ -36,37 +36,25 @@ def is_remote(job: dict) -> bool:
 
 
 def matches_location(job: dict, desired_cities: list) -> bool:
-    """Verifica si la ubicación de la oferta coincide con alguna ciudad deseada."""
     job_loc = job.get("location", "").lower()
     return any(city in job_loc for city in desired_cities)
 
 
 def should_keep(job: dict, desired_cities: list) -> bool:
-    """Determina si una oferta debe conservarse."""
     if is_remote(job):
         return True
     return matches_location(job, desired_cities)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Re-filtrar ofertas por ubicación y modalidad")
-    parser.add_argument("--dry-run", action="store_true", help="Solo mostrar estadísticas sin modificar")
-    parser.add_argument("--archive", action="store_true", help="Mover ofertas eliminadas a data_filtered.json")
-    parser.add_argument("--location", type=str, default=None, help="Ciudad deseada (ej: Sevilla, Madrid, London). Default: DESIRED_LOCATIONS")
+    parser = argparse.ArgumentParser(description="Re-filtrar ofertas por ubicacion y modalidad")
+    parser.add_argument("--dry-run", action="store_true", help="Solo mostrar estadisticas sin modificar")
+    parser.add_argument("--unarchive", action="store_true", help="Desarchivar todas las ofertas")
+    parser.add_argument("--location", type=str, default=None, help="Ciudad deseada (ej: Sevilla, Madrid, London)")
     args = parser.parse_args()
 
-    if args.location:
-        desired_cities = [c.strip().lower() for c in args.location.split(",")]
-        print(f"[Config] Ciudad desde CLI: {desired_cities}")
-    else:
-        os.environ.setdefault("DESIRED_LOCATIONS", "Remoto")
-        config.load_preferences()
-        desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
-        print(f"[Config] Ciudades desde config: {desired_cities}")
-    print(f"[Config] Ciudades deseadas: {desired_cities}")
-
     if not DATA_PATH.exists():
-        print(f"[Error] No se encontró {DATA_PATH}")
+        print(f"[Error] No se encontro {DATA_PATH}")
         sys.exit(1)
 
     with open(DATA_PATH, "r", encoding="utf-8") as f:
@@ -82,22 +70,60 @@ def main():
                 all_jobs[url] = job
 
     total = len(all_jobs)
-    print(f"\n[Estadísticas] Total ofertas únicas: {total}")
+    print(f"[Total] {total} ofertas unicas")
 
-    kept = {}
-    removed = {}
-    for url, job in all_jobs.items():
-        if should_keep(job, desired_cities):
-            kept[url] = job
-        else:
-            removed[url] = job
+    if args.unarchive:
+        count = 0
+        for run in data.get("runs", []):
+            for job in run.get("jobs", []):
+                if job.get("archived"):
+                    job["archived"] = False
+                    count += 1
+        if not args.dry_run and count > 0:
+            with open(DATA_PATH, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"[OK] {count} ofertas desarchivadas")
+        return
 
-    print(f"  [OK] Se mantienen: {len(kept)}")
-    print(f"  [X] Se eliminan: {len(removed)}")
+    if args.location:
+        desired_cities = [c.strip().lower() for c in args.location.split(",")]
+        print(f"[Ciudad] {desired_cities}")
+    else:
+        os.environ.setdefault("DESIRED_LOCATIONS", "Remoto")
+        config.load_preferences()
+        desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
+        print(f"[Ciudad] {desired_cities}")
 
-    if removed:
-        print(f"\n[Ejemplo] Primeras 10 ofertas eliminadas:")
-        for i, (url, job) in enumerate(list(removed.items())[:10]):
+    kept = 0
+    to_archive = 0
+    already_archived = 0
+    newly_archived = 0
+    examples = []
+
+    for run in data.get("runs", []):
+        for job in run.get("jobs", []):
+            url = job.get("link", "")
+            if not url:
+                continue
+            if job.get("archived"):
+                already_archived += 1
+                continue
+            if should_keep(job, desired_cities):
+                kept += 1
+            else:
+                to_archive += 1
+                job["archived"] = True
+                newly_archived += 1
+                if len(examples) < 10:
+                    examples.append(job)
+
+    print(f"  OK se mantienen: {kept}")
+    print(f"  Ya archivadas: {already_archived}")
+    print(f"  Nuevas a archivar: {newly_archived}")
+
+    if examples:
+        print(f"\n[Ejemplo] Primeras 10 ofertas a archivar:")
+        for i, job in enumerate(examples):
             wm = job.get("work_mode", "?")
             loc = job.get("location", "?")
             print(f"  {i+1}. [{wm}] {job.get('title', '?')[:50]} @ {job.get('company', '?')} -- {loc}")
@@ -106,27 +132,12 @@ def main():
         print("\n[Dry Run] No se realizaron cambios.")
         return
 
-    if args.archive and removed:
-        archive = {}
-        if ARCHIVE_PATH.exists():
-            with open(ARCHIVE_PATH, "r", encoding="utf-8") as f:
-                archive = json.load(f)
-        archive.setdefault("filtered_jobs", [])
-        existing_urls = {j.get("link") for j in archive["filtered_jobs"]}
-        for url, job in removed.items():
-            if url not in existing_urls:
-                archive["filtered_jobs"].append(job)
-        with open(ARCHIVE_PATH, "w", encoding="utf-8") as f:
-            json.dump(archive, f, ensure_ascii=False, indent=2)
-        print(f"[Archive] {len(removed)} ofertas guardadas en {ARCHIVE_PATH}")
-
-    for run in data.get("runs", []):
-        run["jobs"] = [j for j in run.get("jobs", []) if j.get("link", "") in kept]
-
-    with open(DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-    print(f"\n[OK] data.json actualizado. {len(kept)} ofertas restantes.")
+    if newly_archived > 0:
+        with open(DATA_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"\n[OK] data.json actualizado. {newly_archived} ofertas archivadas.")
+    else:
+        print(f"\n[OK] Nada que archivar.")
 
 
 if __name__ == "__main__":

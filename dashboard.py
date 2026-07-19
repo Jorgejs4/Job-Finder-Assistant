@@ -176,12 +176,11 @@ def aggregate_all_jobs(runs):
 
 
 def sync_statuses_from_notion(data: dict) -> bool:
-    """Sincroniza los estados de Notion → data.json. Devuelve True si hubo cambios."""
+    """Sincroniza estados y archivado de Notion -> data.json."""
     try:
         notion = NotionSync()
         notion_statuses = notion.get_all_statuses()
-        if not notion_statuses:
-            return False
+        notion_archived = notion.get_all_archived()
     except Exception as e:
         print(f"[Sync] Error conectando con Notion: {e}")
         return False
@@ -196,12 +195,18 @@ def sync_statuses_from_notion(data: dict) -> bool:
                 if old_status != new_status:
                     job["status"] = new_status
                     updated = True
+            if url in notion_archived:
+                old_archived = job.get("archived", False)
+                new_archived = notion_archived[url]
+                if old_archived != new_archived:
+                    job["archived"] = new_archived
+                    updated = True
 
     if updated:
         data_path = os.path.join(RESULTS_DIR, "data.json")
         with open(data_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"[Sync] Estados sincronizados desde Notion")
+        print(f"[Sync] Estados y archivado sincronizados desde Notion")
     return updated
 
 
@@ -270,6 +275,21 @@ def save_job_status(data: dict, link: str, new_status: str) -> bool:
     return updated
 
 
+def save_job_archived(data: dict, link: str, archived: bool) -> bool:
+    """Marca/desmarca una oferta como archivada en data.json."""
+    updated = False
+    for run in data.get("runs", []):
+        for job in run.get("jobs", []):
+            if job.get("link") == link:
+                job["archived"] = archived
+                updated = True
+    if updated:
+        data_path = os.path.join(RESULTS_DIR, "data.json")
+        with open(data_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    return updated
+
+
 def parse_salary(val):
     if not val:
         return None
@@ -303,8 +323,8 @@ if not runs:
 
 latest = runs[0]
 
-tab_mis_ofertas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
-    ["💼 Mis Ofertas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
+tab_mis_ofertas, tab_archivadas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
+    ["💼 Mis Ofertas", "📦 Ofertas archivadas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
 )
 
 if config.USER_PORTFOLIO_URL or config.USER_CERTIFICATIONS or config.USER_GITHUB:
@@ -380,6 +400,9 @@ with tab_mis_ofertas:
 
     filtered = []
     for j in all_jobs:
+        if j.get("archived"):
+            continue
+
         if source_filter and j.get("source", "N/A") not in source_filter:
             continue
 
@@ -513,10 +536,19 @@ with tab_mis_ofertas:
                         label_visibility="collapsed",
                     )
                 with _sc2:
-                    if st.form_submit_button("💾", use_container_width=True):
+                    if st.form_submit_button("Guardar", use_container_width=True):
                         if save_job_status(data, link, new_status):
                             st.success("Guardado")
                             st.rerun()
+
+            if not j.get("archived"):
+                if st.button("Archivar oferta", key=f"arch_{_job_key}", use_container_width=True):
+                    if save_job_archived(data, link, True):
+                        try:
+                            NotionSync().update_job_eliminar(link, True)
+                        except Exception:
+                            pass
+                        st.rerun()
 
             if techs:
                 st.markdown(f"**Stack:** {', '.join(techs)}")
@@ -681,7 +713,196 @@ with tab_mis_ofertas:
                                key="csv_download")
 
 # ═══════════════════════════════════════════════════════════════
-# TAB 2: PIPELINE — Estado de aplicaciones
+# TAB 2: OFERTAS ARCHIVADAS
+# ═══════════════════════════════════════════════════════════════
+with tab_archivadas:
+    archived_jobs = [j for j in all_jobs if j.get("archived")]
+
+    if not archived_jobs:
+        st.info("No hay ofertas archivadas.")
+    else:
+        st.subheader(f"📦 {len(archived_jobs)} ofertas archivadas")
+
+        with st.expander("🔍 Buscar", expanded=False):
+            search_archived = st.text_input(
+                "🔎 Buscar por titulo, empresa o ubicacion",
+                placeholder="Ej: Python, Sevilla...",
+                key="search_archived",
+            )
+
+        filtered_archived = archived_jobs
+        if search_archived.strip():
+            q = search_archived.lower()
+            filtered_archived = [
+                j for j in archived_jobs
+                if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
+            ]
+
+        for j in filtered_archived:
+            title = j.get("title", "N/A")
+            company = j.get("company", "N/A")
+            match = j.get("match_score", 0)
+            salary = j.get("salary", "")
+            salary_is_est = j.get("salary_is_estimate", True)
+            mode = config.normalize_work_mode(j.get("work_mode", "N/A"))
+            status = j.get("status", "Nuevo")
+            source = j.get("source", "N/A")
+            exp = j.get("required_experience", 0)
+            link = j.get("link", "")
+            techs = j.get("tech_stack", [])
+            advice = j.get("tailored_advice", "")
+            cover_letter = j.get("cover_letter", "")
+            cv_url = j.get("custom_cv_url", "")
+            cv_html_file = j.get("custom_cv_html", "")
+            cl_pdf_url = j.get("cover_letter_pdf_url", "")
+
+            header_parts = [f"**{title}** @ {company}"]
+            header_parts.append(f"🎯 {match}%")
+            if salary:
+                sal_label = f"{salary}€"
+                if salary_is_est:
+                    sal_label += " ≈"
+                header_parts.append(f"💰 {sal_label}")
+            header_parts.append(f"📍 {mode}")
+            header_parts.append(f"🏢 {source}")
+            header_parts.append(f"[{status}]")
+
+            with st.expander(" | ".join(header_parts)):
+                m1, m2, m3, m4, m5 = st.columns(5)
+                m1.metric("Match", f"{match}%")
+                if salary:
+                    sal_display = f"{salary}€"
+                    sal_source = "Aproximacion IA" if salary_is_est else "Oferta"
+                    m2.metric("Salario", sal_display, help=f"Fuente: {sal_source}")
+                else:
+                    m2.metric("Salario", "No especificado")
+                m3.metric("Modalidad", mode)
+                m4.metric("Experiencia", f"{exp} anios" if exp else "Junior")
+                m5.metric("Fuente", source)
+
+                if j.get("location"):
+                    st.markdown(f"**Ubicacion:** {j['location']}")
+
+                _job_key_arch = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
+
+                if st.button("Desarchivar oferta", key=f"unarch_{_job_key_arch}", use_container_width=True):
+                    if save_job_archived(data, link, False):
+                        try:
+                            NotionSync().update_job_eliminar(link, False)
+                        except Exception:
+                            pass
+                        st.rerun()
+
+                if techs:
+                    st.markdown(f"**Stack:** {', '.join(techs)}")
+
+                if link:
+                    st.link_button("🔗 Ver oferta original", link)
+
+                if advice:
+                    with st.expander("Consejos personalizados"):
+                        st.write(advice)
+
+                if cover_letter:
+                    st.divider()
+                    st.subheader("Carta de Presentacion")
+                    st.markdown(cover_letter)
+                    if cl_pdf_url:
+                        st.link_button("Descargar Carta en PDF", cl_pdf_url)
+
+                interview_prep = j.get("interview_prep")
+                if interview_prep:
+                    st.divider()
+                    with st.expander("Preparacion para Entrevista", expanded=False):
+                        tech_qs = interview_prep.get("technical_questions", [])
+                        if tech_qs:
+                            st.markdown("**Preguntas Tecnicas:**")
+                            for i, qa in enumerate(tech_qs, 1):
+                                st.markdown(f"**{i}. {qa.get('question', '')}**")
+                                st.markdown(f"→ {qa.get('answer', '')}")
+                                st.markdown("")
+
+                        beh_qs = interview_prep.get("behavioral_questions", [])
+                        if beh_qs:
+                            st.markdown("**Preguntas Comportamentales:**")
+                            for i, qa in enumerate(beh_qs, 1):
+                                st.markdown(f"**{i}. {qa.get('question', '')}**")
+                                st.markdown(f"→ {qa.get('answer', '')}")
+                                st.markdown("")
+
+                company_profile = j.get("company_profile")
+                if company_profile:
+                    st.divider()
+                    with st.expander(f"Perfil de {company_profile.get('name', company)}", expanded=False):
+                        cp = company_profile
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            st.markdown(f"**Sector:** {cp.get('industry', 'N/A')}")
+                            st.markdown(f"**Tamano:** {cp.get('size', 'N/A')}")
+                            st.markdown(f"**Salario:** {cp.get('salary_range', 'N/A')}")
+                        with c2:
+                            remote = "Si" if cp.get('remote_friendly') else "No"
+                            st.markdown(f"**Remoto:** {remote}")
+                            techs_cp = ", ".join(cp.get("tech_stack", [])[:8])
+                            st.markdown(f"**Tech stack:** {techs_cp}")
+
+                        if cp.get("culture"):
+                            st.markdown(f"**Cultura:** {cp['culture']}")
+
+                        pros = cp.get("pros", [])
+                        if pros:
+                            st.markdown("**Pros:**")
+                            for p in pros:
+                                st.markdown(f"  • {p}")
+
+                        cons = cp.get("cons", [])
+                        if cons:
+                            st.markdown("**A tener en cuenta:**")
+                            for c in cons:
+                                st.markdown(f"  • {c}")
+
+                        rec = cp.get("recommendation", "")
+                        if rec:
+                            st.info(rec)
+
+                project_match = j.get("project_match")
+                if project_match:
+                    st.divider()
+                    with st.expander("Match de Proyectos Personales", expanded=False):
+                        pm = project_match
+                        st.metric("Relevancia de proyectos", f"{pm.get('project_relevance', 0)}%")
+
+                        matching = pm.get("matching_projects", [])
+                        if matching:
+                            st.markdown("**Proyectos relevantes:**")
+                            for mp in matching:
+                                st.markdown(f"  {mp}")
+
+                        missing = pm.get("missing_project_types", [])
+                        if missing:
+                            st.markdown("**Tipos de proyecto que te faltan:**")
+                            for m in missing:
+                                st.markdown(f"  {m}")
+
+                        advice_pm = pm.get("project_advice", "")
+                        if advice_pm:
+                            st.info(advice_pm)
+
+                if cv_url:
+                    st.divider()
+                    st.subheader("CV Personalizado")
+                    if cv_html_file:
+                        cv_html_path = os.path.join(RESULTS_DIR, "cvs", cv_html_file)
+                        if os.path.exists(cv_html_path):
+                            with open(cv_html_path, "r", encoding="utf-8") as f:
+                                html_content = f.read()
+                            components.html(html_content, height=800, scrolling=True)
+                        else:
+                            st.info("Preview HTML no disponible (generado en ejecucion anterior)")
+                    st.link_button("Descargar CV en PDF", cv_url)
+
+# ═══════════════════════════════════════════════════════════════
+# TAB 3: PIPELINE — Estado de aplicaciones
 # ═══════════════════════════════════════════════════════════════
 with tab_pipeline:
     st.subheader("🔄 Pipeline de Aplicaciones")
