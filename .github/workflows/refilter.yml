@@ -1,0 +1,58 @@
+name: Refilter Jobs by Location
+
+on:
+  workflow_dispatch:
+    inputs:
+      archive:
+        description: 'Archivar ofertas eliminadas'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+concurrency:
+  group: refilter-run
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  refilter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run refilter
+      env:
+        DESIRED_LOCATIONS: ${{ secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
+      run: |
+        python refilter.py --archive
+
+    - name: Commit results
+      if: always()
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        if [ -f results/data.json ]; then
+          git add results/data.json results/data_filtered.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes after refilter"
+          else
+            git commit -m "🔍 Refilter: removed location+mode mismatches [skip ci]"
+            git push origin main
+          fi
+        fi
