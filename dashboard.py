@@ -6,6 +6,8 @@ Ejecutar con: streamlit run dashboard.py
 import os
 import sys
 import hashlib
+import time
+import unicodedata
 from pathlib import Path
 from collections import defaultdict
 
@@ -17,43 +19,10 @@ import pandas as pd
 import json
 import httpx
 import statistics
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.feedback_manager import FeedbackManager
 import config
 from utils.calendar_integration import create_followup_event, create_interview_event
-
-
-def sync_statuses_from_notion(data):
-    """
-    Sincroniza el Estado de todas las ofertas desde Notion hacia data.json.
-    Actualiza solo los campos que cambiaron en Notion.
-    """
-    try:
-        from notion_sync import NotionSync
-        notion = NotionSync()
-        notion_statuses = notion.get_all_statuses()
-        if not notion_statuses:
-            return 0
-
-        updated = 0
-        for run in data.get("runs", []):
-            for job in run.get("jobs", []):
-                url = job.get("link", "")
-                if not url or url not in notion_statuses:
-                    continue
-                notion_status = notion_statuses[url]
-                current_status = job.get("status", "Nuevo")
-                if notion_status and notion_status != current_status:
-                    job["status"] = notion_status
-                    updated += 1
-
-        if updated:
-            data_path = os.path.join(RESULTS_DIR, "data.json")
-            with open(data_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-        return updated
-    except Exception as e:
-        return 0
 
 st.set_page_config(
     page_title="Job Scraper Dashboard",
@@ -64,6 +33,60 @@ st.set_page_config(
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
 
 
+def _generate_ics_content(event_title: str, description: str, link: str,
+                          start: datetime, end: datetime, alarms: list = None) -> str:
+    alarms_str = ""
+    for trigger, text in (alarms or []):
+        alarms_str += f"""BEGIN:VALARM
+TRIGGER:{trigger}
+ACTION:DISPLAY
+DESCRIPTION:{text}
+END:VALARM
+"""
+    return f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//JobScraperAI//Dashboard//ES
+BEGIN:VEVENT
+DTSTART:{start.strftime('%Y%m%dT%H%M%S')}
+DTEND:{end.strftime('%Y%m%dT%H%M%S')}
+SUMMARY:{event_title}
+DESCRIPTION:{description}
+URL:{link}
+{alarms_str}END:VEVENT
+END:VCALENDAR"""
+
+
+def ics_interview_content(title: str, company: str, link: str) -> tuple:
+    event_title = f"Entrevista: {title} @ {company}"
+    start = datetime.now() + timedelta(days=1)
+    start = start.replace(hour=10, minute=0, second=0, microsecond=0)
+    end = start + timedelta(hours=1)
+    content = _generate_ics_content(
+        event_title,
+        f"Preparar: revisar empresa, practicar preguntas tecnicas.\\nOferta: {link}",
+        link, start, end,
+        [("-PT60M", f"Entrevista en 1 hora: {title} @ {company}"),
+         ("-P1D", f"Entrevista manana: {title} @ {company}")]
+    )
+    filename = f"interview_{company[:20].replace(' ', '_')}_{start.strftime('%Y%m%d')}.ics"
+    return content.encode("utf-8"), filename
+
+
+def ics_followup_content(title: str, company: str, link: str, days: int) -> tuple:
+    event_title = f"Follow-up: {title} @ {company}"
+    start = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+    end = start + timedelta(minutes=15)
+    content = _generate_ics_content(
+        event_title,
+        f"Oferta aplicada hace {days} dias.\\nVer oferta: {link}",
+        link, start, end,
+        [("-PT0M", f"Follow-up pendiente: {title} @ {company}")]
+    )
+    filename = f"followup_{company[:20].replace(' ', '_')}_{start.strftime('%Y%m%d')}.ics"
+    return content.encode("utf-8"), filename
+
+
+@st.cache_data(ttl=300, show_spinner=False)
 def load_data():
     data_path = os.path.join(RESULTS_DIR, "data.json")
     if os.path.exists(data_path):
@@ -82,8 +105,9 @@ def load_data():
     return {"runs": []}
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def aggregate_all_jobs(runs):
-    """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL y título+empresa."""
+    """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL y titulo+empresa."""
     jobs_by_url = {}
     for run in runs:
         run_id = run.get("run_id", "")
@@ -118,7 +142,6 @@ def aggregate_all_jobs(runs):
         return all_jobs
 
     def normalize(text):
-        import unicodedata
         text = text.lower().strip()
         text = unicodedata.normalize("NFKD", text)
         text = "".join(c for c in text if not unicodedata.combining(c))
@@ -147,6 +170,55 @@ def aggregate_all_jobs(runs):
     return deduped
 
 
+def extract_filter_options(all_jobs):
+    """Extrae todas las opciones de filtros en una sola pasada sobre all_jobs."""
+    sources = set()
+    modes = set()
+    statuses_present = set()
+    salaries = []
+    techs = defaultdict(int)
+    experiences = set()
+    locations = set()
+
+    for j in all_jobs:
+        src = j.get("source", "N/A")
+        if src:
+            sources.add(src)
+
+        wm = j.get("work_mode", "")
+        if wm and wm != "N/A":
+            modes.add(wm)
+
+        st_val = j.get("status", "Nuevo")
+        if st_val:
+            statuses_present.add(st_val)
+
+        s = parse_salary(j.get("salary"))
+        if s:
+            salaries.append(s)
+
+        for t in j.get("tech_stack", []):
+            techs[t] += 1
+
+        exp = j.get("required_experience")
+        if exp:
+            experiences.add(exp)
+
+        loc = j.get("location", "").strip()
+        if loc:
+            locations.add(loc)
+
+    return {
+        "sources": sorted(sources),
+        "modes": sorted(modes),
+        "statuses_present": statuses_present,
+        "salaries": salaries,
+        "techs": techs,
+        "experiences": experiences,
+        "locations": sorted(locations),
+    }
+
+
 def parse_salary(val):
     if not val:
         return None
@@ -162,10 +234,14 @@ all_jobs = aggregate_all_jobs(runs)
 feedback_mgr = FeedbackManager()
 
 if config.NOTION_TOKEN and config.NOTION_DATABASE_ID:
-    synced = sync_statuses_from_notion(data)
-    if synced:
-        runs = data.get("runs", [])
-        all_jobs = aggregate_all_jobs(runs)
+    if "last_notion_sync" not in st.session_state:
+        st.session_state.last_notion_sync = 0
+    if time.time() - st.session_state.last_notion_sync > 300:
+        synced = sync_statuses_from_notion(data)
+        st.session_state.last_notion_sync = time.time()
+        if synced:
+            runs = data.get("runs", [])
+            all_jobs = aggregate_all_jobs(runs)
 
 st.title("🔍 Job Scraper Dashboard")
 st.caption(f"{len(all_jobs)} ofertas de {len(runs)} ejecuciones | Última carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
@@ -203,55 +279,39 @@ with tab_mis_ofertas:
     st.subheader(f"💼 {len(all_jobs)} ofertas disponibles")
 
     with st.expander("🔍 Filtros avanzados", expanded=True):
+        filter_opts = extract_filter_options(all_jobs)
+
         f1, f2, f3, f4 = st.columns(4)
         with f1:
-            all_sources = sorted(set(j.get("source", "N/A") for j in all_jobs))
-            source_filter = st.multiselect("Fuente", all_sources, default=all_sources)
+            source_filter = st.multiselect("Fuente", filter_opts["sources"], default=filter_opts["sources"])
         with f2:
-            all_modes_raw = set()
-            for j in all_jobs:
-                wm = j.get("work_mode", "")
-                if wm and wm != "N/A":
-                    all_modes_raw.add(wm)
-            all_modes = sorted(all_modes_raw)
-            mode_filter = st.multiselect("Modalidad", all_modes + ["Sin analizar"], default=all_modes + ["Sin analizar"])
+            mode_filter = st.multiselect("Modalidad", filter_opts["modes"] + ["Sin analizar"], default=filter_opts["modes"] + ["Sin analizar"])
         with f3:
-            all_statuses = [s for s in config.APPLICATION_STATUSES if any(j.get("status") == s for j in all_jobs)]
+            all_statuses = [s for s in config.APPLICATION_STATUSES if s in filter_opts["statuses_present"]]
             status_filter = st.multiselect("Estado", config.APPLICATION_STATUSES, default=all_statuses)
         with f4:
-            min_score = st.slider("Match mínimo (solo aplica a ofertas analizadas)", 0, 100, 0)
+            min_score = st.slider("Match minimo (solo aplica a ofertas analizadas)", 0, 100, 0)
 
         f5, f6, f7, f8 = st.columns(4)
         with f5:
-            all_salaries = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary"))]
-            sal_max = max(all_salaries) if all_salaries else 150000
+            sal_max = max(filter_opts["salaries"]) if filter_opts["salaries"] else 150000
             sal_range = st.slider(
-                "Rango salarial (€)",
+                "Rango salarial",
                 min_value=0,
                 max_value=max(150000, sal_max + 10000),
                 value=(0, max(150000, sal_max + 10000)),
                 step=1000,
             )
         with f6:
-            all_techs = defaultdict(int)
-            for j in all_jobs:
-                for t in j.get("tech_stack", []):
-                    all_techs[t] += 1
-            top_techs = [t for t, _ in sorted(all_techs.items(), key=lambda x: x[1], reverse=True)[:30]]
+            top_techs = [t for t, _ in sorted(filter_opts["techs"].items(), key=lambda x: x[1], reverse=True)[:30]]
             tech_filter = st.multiselect("Tech stack", top_techs, default=[])
         with f7:
-            exp_values = sorted(set(j.get("required_experience", 0) for j in all_jobs if j.get("required_experience")))
+            exp_values = sorted(filter_opts["experiences"])
             max_exp = max(exp_values) if exp_values else 10
             exp_slider_max = max(max_exp, 10)
-            exp_filter = st.slider("Experiencia máx (años)", 0, exp_slider_max, exp_slider_max)
+            exp_filter = st.slider("Experiencia max (anios)", 0, exp_slider_max, exp_slider_max)
         with f8:
-            all_locations = set()
-            for j in all_jobs:
-                loc = j.get("location", "")
-                if loc and loc.strip():
-                    all_locations.add(loc.strip())
-            location_options = sorted(all_locations)
-            location_filter = st.multiselect("Ubicación", location_options, default=[])
+            location_filter = st.multiselect("Ubicacion", filter_opts["locations"], default=[])
 
         sort_options = {
             "Match ↓": ("match_score", True),
@@ -395,15 +455,14 @@ with tab_mis_ofertas:
             if link:
                 st.link_button("🔗 Ver oferta original", link)
                 _job_key = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
-                ics_int = create_interview_event(title, company, link)
-                with open(ics_int, "rb") as f:
-                    st.download_button(
-                        "📅 Crear evento entrevista",
-                        f.read(),
-                        file_name=os.path.basename(ics_int),
-                        mime="text/calendar",
-                        key=f"ics_int_{_job_key}",
-                    )
+                ics_data, ics_name = ics_interview_content(title, company, link)
+                st.download_button(
+                    "📅 Crear evento entrevista",
+                    ics_data,
+                    file_name=ics_name,
+                    mime="text/calendar",
+                    key=f"ics_int_{_job_key}",
+                )
 
             if advice:
                 with st.expander("💡 Consejos personalizados"):
@@ -542,14 +601,16 @@ with tab_mis_ofertas:
                         st.warning("Escribe algo antes de enviar.")
 
     if filtered:
-        csv_data = pd.DataFrame(filtered)
-        display_cols = ["title", "company", "source", "match_score", "salary",
-                        "work_mode", "required_experience", "status", "link"]
-        display_cols = [c for c in display_cols if c in csv_data.columns]
-        csv_export = csv_data[display_cols].to_csv(index=False).encode("utf-8")
-        st.download_button("📥 Exportar CSV", csv_export,
-                           file_name=f"ofertas_{datetime.now().strftime('%Y%m%d')}.csv",
-                           mime="text/csv")
+        if st.button("📥 Exportar CSV"):
+            csv_data = pd.DataFrame(filtered)
+            display_cols = ["title", "company", "source", "match_score", "salary",
+                            "work_mode", "required_experience", "status", "link"]
+            display_cols = [c for c in display_cols if c in csv_data.columns]
+            csv_export = csv_data[display_cols].to_csv(index=False).encode("utf-8")
+            st.download_button("📥 Descargar CSV", csv_export,
+                               file_name=f"ofertas_{datetime.now().strftime('%Y%m%d')}.csv",
+                               mime="text/csv",
+                               key="csv_download")
 
 # ═══════════════════════════════════════════════════════════════
 # TAB 2: PIPELINE — Estado de aplicaciones
@@ -602,15 +663,14 @@ with tab_pipeline:
                 with fc1:
                     st.link_button("🔗 Ver oferta", j.get("link", ""), key=f"fu_{_fu_key}")
                 with fc2:
-                    ics_path = create_followup_event(title_fu, company_fu, j.get("link", ""), j["_days_applied"])
-                    with open(ics_path, "rb") as f:
-                        st.download_button(
-                            "📅 Recordatorio",
-                            f.read(),
-                            file_name=os.path.basename(ics_path),
-                            mime="text/calendar",
-                            key=f"ics_fu_{_fu_key}",
-                        )
+                    ics_data_fu, ics_name_fu = ics_followup_content(title_fu, company_fu, j.get("link", ""), j["_days_applied"])
+                    st.download_button(
+                        "📅 Recordatorio",
+                        ics_data_fu,
+                        file_name=ics_name_fu,
+                        mime="text/calendar",
+                        key=f"ics_fu_{_fu_key}",
+                    )
 
     if all_jobs:
         st.subheader("Ofertas por estado")
@@ -635,6 +695,8 @@ with tab_stats:
     all_sal_data = []
     mode_salaries = defaultdict(list)
     source_salaries = defaultdict(list)
+    direct_salaries = []
+    estimated_salaries = []
     for j in all_jobs:
         s = parse_salary(j.get("salary"))
         if s:
@@ -642,6 +704,10 @@ with tab_stats:
             wm = j.get("work_mode") or "No especificado"
             mode_salaries[wm].append(s)
             source_salaries[j.get("source", "N/A")].append(s)
+            if j.get("salary_is_estimate", True):
+                estimated_salaries.append(s)
+            else:
+                direct_salaries.append(s)
 
     if all_sal_data:
         sc1, sc2, sc3, sc4 = st.columns(4)
@@ -674,23 +740,29 @@ with tab_stats:
             st.dataframe(pd.DataFrame(src_data), use_container_width=True, hide_index=True)
 
         with st.expander("Salario por fuente (Directo vs Estimado)"):
-            direct = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary")) and not j.get("salary_is_estimate", True)]
-            estimated = [parse_salary(j.get("salary")) for j in all_jobs if parse_salary(j.get("salary")) and j.get("salary_is_estimate", True)]
             src_comp = []
-            if direct:
-                src_comp.append({"Tipo": "Directo (de la oferta)", "Ofertas": len(direct), "Promedio": f"{sum(direct)//len(direct):,}€".replace(",", "."), "Mínimo": f"{min(direct):,}€".replace(",", "."), "Máximo": f"{max(direct):,}€".replace(",", ".")})
-            if estimated:
-                src_comp.append({"Tipo": "Estimado (IA)", "Ofertas": len(estimated), "Promedio": f"{sum(estimated)//len(estimated):,}€".replace(",", "."), "Mínimo": f"{min(estimated):,}€".replace(",", "."), "Máximo": f"{max(estimated):,}€".replace(",", ".")})
+            if direct_salaries:
+                src_comp.append({"Tipo": "Directo (de la oferta)", "Ofertas": len(direct_salaries), "Promedio": f"{sum(direct_salaries)//len(direct_salaries):,}€".replace(",", "."), "Minimo": f"{min(direct_salaries):,}€".replace(",", "."), "Maximo": f"{max(direct_salaries):,}€".replace(",", ".")})
+            if estimated_salaries:
+                src_comp.append({"Tipo": "Estimado (IA)", "Ofertas": len(estimated_salaries), "Promedio": f"{sum(estimated_salaries)//len(estimated_salaries):,}€".replace(",", "."), "Minimo": f"{min(estimated_salaries):,}€".replace(",", "."), "Maximo": f"{max(estimated_salaries):,}€".replace(",", ".")})
             if src_comp:
                 st.dataframe(pd.DataFrame(src_comp), use_container_width=True, hide_index=True)
     else:
         st.info("No hay datos de salario disponibles")
 
     st.markdown("### 🎯 Skills Gap")
-    all_techs = defaultdict(int)
+    all_techs_stats = defaultdict(int)
+    remote_count = 0
+    mode_counts = defaultdict(int)
+    source_counts = defaultdict(int)
     for j in all_jobs:
         for tech in j.get("tech_stack", []):
-            all_techs[tech] += 1
+            all_techs_stats[tech] += 1
+        wm = j.get("work_mode") or "No especificado"
+        mode_counts[wm] += 1
+        source_counts[j.get("source", "N/A")] += 1
+        if j.get("work_mode") == "Remoto":
+            remote_count += 1
 
     cv_skills_lower = set()
     profile_skills = latest.get("profile_skills", [])
@@ -699,8 +771,8 @@ with tab_stats:
         with st.expander("Tus skills del CV", expanded=False):
             st.write(", ".join(sorted(cv_skills_lower)))
 
-    if all_techs:
-        demanded = sorted(all_techs.items(), key=lambda x: x[1], reverse=True)
+    if all_techs_stats:
+        demanded = sorted(all_techs_stats.items(), key=lambda x: x[1], reverse=True)
         if cv_skills_lower:
             gap = []
             have = []
@@ -723,14 +795,6 @@ with tab_stats:
             st.bar_chart(pd.DataFrame(tech_data).set_index("Skill")["Ofertas"])
 
     st.markdown("### 📈 Resumen del mercado")
-    remote_count = len([j for j in all_jobs if j.get("work_mode") == "Remoto"])
-    mode_counts = defaultdict(int)
-    source_counts = defaultdict(int)
-    for j in all_jobs:
-        wm = j.get("work_mode") or "No especificado"
-        mode_counts[wm] += 1
-        source_counts[j.get("source", "N/A")] += 1
-
     mc1, mc2, mc3, mc4 = st.columns(4)
     mc1.metric("Total ofertas", len(all_jobs))
     mc2.metric("% Remoto", f"{remote_count/len(all_jobs)*100:.0f}%")
