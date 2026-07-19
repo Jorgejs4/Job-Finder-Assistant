@@ -22,6 +22,7 @@ import statistics
 from datetime import datetime, timedelta
 from utils.feedback_manager import FeedbackManager
 import config
+from notion_sync import NotionSync
 from utils.calendar_integration import create_followup_event, create_interview_event
 
 st.set_page_config(
@@ -137,6 +138,10 @@ def aggregate_all_jobs(runs):
                 job["_last_run_id"] = run_id
                 jobs_by_url[url] = job
 
+    for job in jobs_by_url.values():
+        if job.get("work_mode"):
+            job["work_mode"] = config.normalize_work_mode(job["work_mode"])
+
     all_jobs = list(jobs_by_url.values())
     if not all_jobs:
         return all_jobs
@@ -170,6 +175,36 @@ def aggregate_all_jobs(runs):
     return deduped
 
 
+def sync_statuses_from_notion(data: dict) -> bool:
+    """Sincroniza los estados de Notion → data.json. Devuelve True si hubo cambios."""
+    try:
+        notion = NotionSync()
+        notion_statuses = notion.get_all_statuses()
+        if not notion_statuses:
+            return False
+    except Exception as e:
+        print(f"[Sync] Error conectando con Notion: {e}")
+        return False
+
+    updated = False
+    for run in data.get("runs", []):
+        for job in run.get("jobs", []):
+            url = job.get("link", "")
+            if url in notion_statuses:
+                old_status = job.get("status", "Nuevo")
+                new_status = notion_statuses[url]
+                if old_status != new_status:
+                    job["status"] = new_status
+                    updated = True
+
+    if updated:
+        data_path = os.path.join(RESULTS_DIR, "data.json")
+        with open(data_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"[Sync] Estados sincronizados desde Notion")
+    return updated
+
+
 def extract_filter_options(all_jobs):
     """Extrae todas las opciones de filtros en una sola pasada sobre all_jobs."""
     sources = set()
@@ -187,7 +222,7 @@ def extract_filter_options(all_jobs):
 
         wm = j.get("work_mode", "")
         if wm and wm != "N/A":
-            modes.add(wm)
+            modes.add(config.normalize_work_mode(wm))
 
         st_val = j.get("status", "Nuevo")
         if st_val:
@@ -217,6 +252,22 @@ def extract_filter_options(all_jobs):
         "experiences": experiences,
         "locations": sorted(locations),
     }
+
+
+def save_job_status(data: dict, link: str, new_status: str) -> bool:
+    """Guarda el cambio de estado de una oferta en data.json."""
+    updated = False
+    for run in data.get("runs", []):
+        for job in run.get("jobs", []):
+            if job.get("link") == link:
+                if job.get("status") != new_status:
+                    job["status"] = new_status
+                    updated = True
+    if updated:
+        data_path = os.path.join(RESULTS_DIR, "data.json")
+        with open(data_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    return updated
 
 
 def parse_salary(val):
@@ -335,7 +386,8 @@ with tab_mis_ofertas:
         wm = j.get("work_mode", "")
         is_analyzed = bool(j.get("match_score"))
         if is_analyzed:
-            if wm and wm != "N/A" and mode_filter and wm not in mode_filter:
+            wm_norm = config.normalize_work_mode(wm)
+            if wm_norm and wm_norm != "N/A" and mode_filter and wm_norm not in mode_filter:
                 continue
         else:
             if "Sin analizar" not in mode_filter:
@@ -392,7 +444,7 @@ with tab_mis_ofertas:
         match = j.get("match_score", 0)
         salary = j.get("salary", "")
         salary_is_est = j.get("salary_is_estimate", True)
-        mode = j.get("work_mode", "N/A")
+        mode = config.normalize_work_mode(j.get("work_mode", "N/A"))
         status = j.get("status", "Nuevo")
         source = j.get("source", "N/A")
         exp = j.get("required_experience", 0)
@@ -449,12 +501,28 @@ with tab_mis_ofertas:
             if j.get("location"):
                 st.markdown(f"**Ubicación:** {j['location']}")
 
+            _job_key = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
+            with st.form(key=f"status_{_job_key}", clear_on_submit=False):
+                _sc1, _sc2 = st.columns([3, 1])
+                with _sc1:
+                    new_status = st.selectbox(
+                        "Estado",
+                        config.APPLICATION_STATUSES,
+                        index=config.APPLICATION_STATUSES.index(status) if status in config.APPLICATION_STATUSES else 0,
+                        key=f"st_{_job_key}",
+                        label_visibility="collapsed",
+                    )
+                with _sc2:
+                    if st.form_submit_button("💾", use_container_width=True):
+                        if save_job_status(data, link, new_status):
+                            st.success("Guardado")
+                            st.rerun()
+
             if techs:
                 st.markdown(f"**Stack:** {', '.join(techs)}")
 
             if link:
                 st.link_button("🔗 Ver oferta original", link)
-                _job_key = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
                 ics_data, ics_name = ics_interview_content(title, company, link)
                 st.download_button(
                     "📅 Crear evento entrevista",
@@ -701,7 +769,7 @@ with tab_stats:
         s = parse_salary(j.get("salary"))
         if s:
             all_sal_data.append(s)
-            wm = j.get("work_mode") or "No especificado"
+            wm = config.normalize_work_mode(j.get("work_mode", "")) or "No especificado"
             mode_salaries[wm].append(s)
             source_salaries[j.get("source", "N/A")].append(s)
             if j.get("salary_is_estimate", True):
@@ -758,10 +826,10 @@ with tab_stats:
     for j in all_jobs:
         for tech in j.get("tech_stack", []):
             all_techs_stats[tech] += 1
-        wm = j.get("work_mode") or "No especificado"
+        wm = config.normalize_work_mode(j.get("work_mode", "")) or "No especificado"
         mode_counts[wm] += 1
         source_counts[j.get("source", "N/A")] += 1
-        if j.get("work_mode") == "Remoto":
+        if wm == "Remoto":
             remote_count += 1
 
     cv_skills_lower = set()
@@ -824,7 +892,7 @@ with tab_stats:
                 s = parse_salary(j.get("salary"))
                 if s:
                     salaries.append(s)
-                if j.get("work_mode") == "Remoto":
+                if config.normalize_work_mode(j.get("work_mode", "")) == "Remoto":
                     remote_count += 1
                 for t in j.get("tech_stack", []):
                     tech_counts[t] += 1

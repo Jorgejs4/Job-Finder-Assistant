@@ -16,6 +16,7 @@ class ResultsManager:
         self.results_dir = results_dir
         os.makedirs(self.results_dir, exist_ok=True)
         self.data_path = os.path.join(self.results_dir, "data.json")
+        self.pending_path = os.path.join(self.results_dir, "notion_pending.json")
         self.run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.run_data = {
             "run_id": self.run_id,
@@ -58,6 +59,25 @@ class ResultsManager:
 
     def set_analyzed_count(self, count: int):
         self.run_data["_analyzed_count"] = count
+
+    def record_enriched_job(self, job: dict):
+        """Guarda un job enriquecido (con match_score, tech_stack, etc.) en run_data."""
+        enriched_fields = [
+            "match_score", "tech_stack", "work_mode", "tailored_advice",
+            "salary", "salary_is_estimate", "required_experience",
+            "cover_letter", "cv_summary", "cv_experience_adapted",
+            "cv_skills", "cv_projects", "custom_cv_url", "custom_cv_html",
+            "cover_letter_pdf_url", "interview_prep", "company_profile",
+            "project_match", "language", "status",
+        ]
+        link = job.get("link", "")
+        for existing_job in self.run_data["jobs"]:
+            if existing_job.get("link") == link:
+                for key in enriched_fields:
+                    if key in job and job[key] is not None:
+                        existing_job[key] = job[key]
+                return
+        self.run_data["jobs"].append(job)
 
     def save(self) -> str:
         # Cargar datos existentes
@@ -114,3 +134,33 @@ class ResultsManager:
                 "errors": len(run.get("errors", [])),
             })
         return history
+
+    def add_pending_notion_write(self, job: dict):
+        """Guarda un job que falló al escribir en Notion para reintentar después."""
+        pending = self._load_pending()
+        link = job.get("link", "")
+        existing_links = {j.get("link") for j in pending}
+        if link and link not in existing_links:
+            pending.append(job)
+            with open(self.pending_path, "w", encoding="utf-8") as f:
+                json.dump(pending, f, ensure_ascii=False, indent=2)
+
+    def get_pending_notion_writes(self) -> List[dict]:
+        """Devuelve la lista de jobs pendientes de escribir en Notion."""
+        return self._load_pending()
+
+    def clear_pending_notion_write(self, link: str):
+        """Elimina un job de la cola de pendientes tras escribir con éxito."""
+        pending = self._load_pending()
+        pending = [j for j in pending if j.get("link") != link]
+        with open(self.pending_path, "w", encoding="utf-8") as f:
+            json.dump(pending, f, ensure_ascii=False, indent=2)
+
+    def _load_pending(self) -> list:
+        if os.path.exists(self.pending_path):
+            try:
+                with open(self.pending_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, KeyError):
+                pass
+        return []

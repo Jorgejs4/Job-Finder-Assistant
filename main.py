@@ -138,6 +138,16 @@ def main():
 
     deleted_count = notion_sync.clean_deleted_items()
 
+    pending_writes = results.get_pending_notion_writes()
+    if pending_writes:
+        print(f"\n[Notion] Reintentando {len(pending_writes)} escrituras pendientes...")
+        retried = 0
+        for job in pending_writes[:20]:
+            if notion_sync.add_job_to_notion(job):
+                results.clear_pending_notion_write(job.get("link", ""))
+                retried += 1
+        print(f"[Notion] {retried}/{len(pending_writes)} pendientes sincronizados")
+
     cv_path = Path(config.CV_PATH)
     if not cv_path.exists():
         msg = f"No se encontró el CV en: {cv_path}"
@@ -326,7 +336,7 @@ def main():
 
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
-    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "notion_error": 0, "cuota_gemini": False}
+    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "experiencia": 0, "notion_error": 0, "cuota_gemini": False}
 
     # Pre-filter: remove duplicates and obviously non-matching jobs before Gemini
     pre_filtered = []
@@ -445,6 +455,16 @@ def main():
 
             print(f"  - {job['title']} @ {job['company']}: match {match_result.match_score}%", flush=True)
 
+            job["match_score"] = match_result.match_score
+            job["tech_stack"] = match_result.tech_stack
+            job["work_mode"] = config.normalize_work_mode(match_result.work_mode)
+            if details:
+                job["tailored_advice"] = details.tailored_advice
+                job["salary"] = str(details.estimated_salary)
+                job["salary_is_estimate"] = details.salary_is_estimate
+                job["required_experience"] = details.required_experience
+            results.record_enriched_job(job)
+
             if match_result.match_score < 35:
                 skipped["bajo_match"] += 1
                 continue
@@ -456,7 +476,7 @@ def main():
 
             max_exp = config.YEARS_OF_EXPERIENCE + 2
             if max_exp > 0 and details and details.required_experience > max_exp:
-                skipped["ubicacion"] += 1
+                skipped["experiencia"] += 1
                 continue
 
             work_mode = match_result.work_mode
@@ -466,15 +486,6 @@ def main():
                 if not matches_city:
                     skipped["ubicacion"] += 1
                     continue
-
-            job["match_score"] = match_result.match_score
-            job["tech_stack"] = match_result.tech_stack
-            job["work_mode"] = match_result.work_mode
-            if details:
-                job["tailored_advice"] = details.tailored_advice
-                job["salary"] = str(details.estimated_salary)
-                job["salary_is_estimate"] = details.salary_is_estimate
-                job["required_experience"] = details.required_experience
 
             # Llamada 3a: CV + cover letter (text)
             try:
@@ -592,8 +603,10 @@ def main():
                 new_jobs_added += 1
                 analyzed_count += 1
                 high_match_jobs.append(job)
+                results.record_enriched_job(job)
             else:
                 skipped["notion_error"] += 1
+                results.add_pending_notion_write(job)
 
     t3 = time.time()
     print(f"\n[Timing] Análisis IA + Notion: {t3 - t2:.1f}s")

@@ -147,6 +147,18 @@ def detect_language(source: str, title: str = "", description: str = "") -> str:
     es_count = sum(1 for w in spanish_words if w in text)
     return "en" if en_count > es_count else "es"
 
+
+def normalize_work_mode(wm: str) -> str:
+    """Normaliza work_mode a español unificado: 'Presencial', 'Remoto', 'Híbrido'."""
+    if not wm or wm == "N/A":
+        return wm or ""
+    wl = str(wm).lower()
+    if "remot" in wl or "teletrabaj" in wl or "distancia" in wl or "home office" in wl:
+        return "Remoto"
+    if "hibrid" in wl or "híbrid" in wl or "hybrid" in wl or "semipresencial" in wl:
+        return "Híbrido"
+    return "Presencial"
+
 # Mapping de ubicaciones: expande nombres cortos a strings completos para cada scraper
 LOCATION_MAP = {
     "sevilla": {

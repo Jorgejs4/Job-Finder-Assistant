@@ -222,6 +222,91 @@ class NotionSync:
             print(f"[Notion] Error actualizando Estado: {e}")
             return False
 
+    def update_job_fields(self, job_data: dict) -> bool:
+        """Actualiza campos enriquecidos de un job existente en Notion (por URL)."""
+        url = job_data.get("link", "")
+        if not url:
+            return False
+        if url.startswith("//"):
+            url = "https:" + url
+
+        try:
+            results = self._query({"property": "URL", "url": {"equals": url}})
+            if not results:
+                return False
+            page_id = results[0]["id"]
+        except Exception as e:
+            print(f"[Notion] Error buscando job por URL: {e}")
+            return False
+
+        props = {}
+
+        match_score = job_data.get("match_score")
+        if match_score is not None:
+            prop_name = self._find_prop("Match")
+            if prop_name:
+                props[prop_name] = {"number": int(match_score)}
+
+        work_mode = job_data.get("work_mode")
+        if work_mode:
+            prop_name = self._find_prop("Modalidad")
+            if prop_name:
+                modalidad_type = self.schema_properties[prop_name].get("type", "select")
+                if modalidad_type == "rich_text":
+                    props[prop_name] = {"rich_text": [{"text": {"content": work_mode}}]}
+                else:
+                    props[prop_name] = {"select": {"name": work_mode}}
+
+        tech_stack = job_data.get("tech_stack")
+        if tech_stack:
+            prop_name = self._find_prop("Stack")
+            if prop_name:
+                stack_str = ", ".join(str(t).strip() for t in tech_stack[:20])
+                props[prop_name] = {"rich_text": [{"text": {"content": stack_str[:1900]}}]}
+
+        tailored_advice = job_data.get("tailored_advice")
+        if tailored_advice:
+            prop_name = self._find_prop("Consejos")
+            if prop_name:
+                props[prop_name] = {"rich_text": [{"text": {"content": str(tailored_advice)[:1900]}}]}
+
+        salary = job_data.get("salary")
+        if salary:
+            prop_name = self._find_prop("Salario")
+            if prop_name:
+                salario_num = self._parse_salary_to_num(str(salary))
+                if salario_num:
+                    props[prop_name] = {"number": salario_num}
+
+        required_experience = job_data.get("required_experience")
+        if required_experience is not None:
+            prop_name = self._find_prop("Exp")
+            if prop_name:
+                props[prop_name] = {"number": int(required_experience)}
+
+        cover_letter = job_data.get("cover_letter")
+        if cover_letter:
+            prop_name = self._find_prop("Carta Presentacion")
+            if prop_name:
+                props[prop_name] = {"rich_text": [{"text": {"content": str(cover_letter)[:1900]}}]}
+
+        custom_cv_url = job_data.get("custom_cv_url")
+        if custom_cv_url:
+            prop_name = self._find_prop("CV")
+            if prop_name:
+                props[prop_name] = {"url": custom_cv_url}
+
+        if not props:
+            return False
+
+        try:
+            self.notion.pages.update(page_id=page_id, properties=props)
+            print(f"[Notion] Actualizado: {job_data.get('title', '?')[:40]} ({len(props)} campos)")
+            return True
+        except Exception as e:
+            print(f"[Notion] Error actualizando job: {e}")
+            return False
+
     def get_all_jobs_for_analysis(self) -> list:
         """
         Devuelve lista completa de ofertas activas con todos los campos.

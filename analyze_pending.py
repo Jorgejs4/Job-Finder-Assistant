@@ -25,10 +25,27 @@ import config
 from utils.gemini_client import GeminiClient, KeyPool
 from utils.cv_parser import parse_cv
 from utils.cv_generator import CVGenerator
+from notion_sync import NotionSync
 
 
 DATA_PATH = Path(__file__).resolve().parent / "results" / "data.json"
 SAVE_INTERVAL = 10
+
+
+def sync_to_notion(notion, job):
+    """Sincroniza un job re-analizado con Notion. Actualiza si existe, crea si no."""
+    if not notion:
+        return
+    url = job.get("link", "")
+    if not url:
+        return
+    try:
+        if notion.is_url_in_notion(url):
+            notion.update_job_fields(job)
+        else:
+            notion.add_job_to_notion(job)
+    except Exception as e:
+        print(f"    [Notion Sync] Error: {e}")
 
 
 class RateLimiter:
@@ -122,7 +139,7 @@ def analyze_single(gemini, cv_text, job, rate_limiter):
     updates = {
         "match_score": match_result.match_score,
         "tech_stack": match_result.tech_stack,
-        "work_mode": match_result.work_mode,
+        "work_mode": config.normalize_work_mode(match_result.work_mode),
         "language": language,
     }
 
@@ -225,6 +242,14 @@ def main():
     rate_limiter = RateLimiter(min_interval=10.0)
     cv_gen = CVGenerator()
 
+    notion = None
+    if config.NOTION_TOKEN and config.NOTION_DATABASE_ID:
+        try:
+            notion = NotionSync()
+            print(f"[Notion] Conectado para sincronización")
+        except Exception as e:
+            print(f"[Notion] Error conectando: {e}")
+
     analyzed = 0
     failed = 0
     saved = 0
@@ -257,6 +282,7 @@ def main():
                         job.update(updates)
                         write_job_back(data, url, updates)
                         analyzed += 1
+                        sync_to_notion(notion, job)
 
                         match = updates.get("match_score", 0)
                         print(f"  [{analyzed}/{len(to_analyze)}] {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%", flush=True)
@@ -377,6 +403,7 @@ def main():
                 job.update(updates)
                 write_job_back(data, url, updates)
                 analyzed += 1
+                sync_to_notion(notion, job)
 
                 match = updates.get("match_score", 0)
                 print(f"  [{analyzed}/{len(to_analyze)}] {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%", flush=True)
