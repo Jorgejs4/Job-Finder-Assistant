@@ -52,12 +52,18 @@ def main():
     parser = argparse.ArgumentParser(description="Re-filtrar ofertas por ubicación y modalidad")
     parser.add_argument("--dry-run", action="store_true", help="Solo mostrar estadísticas sin modificar")
     parser.add_argument("--archive", action="store_true", help="Mover ofertas eliminadas a data_filtered.json")
+    parser.add_argument("--location", type=str, default=None, help="Ciudad deseada (ej: Sevilla, Madrid, London). Default: DESIRED_LOCATIONS")
     args = parser.parse_args()
 
-    config.load_preferences()
-    desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
+    if args.location:
+        desired_cities = [c.strip().lower() for c in args.location.split(",")]
+        print(f"[Config] Ciudad desde CLI: {desired_cities}")
+    else:
+        os.environ.setdefault("DESIRED_LOCATIONS", "Remoto")
+        config.load_preferences()
+        desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
+        print(f"[Config] Ciudades desde config: {desired_cities}")
     print(f"[Config] Ciudades deseadas: {desired_cities}")
-    print(f"[Config] Ubicaciones completas: {config.DESIRED_LOCATIONS}")
 
     if not DATA_PATH.exists():
         print(f"[Error] No se encontró {DATA_PATH}")

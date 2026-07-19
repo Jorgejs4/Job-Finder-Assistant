@@ -3,6 +3,10 @@ name: Refilter Jobs by Location
 on:
   workflow_dispatch:
     inputs:
+      city:
+        description: 'Ciudad deseada (ej: Sevilla, Madrid, London)'
+        required: false
+        default: 'Sevilla'
       archive:
         description: 'Archivar ofertas eliminadas'
         required: false
@@ -38,9 +42,9 @@ jobs:
 
     - name: Run refilter
       env:
-        DESIRED_LOCATIONS: ${{ secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
+        DESIRED_LOCATIONS: ${{ inputs.city || 'Sevilla' }},Remoto
       run: |
-        python refilter.py --archive
+        python refilter.py --archive --location "${{ inputs.city || 'Sevilla' }}"
 
     - name: Commit results
       if: always()
@@ -52,7 +56,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes after refilter"
           else
-            git commit -m "🔍 Refilter: removed location+mode mismatches [skip ci]"
+            git commit -m "Refilter: removed non-${{ inputs.city || 'Sevilla' }} location+mode mismatches [skip ci]"
             git push origin main
           fi
         fi
