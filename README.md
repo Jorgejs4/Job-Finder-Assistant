@@ -145,6 +145,12 @@ Dashboard interactivo con **Streamlit**, reimaginado como panel de gestión de o
 - **📊 Estadísticas** — Inteligencia salarial completa (promedio, mediana, min, max + desglose por modalidad y plataforma). Skills gap analysis (skills que tienes vs las que faltan). Resumen del mercado (distribución por modalidad, plataforma, % remoto).
 - **📈 Ejecuciones** — KPIs de la última ejecución, tabla de scrapers OK/fallidos, historial con gráficos de evolución.
 
+### Dashboard Online
+
+El dashboard está desplegado en **Streamlit Community Cloud** y se actualiza automáticamente con cada ejecución del scraper:
+
+👉 **https://job-finder-assistant.streamlit.app**
+
 ### Cómo funciona
 
 El dashboard lee los datos directamente desde el repositorio en GitHub (archivo `results/data.json`). Agrega TODAS las ofertas de TODAS las ejecuciones y las deduplica por URL (conserva la versión más reciente).

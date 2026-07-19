@@ -15,7 +15,8 @@ import json
 import time
 import argparse
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait, FIRST_COMPLETED
 import threading
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -48,11 +49,6 @@ class RateLimiter:
     def reset_interval(self):
         with self._lock:
             self._interval = self._min_interval
-
-    def backoff(self, factor=4.0, max_interval=120.0):
-        with self._lock:
-            self._interval = min(self._interval * factor, max_interval)
-            print(f"[RateLimiter] Backoff → {self._interval:.1f}s")
 
     def backoff(self):
         with self._lock:
@@ -106,6 +102,8 @@ def write_job_back(data, url, updated_job):
 
 def analyze_single(gemini, cv_text, job, rate_limiter):
     """Analiza un job con Gemini. 3 llamadas separadas: basic, details, cv."""
+    if gemini.key_pool.exhausted:
+        raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
     desc = job.get("description") or job.get("title", "")
     experience_hint = job.get("experience_hint", 0)
     language = config.detect_language(job.get("source", ""), job.get("title", ""), desc)
@@ -236,122 +234,140 @@ def main():
 
     if args.workers > 1:
         with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            job_iter = iter(to_analyze)
             futures = {}
-            for url, job in to_analyze:
-                if stop_event.is_set():
-                    break
-                future = executor.submit(analyze_single, gemini, cv_text, job, rate_limiter)
-                futures[future] = (url, job)
 
-            for future in as_completed(futures):
-                if stop_event.is_set():
-                    break
-                url, job = futures[future]
-                try:
-                    updates = future.result()
-                    job.update(updates)
-                    write_job_back(data, url, updates)
-                    analyzed += 1
+            def submit_next():
+                if stop_event.is_set() or gemini.key_pool.exhausted:
+                    return
+                for url, job in job_iter:
+                    future = executor.submit(analyze_single, gemini, cv_text, job, rate_limiter)
+                    futures[future] = (url, job)
+                    return
 
-                    match = updates.get("match_score", 0)
-                    print(f"  [{analyzed}/{len(to_analyze)}] {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%", flush=True)
+            for _ in range(min(args.workers, len(to_analyze))):
+                submit_next()
 
-                    # Generar CV para ofertas con match >= 50
-                    if match >= 50:
-                        try:
-                            job_data = {
-                                "title": job["title"],
-                                "company": job.get("company", ""),
-                                "tech_stack": job.get("tech_stack", []),
-                                "tailored_advice": updates.get("tailored_advice", ""),
-                            }
-                            html_path, pdf_path, cl_pdf_path = cv_gen.generate(
-                                gemini, cv_text, job_data, cv_pdf_path=cv_path,
-                                cover_letter=job.get("cover_letter"),
-                                language=job.get("language", "es"),
-                            )
-                            if pdf_path:
-                                slug = os.path.basename(pdf_path)
-                                job["custom_cv_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
-                            if html_path:
-                                job["custom_cv_html"] = os.path.basename(html_path)
-                            if cl_pdf_path:
-                                cl_slug = os.path.basename(cl_pdf_path)
-                                job["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
-                            write_job_back(data, url, job)
-                        except Exception as e:
-                            print(f"    [CV Error] {e}")
+            while futures:
+                done, _ = wait(futures, return_when=FIRST_COMPLETED)
+                for future in done:
+                    url, job = futures.pop(future)
+                    try:
+                        updates = future.result()
+                        job.update(updates)
+                        write_job_back(data, url, updates)
+                        analyzed += 1
 
-                        # Generar guía de entrevista
-                        try:
-                            rate_limiter.wait()
-                            techs_str = ", ".join(job.get("tech_stack", [])[:10])
-                            interview_prep = gemini.generate_interview_prep(
-                                cv_text=cv_text,
-                                offer_title=job["title"],
-                                company=job.get("company", ""),
-                                tech_stack=techs_str,
-                                offer_description=job.get("description", "") or job["title"],
-                                language=job.get("language", "es"),
-                            )
-                            job["interview_prep"] = interview_prep.model_dump()
-                            rate_limiter.reset_interval()
-                            write_job_back(data, url, job)
-                        except Exception as e:
-                            rate_limiter.backoff()
-                            print(f"    [Entrevista Error] {e}")
+                        match = updates.get("match_score", 0)
+                        print(f"  [{analyzed}/{len(to_analyze)}] {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%", flush=True)
 
-                        # Investigar empresa (match >= 60)
-                        if match >= 60:
+                        if match >= 50:
+                            try:
+                                job_data = {
+                                    "title": job["title"],
+                                    "company": job.get("company", ""),
+                                    "tech_stack": job.get("tech_stack", []),
+                                    "tailored_advice": updates.get("tailored_advice", ""),
+                                }
+                                html_path, pdf_path, cl_pdf_path = cv_gen.generate(
+                                    gemini, cv_text, job_data, cv_pdf_path=cv_path,
+                                    cover_letter=job.get("cover_letter"),
+                                    language=job.get("language", "es"),
+                                )
+                                if pdf_path:
+                                    slug = os.path.basename(pdf_path)
+                                    job["custom_cv_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                                if html_path:
+                                    job["custom_cv_html"] = os.path.basename(html_path)
+                                if cl_pdf_path:
+                                    cl_slug = os.path.basename(cl_pdf_path)
+                                    job["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
+                                write_job_back(data, url, job)
+                            except Exception as e:
+                                print(f"    [CV Error] {e}")
+
+                            if stop_event.is_set() or gemini.key_pool.exhausted:
+                                continue
+
                             try:
                                 rate_limiter.wait()
-                                company_profile = gemini.research_company(
-                                    company_name=job.get("company", ""),
+                                techs_str = ", ".join(job.get("tech_stack", [])[:10])
+                                interview_prep = gemini.generate_interview_prep(
+                                    cv_text=cv_text,
                                     offer_title=job["title"],
+                                    company=job.get("company", ""),
+                                    tech_stack=techs_str,
                                     offer_description=job.get("description", "") or job["title"],
                                     language=job.get("language", "es"),
                                 )
-                                job["company_profile"] = company_profile.model_dump()
+                                job["interview_prep"] = interview_prep.model_dump()
                                 rate_limiter.reset_interval()
                                 write_job_back(data, url, job)
                             except Exception as e:
                                 rate_limiter.backoff()
-                                print(f"    [Empresa Error] {e}")
+                                print(f"    [Entrevista Error] {e}")
 
-                            # Matching por proyectos
-                            if config.USER_PROJECTS:
+                            if stop_event.is_set() or gemini.key_pool.exhausted:
+                                continue
+
+                            if match >= 60:
                                 try:
                                     rate_limiter.wait()
-                                    project_match = gemini.match_projects(
-                                        cv_text=cv_text,
+                                    company_profile = gemini.research_company(
+                                        company_name=job.get("company", ""),
                                         offer_title=job["title"],
                                         offer_description=job.get("description", "") or job["title"],
-                                        user_projects=config.USER_PROJECTS,
                                         language=job.get("language", "es"),
                                     )
-                                    job["project_match"] = project_match.model_dump()
+                                    job["company_profile"] = company_profile.model_dump()
                                     rate_limiter.reset_interval()
                                     write_job_back(data, url, job)
                                 except Exception as e:
                                     rate_limiter.backoff()
-                                    print(f"    [Proyectos Error] {e}")
+                                    print(f"    [Empresa Error] {e}")
 
-                except RuntimeError as e:
-                    if "429" in str(e):
-                        print(f"\n[CRÍTICO] Todas las API keys agotadas. Parando.")
-                        stop_event.set()
-                        break
-                    failed += 1
-                    rate_limiter.backoff()
-                    print(f"  [Error] {job.get('title', '?')}: {e}")
-                except Exception as e:
-                    failed += 1
-                    rate_limiter.backoff()
-                    print(f"  [Error] {job.get('title', '?')}: {e}")
+                                if stop_event.is_set() or gemini.key_pool.exhausted:
+                                    continue
 
-                if (analyzed + failed) % SAVE_INTERVAL == 0:
-                    save_data(data)
-                    saved = analyzed + failed
+                                if config.USER_PROJECTS:
+                                    try:
+                                        rate_limiter.wait()
+                                        project_match = gemini.match_projects(
+                                            cv_text=cv_text,
+                                            offer_title=job["title"],
+                                            offer_description=job.get("description", "") or job["title"],
+                                            user_projects=config.USER_PROJECTS,
+                                            language=job.get("language", "es"),
+                                        )
+                                        job["project_match"] = project_match.model_dump()
+                                        rate_limiter.reset_interval()
+                                        write_job_back(data, url, job)
+                                    except Exception as e:
+                                        rate_limiter.backoff()
+                                        print(f"    [Proyectos Error] {e}")
+
+                    except RuntimeError as e:
+                        if "429" in str(e):
+                            print(f"\n[CRITICO] Todas las API keys agotadas. Parando.")
+                            stop_event.set()
+                            for f in futures:
+                                f.cancel()
+                            break
+                        failed += 1
+                        rate_limiter.backoff()
+                        print(f"  [Error] {job.get('title', '?')}: {e}")
+                    except Exception as e:
+                        failed += 1
+                        rate_limiter.backoff()
+                        print(f"  [Error] {job.get('title', '?')}: {e}")
+
+                    if (analyzed + failed) % SAVE_INTERVAL == 0:
+                        save_data(data)
+                        saved = analyzed + failed
+
+                if stop_event.is_set():
+                    break
+                submit_next()
     else:
         for url, job in to_analyze:
             if stop_event.is_set():
@@ -390,6 +406,9 @@ def main():
                     except Exception as e:
                         print(f"    [CV Error] {e}")
 
+                    if stop_event.is_set() or gemini.key_pool.exhausted:
+                        continue
+
                     # Generar guía de entrevista
                     try:
                         rate_limiter.wait()
@@ -408,6 +427,9 @@ def main():
                     except Exception as e:
                         print(f"    [Entrevista Error] {e}")
 
+                    if stop_event.is_set() or gemini.key_pool.exhausted:
+                        continue
+
                     # Investigar empresa (match >= 60)
                     if match >= 60:
                         try:
@@ -423,6 +445,9 @@ def main():
                             write_job_back(data, url, job)
                         except Exception as e:
                             print(f"    [Empresa Error] {e}")
+
+                        if stop_event.is_set() or gemini.key_pool.exhausted:
+                            continue
 
                         # Matching por proyectos
                         if config.USER_PROJECTS:

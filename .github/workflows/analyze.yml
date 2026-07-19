@@ -22,7 +22,7 @@ permissions:
 jobs:
   analyze:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
 
     steps:
     - name: Checkout repository
@@ -72,6 +72,7 @@ jobs:
               git add results/data.json results/cvs/ 2>/dev/null || true
               if ! git diff --cached --quiet; then
                 git commit -m "📊 Analysis progress [skip ci]" || true
+                git pull --rebase origin main || true
                 git push origin main || true
               fi
             fi
