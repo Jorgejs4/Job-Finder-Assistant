@@ -111,7 +111,13 @@ class EmailNotifier:
         for name, stats in scraper_stats.items():
             found = stats.get("found", 0)
             failed = stats.get("failed", False)
-            status_icon = "&#10060;" if failed else "&#9989;"
+            error = stats.get("error", "")
+            if failed and error:
+                status_icon = "&#10060;"  # ❌
+            elif failed:
+                status_icon = "&#9888;&#65039;"  # ⚠️
+            else:
+                status_icon = "&#9989;"  # ✅
             scraper_rows += f"""
             <tr>
                 <td style="padding:8px;border-bottom:1px solid #eee;font-weight:600">{name}</td>

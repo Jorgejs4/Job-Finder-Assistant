@@ -356,7 +356,7 @@ with tab_mis_ofertas:
         with f1:
             source_filter = st.multiselect("Fuente", filter_opts["sources"], default=filter_opts["sources"])
         with f2:
-            mode_filter = st.multiselect("Modalidad", filter_opts["modes"] + ["Sin analizar"], default=filter_opts["modes"] + ["Sin analizar"])
+            mode_filter = st.multiselect("Modalidad", filter_opts["modes"] + ["Sin analizar"], default=filter_opts["modes"])
         with f3:
             all_statuses = [s for s in config.APPLICATION_STATUSES if s in filter_opts["statuses_present"]]
             status_filter = st.multiselect("Estado", config.APPLICATION_STATUSES, default=all_statuses)
@@ -1158,18 +1158,20 @@ with tab_ejecuciones:
 
     stats = latest.get("scraper_stats", {})
     total_found = sum(s.get("found", 0) for s in stats.values())
-    scrapers_ok = sum(1 for s in stats.values() if not s.get("failed"))
-    scrapers_fail = sum(1 for s in stats.values() if s.get("failed"))
+    scrapers_ok = sum(1 for s in stats.values() if not s.get("failed") and s.get("found", 0) > 0)
+    scrapers_zero = sum(1 for s in stats.values() if s.get("failed") and not s.get("error"))
+    scrapers_fail = sum(1 for s in stats.values() if s.get("failed") and s.get("error"))
     added = latest.get("_total_added", 0)
     analyzed = latest.get("_analyzed_count", 0)
 
     st.markdown("#### Última ejecución")
-    k1, k2, k3, k4, k5 = st.columns(5)
+    k1, k2, k3, k4, k5, k6 = st.columns(6)
     k1.metric("Ofertas encontradas", total_found)
     k2.metric("Añadidas a Notion", added)
     k3.metric("Analizadas por IA", analyzed)
     k4.metric("Scrapers OK", scrapers_ok)
-    k5.metric("Scrapers fallidos", scrapers_fail, delta=f"-{scrapers_fail}" if scrapers_fail else None, delta_color="inverse")
+    k5.metric("Sin ofertas", scrapers_zero)
+    k6.metric("Scrapers fallidos", scrapers_fail, delta=f"-{scrapers_fail}" if scrapers_fail else None, delta_color="inverse")
 
     errors = latest.get("errors", [])
     if errors:
@@ -1180,11 +1182,20 @@ with tab_ejecuciones:
     st.markdown("#### Scrapers")
     scraper_data = []
     for name, s in stats.items():
+        found = s.get("found", 0)
+        failed = s.get("failed", False)
+        error = s.get("error", "")
+        if failed and error:
+            estado = "❌ Fallido"
+        elif failed:
+            estado = "⚠️ Sin ofertas"
+        else:
+            estado = "✅ OK"
         scraper_data.append({
             "Plataforma": name,
-            "Ofertas": s.get("found", 0),
-            "Estado": "❌ Fallido" if s.get("failed") else "✅ OK",
-            "Error": s.get("error", "") if s.get("failed") else "",
+            "Ofertas": found,
+            "Estado": estado,
+            "Error": error if failed else "",
         })
     st.dataframe(pd.DataFrame(scraper_data), use_container_width=True, hide_index=True)
 
@@ -1198,8 +1209,9 @@ with tab_ejecuciones:
                 "Encontradas": sum(s.get("found", 0) for s in st_stats.values()),
                 "Añadidas": run.get("_total_added", 0),
                 "Analizadas": run.get("_analyzed_count", 0),
-                "Scrapers OK": sum(1 for s in st_stats.values() if not s.get("failed")),
-                "Scrapers FAIL": sum(1 for s in st_stats.values() if s.get("failed")),
+                "Scrapers OK": sum(1 for s in st_stats.values() if not s.get("failed") and s.get("found", 0) > 0),
+                "Sin ofertas": sum(1 for s in st_stats.values() if s.get("failed") and not s.get("error")),
+                "Scrapers FAIL": sum(1 for s in st_stats.values() if s.get("failed") and s.get("error")),
                 "Errores": len(run.get("errors", [])),
             })
         hist_df = pd.DataFrame(history)

@@ -11,6 +11,12 @@ class TecnoJobsScraper(BaseScraper):
     Usa curl_cffi para evadir protecciones anti-bot.
     """
     MAX_RESULTS = 50
+    TECNOEMPLEO_PROVINCES = {
+        "sevilla": "274", "madrid": "263", "barcelona": "240",
+        "valencia": "279", "malaga": "291", "bizkaia": "480",
+        "guipuzcoa": "200", "aragon": "50", "asturias": "33",
+        "galicia": "15", "castilla": "45", "murcia": "30",
+    }
 
     def _fetch(self, url: str, params: dict = None) -> str:
         try:
@@ -30,11 +36,21 @@ class TecnoJobsScraper(BaseScraper):
         jobs = []
         encoded = search_query.replace(" ", "+")
 
+        # Determinar parámetros de ubicación
         is_remote = any(loc.lower() in ("remoto", "remote") for loc in (locations or []))
+        province_code = ""
+        if not is_remote and locations:
+            for loc in locations:
+                code = self.TECNOEMPLEO_PROVINCES.get(loc.lower().strip())
+                if code:
+                    province_code = code
+                    break
+
+        url = f"https://www.tecnoempleo.com/ofertas-trabajo/?te={encoded}"
         if is_remote:
-            url = f"https://www.tecnoempleo.com/ofertas-trabajo/?te={encoded}&en_remoto=,1,"
-        else:
-            url = f"https://www.tecnoempleo.com/ofertas-trabajo/?te={encoded}"
+            url += "&en_remoto=,1,"
+        elif province_code:
+            url += f"&pr=,{province_code},"
 
         html = self._fetch(url)
         if not html:
@@ -63,37 +79,54 @@ class TecnoJobsScraper(BaseScraper):
                 if not title or len(title) < 3:
                     continue
 
-                # La empresa suele estar en un nodo hermano o padre
-                company = ""
                 parent = link.find_parent("div") or link.find_parent("li")
-                if parent:
-                    for sep in [",", "("]:
-                        full_text = parent.get_text(" ", strip=True)
-                        parts = full_text.split(sep)
-                        if len(parts) > 1:
-                            candidate = parts[-1].strip().rstrip(")")
-                            if 3 < len(candidate) < 60:
-                                company = candidate
-                                break
 
+                # Empresa: selector actual a.text-primary.link-muted
+                company = ""
+                if parent:
+                    company_tag = parent.select_one("a.text-primary.link-muted") or parent.select_one("a[href*='-trabajo']")
+                    if company_tag:
+                        company = company_tag.get_text(strip=True)
+
+                # Ubicación: div col-lg-3 (desktop) o span d-block (mobile)
                 location = ""
-                loc_tag = parent.select_one(".text-muted, .location") if parent else None
-                if loc_tag:
-                    location = loc_tag.get_text(strip=True)
+                if parent:
+                    loc_tag = (parent.select_one("div.text-gray-700") or
+                               parent.select_one("div.col-lg-3") or
+                               parent.select_one("span.d-block.d-lg-none"))
+                    if loc_tag:
+                        loc_text = loc_tag.get_text(" ", strip=True)
+                        # Extraer ciudad: buscar <b> dentro del tag
+                        b_tag = loc_tag.find("b")
+                        if b_tag:
+                            city = b_tag.get_text(strip=True)
+                            # Buscar modalidad (Presencial/Remoto/Híbrido)
+                            mode = ""
+                            for m in ["100% remoto", "Remoto", "Híbrido", "Presencial"]:
+                                if m.lower() in loc_text.lower():
+                                    mode = m
+                                    break
+                            location = f"{city} ({mode})" if mode else city
+                        elif loc_text:
+                            # Fallback: usar el texto directamente
+                            location = loc_text.split("\n")[0].strip()
+
+                # Descripción: span.hidden-md-down.text-gray-800
+                description = ""
+                if parent:
+                    desc_tag = parent.select_one("span.hidden-md-down") or parent.select_one("span.text-gray-800")
+                    if desc_tag:
+                        description = desc_tag.get_text(" ", strip=True)[:300]
+
                 if not location:
                     location = "España"
-
-                desc = ""
-                desc_tag = parent.select_one(".description, .snippet") if parent else None
-                if desc_tag:
-                    desc = desc_tag.get_text(strip=True)
 
                 jobs.append({
                     "title": title,
                     "company": company or "No especificada",
                     "location": location,
                     "link": href,
-                    "description": desc or title,
+                    "description": description or title,
                     "date_posted": "Reciente",
                     "source": "TecnoEmpleo"
                 })

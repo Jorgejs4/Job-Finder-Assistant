@@ -23,6 +23,100 @@ class JobfluentScraper(BaseScraper):
             print(f"[Jobfluent] Error curl_cffi: {e}")
         return ""
 
+    def _parse_card(self, card) -> dict:
+        """Parsea una tarjeta de empleo con selectores robustos."""
+        a_tag = None
+
+        # Buscar enlace de empleo: probar múltiples selectores
+        for selector in [
+            "a[href*='/jobs/']",
+            "a[href*='/ofertas/']",
+            "a.offer-link",
+            "h3 a",
+            "h2 a",
+            "a[href*='job']",
+        ]:
+            a_tag = card.select_one(selector)
+            if a_tag and a_tag.get("href"):
+                break
+
+        if not a_tag:
+            # Fallback: primer <a> con href que parezca empleo
+            for a in card.find_all("a", href=True):
+                href = a["href"]
+                if "/jobs/" in href or "/ofertas/" in href or "job" in href.lower():
+                    a_tag = a
+                    break
+
+        if not a_tag or not a_tag.get("href"):
+            return None
+
+        href = a_tag["href"]
+        if href.startswith("/"):
+            href = "https://jobfluent.com" + href
+
+        # Título
+        title = ""
+        for sel in ["h3", "h2", ".job-title", ".title", "a.offer-title"]:
+            tag = card.select_one(sel)
+            if tag:
+                title = tag.get_text(strip=True)
+                if title:
+                    break
+        if not title:
+            title = a_tag.get_text(strip=True)[:100]
+        if not title or len(title) < 3:
+            return None
+
+        # Empresa: múltiples selectores
+        company = ""
+        for sel in [".company", ".employer", ".company-name", "a[href*='/company/']",
+                    "span.company-name", "div.company"]:
+            tag = card.select_one(sel)
+            if tag:
+                company = tag.get_text(strip=True)
+                if company:
+                    break
+        # Fallback: buscar enlaces que parezcan empresas
+        if not company:
+            for a in card.find_all("a", href=True):
+                if "/company/" in a["href"] or "/empresas/" in a["href"]:
+                    company = a.get_text(strip=True)
+                    if company:
+                        break
+
+        # Ubicación
+        location = ""
+        for sel in [".location", ".job-location", "span.location",
+                    "div.location", "span.city", "span[data-location]"]:
+            tag = card.select_one(sel)
+            if tag:
+                location = tag.get_text(strip=True)
+                if location:
+                    break
+        if not location:
+            location = "España"
+
+        # Descripción
+        description = ""
+        for sel in [".description", ".snippet", ".job-description",
+                    "p.description", "div.job-summary"]:
+            tag = card.select_one(sel)
+            if tag:
+                description = tag.get_text(strip=True)
+                if description:
+                    break
+
+        return {
+            "title": title,
+            "company": company or "No especificada",
+            "location": location,
+            "link": href,
+            "description": description or title,
+            "date_posted": "Reciente",
+            "source": "Jobfluent"
+        }
+
     def scrape_jobs(self, search_query: str, locations: List[str]) -> List[Dict[str, Any]]:
         print(f"[Jobfluent] Buscando ofertas para '{search_query}'...")
         jobs = []
@@ -39,61 +133,44 @@ class JobfluentScraper(BaseScraper):
 
         soup = BeautifulSoup(html, "html.parser")
 
-        cards = soup.select("div.job-card, div.offer-item, article.job")
+        # Estrategia 1: buscar tarjetas con selectores específicos
+        cards = []
+        for selector in [
+            "div.job-card",
+            "div.offer-item",
+            "article.job",
+            "div.panel-offer",
+            "div.job-offer",
+            "div.offer-card",
+        ]:
+            cards = soup.select(selector)
+            if cards:
+                break
+
+        # Estrategia 2: buscar por clases que contengan "job" o "offer"
         if not cards:
             cards = soup.find_all("div", class_=re.compile(r"job|offer", re.I))
+
+        # Estrategia 3: buscar por enlaces a /jobs/ y usar el padre como card
         if not cards:
-            cards = soup.find_all("a", href=re.compile(r"/jobs/"))
+            job_links = soup.find_all("a", href=re.compile(r"/jobs/"))
+            seen_parents = set()
+            for link in job_links:
+                parent = link.find_parent("div") or link.find_parent("article") or link.find_parent("li")
+                if parent and id(parent) not in seen_parents:
+                    seen_parents.add(id(parent))
+                    cards.append(parent)
 
         seen = set()
         for card in cards[:self.MAX_RESULTS]:
             try:
-                if card.name == "a":
-                    a_tag = card
-                    card = card.find_parent("div") or card
-                else:
-                    a_tag = card.find("a", href=True)
-                    if not a_tag:
-                        continue
-
-                href = a_tag["href"]
-                if href.startswith("/"):
-                    href = "https://jobfluent.com" + href
-                if href in seen:
+                result = self._parse_card(card)
+                if not result or not result["link"]:
                     continue
-                seen.add(href)
-
-                title = ""
-                for sel in ["h2", "h3", ".job-title", ".title"]:
-                    t = card.select_one(sel)
-                    if t:
-                        title = t.get_text(strip=True)
-                        break
-                if not title:
-                    title = a_tag.get_text(strip=True)[:100]
-
-                company = ""
-                for sel in [".company", ".employer", ".company-name"]:
-                    c = card.select_one(sel)
-                    if c:
-                        company = c.get_text(strip=True)
-                        break
-
-                loc_tag = card.select_one(".location, .job-location")
-                location = loc_tag.get_text(strip=True) if loc_tag else "España"
-
-                desc_tag = card.select_one(".description, .snippet, .job-description")
-                desc = desc_tag.get_text(strip=True) if desc_tag else title
-
-                jobs.append({
-                    "title": title,
-                    "company": company or "No especificada",
-                    "location": location,
-                    "link": href,
-                    "description": desc,
-                    "date_posted": "Reciente",
-                    "source": "Jobfluent"
-                })
+                if result["link"] in seen:
+                    continue
+                seen.add(result["link"])
+                jobs.append(result)
             except Exception:
                 continue
 

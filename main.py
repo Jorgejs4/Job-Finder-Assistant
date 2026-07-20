@@ -226,9 +226,13 @@ def main():
                 else:
                     jobs_found = jobs_found[:config.MAX_JOBS_PER_SCRAPER]
                     all_jobs.extend(jobs_found)
-                    results.record_scraper_result(scraper_name, jobs_found)
+                    is_zero = len(jobs_found) == 0
+                    results.record_scraper_result(scraper_name, jobs_found, failed=is_zero,
+                                                  error_msg="0 ofertas encontradas" if is_zero else "")
                     if jobs_found:
                         print(f"[{scraper_name}] +{len(jobs_found)} ofertas")
+                    else:
+                        print(f"[{scraper_name}] ⚠️ 0 ofertas encontradas")
             except Exception as e:
                 print(f"[{name}] Error future: {e}")
                 results.record_scraper_result(name, [], failed=True, error_msg=str(e))
@@ -488,14 +492,16 @@ def main():
                     continue
 
             # Llamada 3a: CV + cover letter (text)
+            _desc = job.get("description") or job["title"]
+            _lang = config.detect_language(job.get("source", ""), job.get("title", ""), _desc)
             try:
                 rate_limiter.wait()
                 cv_text_data = gemini.customize_cv_text(
                     cv_text=cv_text,
                     offer_title=job["title"],
-                    offer_description=desc_for_match,
+                    offer_description=_desc,
                     match_result=match_result,
-                    language=language,
+                    language=_lang,
                 )
                 rate_limiter.reset_interval()
                 job["cover_letter"] = cv_text_data.cover_letter
@@ -509,9 +515,9 @@ def main():
                 cv_exp_data = gemini.customize_cv_data(
                     cv_text=cv_text,
                     offer_title=job["title"],
-                    offer_description=desc_for_match,
+                    offer_description=_desc,
                     match_result=match_result,
-                    language=language,
+                    language=_lang,
                 )
                 rate_limiter.reset_interval()
                 job["cv_experience_adapted"] = cv_exp_data.cv_experience_adapted
@@ -559,7 +565,7 @@ def main():
                         offer_title=job["title"],
                         company=job.get("company", ""),
                         tech_stack=techs_str,
-                        offer_description=desc_for_match,
+                        offer_description=_desc,
                         language=language,
                     )
                     job["interview_prep"] = interview_prep.model_dump()
@@ -574,7 +580,7 @@ def main():
                     company_profile = gemini.research_company(
                         company_name=job.get("company", ""),
                         offer_title=job["title"],
-                        offer_description=desc_for_match,
+                        offer_description=_desc,
                         language=language,
                     )
                     job["company_profile"] = company_profile.model_dump()
@@ -589,7 +595,7 @@ def main():
                         project_match = gemini.match_projects(
                             cv_text=cv_text,
                             offer_title=job["title"],
-                            offer_description=desc_for_match,
+                            offer_description=_desc,
                             user_projects=config.USER_PROJECTS,
                             language=language,
                         )

@@ -198,7 +198,8 @@ class WebhookNotifier:
 
     def _send_slack_summary(self, jobs_added: int, jobs_analyzed: int, scraper_stats: Dict):
         """Envía resumen de ejecución a Slack."""
-        scrapers_ok = sum(1 for s in scraper_stats.values() if not s.get("failed"))
+        scrapers_ok = sum(1 for s in scraper_stats.values()
+                         if not s.get("failed") and s.get("found", 0) > 0)
         scrapers_total = len(scraper_stats)
         
         blocks = [
@@ -220,7 +221,8 @@ class WebhookNotifier:
 
     def _send_discord_summary(self, jobs_added: int, jobs_analyzed: int, scraper_stats: Dict):
         """Envía resumen de ejecución a Discord."""
-        scrapers_ok = sum(1 for s in scraper_stats.values() if not s.get("failed"))
+        scrapers_ok = sum(1 for s in scraper_stats.values()
+                         if not s.get("failed") and s.get("found", 0) > 0)
         embed = {
             "title": "📊 Resumen de ejecución Job Scraper",
             "color": 0x3b82f6,
