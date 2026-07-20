@@ -1,0 +1,143 @@
+name: Job Scraper (Full - Experimental)
+
+on:
+  workflow_dispatch:
+    inputs:
+      desired_locations:
+        description: 'Ubicaciones de búsqueda (separadas por comas)'
+        required: true
+        default: 'Sevilla,Remoto'
+      years_of_experience:
+        description: 'Años de experiencia requeridos'
+        required: false
+        default: '0'
+      min_salary:
+        description: 'Salario mínimo deseado'
+        required: false
+        default: '20000'
+
+concurrency:
+  group: scraper-full-run
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  test-scrapers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    - name: Install dependencies
+      run: pip install -r requirements.txt && pip install playwright && playwright install chromium
+    - name: Run scraper tests
+      env:
+        MOCK_GEMINI: 'true'
+        GEMINI_API_KEY: 'test-mock-key'
+        DESIRED_LOCATIONS: 'Remoto'
+      run: python tests/test_scrapers.py
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scraper-full-test-report
+        path: results/test_report.json
+        retention-days: 30
+
+  run-scraper:
+    needs: test-scrapers
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Cache Docker layers
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-full-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-full-
+    - name: Build Docker Image (full con Playwright)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile.full
+        load: true
+        tags: job-scraper-full:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+    - name: Run Scraper (full headless)
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        SMTP_GMAIL_USER: ${{ secrets.SMTP_GMAIL_USER }}
+        SMTP_GMAIL_PASSWORD: ${{ secrets.SMTP_GMAIL_PASSWORD }}
+        NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+        JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        WEBHOOK_MIN_MATCH: ${{ secrets.WEBHOOK_MIN_MATCH }}
+        DESIRED_LOCATIONS: ${{ github.event.inputs.desired_locations || secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
+        YEARS_OF_EXPERIENCE: ${{ github.event.inputs.years_of_experience || secrets.YEARS_OF_EXPERIENCE || '0' }}
+        MIN_SALARY: ${{ github.event.inputs.min_salary || secrets.MIN_SALARY || '20000' }}
+        CV_PATH: 'cv.pdf'
+        USE_HEADLESS_SCRAPERS: 'true'
+      run: |
+        mkdir -p results
+        docker run --rm \
+          -v "$(pwd)/results:/app/results" \
+          -e GEMINI_API_KEY="$GEMINI_API_KEY" \
+          -e GEMINI_API_KEYS="$GEMINI_API_KEYS" \
+          -e NOTION_TOKEN="$NOTION_TOKEN" \
+          -e NOTION_DATABASE_ID="$NOTION_DATABASE_ID" \
+          -e RAPIDAPI_KEY="$RAPIDAPI_KEY" \
+          -e SMTP_GMAIL_USER="$SMTP_GMAIL_USER" \
+          -e SMTP_GMAIL_PASSWORD="$SMTP_GMAIL_PASSWORD" \
+          -e NOTIFY_EMAIL="$NOTIFY_EMAIL" \
+          -e JOOBLE_API_KEY="$JOOBLE_API_KEY" \
+          -e WEBHOOK_URL="$WEBHOOK_URL" \
+          -e WEBHOOK_MIN_MATCH="$WEBHOOK_MIN_MATCH" \
+          -e DESIRED_LOCATIONS="$DESIRED_LOCATIONS" \
+          -e YEARS_OF_EXPERIENCE="$YEARS_OF_EXPERIENCE" \
+          -e MIN_SALARY="$MIN_SALARY" \
+          -e CV_PATH="$CV_PATH" \
+          -e USE_HEADLESS_SCRAPERS=true \
+          job-scraper-full:latest
+    - name: Upload run results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scraper-full-results-${{ github.run_id }}
+        path: results/
+        retention-days: 90
+    - name: Commit data.json
+      if: always()
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        if [ -f results/data.json ]; then
+          git add results/data.json results/cvs/
+          if [ -f results/feedback.json ]; then git add results/feedback.json; fi
+          if git diff --cached --quiet; then
+            echo "No changes to data.json"
+          else
+            git commit -m "Scraper Full results [skip ci]"
+            git fetch origin main
+            git rebase -X theirs origin/main || (git rebase --abort && git push origin main)
+            git push origin main
+          fi
+        fi
+    - name: Cleanup Docker cache
+      if: always()
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
