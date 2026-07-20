@@ -14,10 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copiar requerimientos e instalar
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt playwright
 
 # Instalar Playwright browsers (chromium) + dependencias del sistema
-RUN playwright install chromium && playwright install-deps chromium
+RUN python -m playwright install chromium && python -m playwright install-deps chromium
 
 # Copiar el código del proyecto
 COPY . .
