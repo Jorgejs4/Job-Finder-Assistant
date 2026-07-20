@@ -55,6 +55,9 @@ jobs:
             echo "No changes after refilter"
           else
             git commit -m "Refilter: archivadas ofertas fuera de ${{ inputs.city || 'Sevilla' }} [skip ci]"
+            for i in 1 2 3; do
+              git fetch origin main && git rebase origin/main && break || { git rebase --abort 2>/dev/null; sleep 5; }
+            done
             git push origin main
           fi
         fi

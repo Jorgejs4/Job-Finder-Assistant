@@ -1,8 +1,7 @@
-name: Job Scraper and Notion Sync
+name: Job Scraper (Simple - Stable)
 
 on:
   schedule:
-    # 7:00 y 19:00 UTC = 9:00 y 21:00 CEST (hora española en verano)
     - cron: '0 7,19 * * *'
   workflow_dispatch:
     inputs:
@@ -32,22 +31,18 @@ jobs:
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@v4
-
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
         cache: 'pip'
-
     - name: Install dependencies
       run: pip install -r requirements.txt
-
     - name: Run scraper tests
       env:
         MOCK_GEMINI: 'true'
         GEMINI_API_KEY: 'test-mock-key'
         DESIRED_LOCATIONS: 'Remoto'
       run: python tests/test_scrapers.py
-
     - name: Upload test report
       if: always()
       uses: actions/upload-artifact@v4
@@ -72,14 +67,15 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ hashFiles('requirements.txt') }}
+        key: ${{ runner.os }}-buildx-simple-${{ hashFiles('requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-buildx-
+          ${{ runner.os }}-buildx-simple-
 
-    - name: Build Docker Image
+    - name: Build Docker Image (simple)
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: Dockerfile
         load: true
         tags: job-scraper:latest
         cache-from: type=local,src=/tmp/.buildx-cache
@@ -142,9 +138,10 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to data.json"
           else
-            git commit -m "📊 Update data.json [skip ci]"
-            git fetch origin main
-            git rebase -X theirs origin/main || (git rebase --abort && git push origin main)
+            git commit -m "Update data.json [skip ci]" || true
+            for i in 1 2 3; do
+              git fetch origin main && git rebase origin/main && break || { git rebase --abort 2>/dev/null; sleep 5; }
+            done
             git push origin main
           fi
         else
