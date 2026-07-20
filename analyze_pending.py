@@ -40,7 +40,7 @@ def sync_to_notion(notion, job):
     if not url:
         return
     try:
-        if notion.is_url_in_notion(url):
+        if notion.check_if_job_exists(url):
             notion.update_job_fields(job)
         else:
             notion.add_job_to_notion(job)
