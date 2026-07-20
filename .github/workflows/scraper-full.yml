@@ -131,10 +131,7 @@ jobs:
             echo "No changes to data.json"
           else
             git commit -m "Scraper Full results [skip ci]"
-            for i in 1 2 3; do
-              git fetch origin main && git rebase origin/main && break || { git rebase --abort 2>/dev/null; sleep 5; }
-            done
-            git push origin main
+            git push --force-with-lease origin main
           fi
         fi
     - name: Cleanup Docker cache

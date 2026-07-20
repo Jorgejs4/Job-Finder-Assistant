@@ -141,10 +141,7 @@ jobs:
           if [ -f results/feedback.json ]; then git add results/feedback.json; fi
           if ! git diff --cached --quiet; then
             git commit -m "Scrape complete [skip ci]"
-            for i in 1 2 3; do
-              git fetch origin main && git rebase origin/main && break || { git rebase --abort 2>/dev/null; sleep 5; }
-            done
-            git push origin main
+            git push --force-with-lease origin main
           fi
         fi
 
@@ -205,10 +202,7 @@ jobs:
           if [ -f results/feedback.json ]; then git add results/feedback.json; fi
           if ! git diff --cached --quiet; then
             git commit -m "Analysis complete [skip ci]"
-            for i in 1 2 3; do
-              git fetch origin main && git rebase origin/main && break || { git rebase --abort 2>/dev/null; sleep 5; }
-            done
-            git push origin main
+            git push --force-with-lease origin main
           fi
         fi
 
@@ -239,10 +233,7 @@ jobs:
           git add results/data.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Refilter complete [skip ci]"
-            for i in 1 2 3; do
-              git fetch origin main && git rebase origin/main && break || { git rebase --abort 2>/dev/null; sleep 5; }
-            done
-            git push origin main
+            git push --force-with-lease origin main
           fi
         fi
 
