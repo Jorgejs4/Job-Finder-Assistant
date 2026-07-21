@@ -146,6 +146,13 @@ def aggregate_all_jobs(runs):
                 jobs_by_url[url] = job
 
     for job in jobs_by_url.values():
+        has_match = job.get("match_score") is not None
+        if not has_match:
+            job["needs_analysis"] = True
+            job["archived"] = False
+            job.pop("archive_reason", None)
+            continue
+        job.pop("needs_analysis", None)
         if job.get("work_mode"):
             job["work_mode"] = config.normalize_work_mode(job["work_mode"])
         match = job.get("match_score") or 0
@@ -329,6 +336,88 @@ def save_job_archived(data: dict, link: str, archived: bool, reason: str | None 
     return updated
 
 
+def save_job_analysis(data: dict, link: str, updates: dict) -> bool:
+    """Guarda los resultados del análisis de Gemini en data.json."""
+    updated = False
+    for run in data.get("runs", []):
+        for job in run.get("jobs", []):
+            if job.get("link") == link:
+                job.update(updates)
+                job.pop("needs_analysis", None)
+                updated = True
+    if updated:
+        data_path = os.path.join(RESULTS_DIR, "data.json")
+        with open(data_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    return updated
+
+
+def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
+    """Reanaliza ofertas sin analizar usando Gemini. Devuelve (analyzed, errors)."""
+    from utils.gemini_client import GeminiClient
+    from utils.cv_parser import parse_cv
+
+    config.validate_config()
+    gemini = GeminiClient()
+    cv_text = parse_cv(config.CV_PATH)
+
+    total = len(jobs_list)
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    analyzed = 0
+    errors = 0
+
+    for i, job in enumerate(jobs_list):
+        title = job.get("title", "?")[:50]
+        status_text.text(f"[{i+1}/{total}] Analizando: {title}...")
+        try:
+            language = config.detect_language(
+                job.get("source", ""), job.get("title", ""),
+                job.get("description", "") or job.get("title", "")
+            )
+            desc = job.get("description", "") or job.get("title", "")
+
+            match_result = gemini.match_offer(
+                cv_text=cv_text,
+                offer_title=job["title"],
+                offer_description=desc,
+                experience_hint=0,
+                language=language,
+            )
+            time.sleep(2)
+
+            details = gemini.match_details(
+                cv_text=cv_text,
+                offer_title=job["title"],
+                offer_description=desc,
+                match_result=match_result,
+                language=language,
+            )
+            time.sleep(2)
+
+            updates = {
+                "match_score": match_result.match_score,
+                "tech_stack": match_result.tech_stack,
+                "work_mode": config.normalize_work_mode(match_result.work_mode),
+                "language": language,
+                "salary": str(details.estimated_salary),
+                "salary_is_estimate": details.salary_is_estimate,
+                "required_experience": details.required_experience,
+                "tailored_advice": details.tailored_advice,
+            }
+            save_job_analysis(data, job["link"], updates)
+            job.update(updates)
+            analyzed += 1
+        except Exception as e:
+            errors += 1
+            st.warning(f"Error analizando '{title}': {e}")
+
+        progress_bar.progress((i + 1) / total)
+
+    status_text.success(f"Completado: {analyzed} analizadas, {errors} errores")
+    return analyzed, errors
+
+
 def parse_salary(val):
     if not val:
         return None
@@ -362,8 +451,8 @@ if not runs:
 
 latest = runs[0]
 
-tab_mis_ofertas, tab_archivadas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
-    ["💼 Mis Ofertas", "📦 Ofertas archivadas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
+tab_mis_ofertas, tab_sin_analizar, tab_archivadas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
+    ["💼 Mis Ofertas", "📋 Sin analizar", "📦 Ofertas archivadas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
 )
 
 if config.USER_PORTFOLIO_URL or config.USER_CERTIFICATIONS or config.USER_GITHUB:
@@ -395,7 +484,7 @@ with tab_mis_ofertas:
         with f1:
             source_filter = st.multiselect("Fuente", filter_opts["sources"], default=filter_opts["sources"])
         with f2:
-            mode_filter = st.multiselect("Modalidad", filter_opts["modes"] + ["Sin analizar"], default=filter_opts["modes"])
+            mode_filter = st.multiselect("Modalidad", filter_opts["modes"], default=filter_opts["modes"])
         with f3:
             all_statuses = [s for s in config.APPLICATION_STATUSES if s in filter_opts["statuses_present"]]
             status_filter = st.multiselect("Estado", config.APPLICATION_STATUSES, default=all_statuses)
@@ -444,30 +533,27 @@ with tab_mis_ofertas:
     for j in all_jobs:
         if j.get("archived"):
             continue
+        if j.get("needs_analysis"):
+            continue
 
         if source_filter and j.get("source", "N/A") not in source_filter:
             continue
 
         wm = j.get("work_mode", "")
-        is_analyzed = bool(j.get("match_score"))
-        if is_analyzed:
-            wm_norm = config.normalize_work_mode(wm)
-            if wm_norm and wm_norm != "N/A" and mode_filter and wm_norm not in mode_filter:
-                continue
-        else:
-            if "Sin analizar" not in mode_filter:
-                continue
+        wm_norm = config.normalize_work_mode(wm)
+        if wm_norm and wm_norm != "N/A" and mode_filter and wm_norm not in mode_filter:
+            continue
 
         job_status = j.get("status", "Nuevo")
         if status_filter and job_status not in status_filter:
             continue
 
         match = j.get("match_score") or 0
-        if is_analyzed and match < min_score:
+        if match < min_score:
             continue
 
         exp = j.get("required_experience") or 0
-        if is_analyzed and exp > exp_filter:
+        if exp > exp_filter:
             continue
 
         sal = parse_salary(j.get("salary"))
@@ -788,10 +874,63 @@ with tab_mis_ofertas:
             st.download_button("📥 Descargar CSV", csv_export,
                                file_name=f"ofertas_{datetime.now().strftime('%Y%m%d')}.csv",
                                mime="text/csv",
-                               key="csv_download")
+                                key="csv_download")
 
 # ═══════════════════════════════════════════════════════════════
-# TAB 2: OFERTAS ARCHIVADAS
+# TAB 2: OFERTAS SIN ANALIZAR
+# ═══════════════════════════════════════════════════════════════
+with tab_sin_analizar:
+    unanalyzed_jobs = [j for j in all_jobs if j.get("needs_analysis")]
+
+    if not unanalyzed_jobs:
+        st.info("No hay ofertas sin analizar. Todas las ofertas han sido procesadas por Gemini.")
+    else:
+        st.subheader(f"📋 {len(unanalyzed_jobs)} ofertas sin analizar")
+        st.caption("Estas ofertas no pudieron ser clasificadas automaticamente por Gemini y necesitan un análisis.")
+
+        if st.button("🔍 Reanalizar todas las ofertas", type="primary", use_container_width=True):
+            analyzed, errors = reanalyze_jobs_with_gemini(unanalyzed_jobs)
+            load_data.clear()
+            aggregate_all_jobs.clear()
+            st.rerun()
+
+        st.divider()
+
+        with st.expander("🔍 Buscar y filtrar", expanded=False):
+            search_unanalyzed = st.text_input(
+                "🔎 Buscar por titulo, empresa o ubicacion",
+                placeholder="Ej: Python, Sevilla...",
+                key="search_unanalyzed",
+            )
+
+        filtered_unanalyzed = unanalyzed_jobs
+        if search_unanalyzed.strip():
+            q = search_unanalyzed.lower()
+            filtered_unanalyzed = [
+                j for j in filtered_unanalyzed
+                if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
+            ]
+
+        for j in filtered_unanalyzed:
+            title = j.get("title", "N/A")
+            company = j.get("company", "N/A")
+            source = j.get("source", "N/A")
+            link = j.get("link", "")
+
+            header_parts = [f"**{title}** @ {company}"]
+            header_parts.append(f"🏢 {source}")
+
+            with st.expander(" | ".join(header_parts)):
+                if j.get("location"):
+                    st.markdown(f"**Ubicacion:** {j['location']}")
+                if j.get("description"):
+                    with st.expander("Ver descripcion", expanded=False):
+                        st.text(j["description"][:2000])
+                if link:
+                    st.link_button("🔗 Ver oferta original", link)
+
+# ═══════════════════════════════════════════════════════════════
+# TAB 3: OFERTAS ARCHIVADAS
 # ═══════════════════════════════════════════════════════════════
 with tab_archivadas:
     archived_jobs = [j for j in all_jobs if j.get("archived")]
