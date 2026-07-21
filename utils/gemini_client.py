@@ -826,7 +826,7 @@ Un cordial saludo."""
         lang_name = "español" if language == "es" else "English"
 
         prompt = f"""
-        Eres un reclutador técnico experto. Genera una guía de preparación para una entrevista para este puesto.
+        Eres un reclutador técnico experto. Genera una guía de preparación completa para una entrevista para este puesto.
         Responde en {lang_name}.
 
         Puesto: {offer_title}
@@ -840,11 +840,11 @@ Un cordial saludo."""
         {cv_text}
         ---
 
-        Genera:
-        1. 5-8 preguntas técnicas probables que podrían hacerse en esta entrevista, con respuestas sugeridas basadas en el CV
-        2. 3-5 preguntas comportamentales (STAR method) con respuestas sugeridas
-        3. 3-5 temas clave que el candidato debe repasar
-        4. 3-5 consejos específicos para esta oferta concreta
+        Debes generar TODAS estas secciones (ninguna puede estar vacía):
+        1. "technical_questions": 5-8 preguntas técnicas probables con respuestas sugeridas basadas en el CV
+        2. "behavioral_questions": 3-5 preguntas comportamentales (STAR method) con respuestas sugeridas
+        3. "key_topics": 3-5 temas clave que el candidato debe repasar
+        4. "preparation_tips": 3-5 consejos específicos para esta oferta concreta
 
         Responde CON SOLO el JSON con esta estructura exacta:
         {{
@@ -853,6 +853,8 @@ Un cordial saludo."""
             "key_topics": ["Tema 1", "Tema 2"],
             "preparation_tips": ["Consejo 1", "Consejo 2"]
         }}
+
+        IMPORTANTE: Todas las 4 claves deben aparecer en tu respuesta. Nunca omitas ninguna.
         """
 
         import time

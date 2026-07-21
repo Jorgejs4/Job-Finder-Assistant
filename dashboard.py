@@ -23,7 +23,6 @@ from datetime import datetime, timedelta
 from utils.feedback_manager import FeedbackManager
 import config
 from notion_sync import NotionSync
-from utils.calendar_integration import create_followup_event, create_interview_event
 
 st.set_page_config(
     page_title="Job Scraper Dashboard",
@@ -57,20 +56,15 @@ URL:{link}
 END:VCALENDAR"""
 
 
-def ics_interview_content(title: str, company: str, link: str) -> tuple:
+def google_calendar_url(title: str, company: str, link: str, event_datetime: datetime) -> str:
+    """Genera URL para crear evento en Google Calendar."""
+    from urllib.parse import quote
     event_title = f"Entrevista: {title} @ {company}"
-    start = datetime.now() + timedelta(days=1)
-    start = start.replace(hour=10, minute=0, second=0, microsecond=0)
-    end = start + timedelta(hours=1)
-    content = _generate_ics_content(
-        event_title,
-        f"Preparar: revisar empresa, practicar preguntas tecnicas.\\nOferta: {link}",
-        link, start, end,
-        [("-PT60M", f"Entrevista en 1 hora: {title} @ {company}"),
-         ("-P1D", f"Entrevista manana: {title} @ {company}")]
-    )
-    filename = f"interview_{company[:20].replace(' ', '_')}_{start.strftime('%Y%m%d')}.ics"
-    return content.encode("utf-8"), filename
+    description = f"Preparar: revisar empresa, practicar preguntas técnicas.\nOferta: {link}"
+    end = event_datetime + timedelta(hours=1)
+    dates = f"{event_datetime.strftime('%Y%m%dT%H%M%S')}/{end.strftime('%Y%m%dT%H%M%S')}"
+    params = f"action=TEMPLATE&text={quote(event_title)}&details={quote(description)}&dates={dates}"
+    return f"https://calendar.google.com/calendar/render?{params}"
 
 
 def ics_followup_content(title: str, company: str, link: str, days: int) -> tuple:
@@ -363,7 +357,7 @@ with tab_mis_ofertas:
         with f4:
             min_score = st.slider("Match minimo (solo aplica a ofertas analizadas)", 0, 100, 0)
 
-        f5, f6, f7, f8 = st.columns(4)
+        f5, f6, f7, f8, f9 = st.columns(5)
         with f5:
             sal_max = max(filter_opts["salaries"]) if filter_opts["salaries"] else 150000
             sal_range = st.slider(
@@ -374,14 +368,16 @@ with tab_mis_ofertas:
                 step=1000,
             )
         with f6:
+            salary_only_from_offer = st.checkbox("Solo salario de la oferta", value=False)
+        with f7:
             top_techs = [t for t, _ in sorted(filter_opts["techs"].items(), key=lambda x: x[1], reverse=True)[:30]]
             tech_filter = st.multiselect("Tech stack", top_techs, default=[])
-        with f7:
+        with f8:
             exp_values = sorted(filter_opts["experiences"])
             max_exp = max(exp_values) if exp_values else 10
             exp_slider_max = max(max_exp, 10)
             exp_filter = st.slider("Experiencia max (anios)", 0, exp_slider_max, exp_slider_max)
-        with f8:
+        with f9:
             location_filter = st.multiselect("Ubicacion", filter_opts["locations"], default=[])
 
         sort_options = {
@@ -432,6 +428,9 @@ with tab_mis_ofertas:
         if sal is not None and sal_range:
             if sal < sal_range[0] or sal > sal_range[1]:
                 continue
+
+        if salary_only_from_offer and j.get("salary_is_estimate", True):
+            continue
 
         if tech_filter:
             job_techs = j.get("tech_stack", [])
@@ -515,6 +514,10 @@ with tab_mis_ofertas:
                 sal_display = f"{salary}€"
                 sal_source = "Aproximación IA" if salary_is_est else "Oferta"
                 m2.metric("Salario", sal_display, help=f"Fuente: {sal_source}")
+                if salary_is_est:
+                    st.caption("≈ Salario estimado por IA")
+                else:
+                    st.caption("✅ Salario de la oferta")
             else:
                 m2.metric("Salario", "No especificado")
             m3.metric("Modalidad", mode)
@@ -555,14 +558,26 @@ with tab_mis_ofertas:
 
             if link:
                 st.link_button("🔗 Ver oferta original", link)
-                ics_data, ics_name = ics_interview_content(title, company, link)
-                st.download_button(
-                    "📅 Crear evento entrevista",
-                    ics_data,
-                    file_name=ics_name,
-                    mime="text/calendar",
-                    key=f"ics_int_{_job_key}",
-                )
+
+                st.markdown("**📅 Crear evento entrevista:**")
+                _ic1, _ic2 = st.columns([1, 1])
+                with _ic1:
+                    interview_date = st.date_input(
+                        "Fecha",
+                        value=datetime.now().date() + timedelta(days=1),
+                        key=f"int_date_{_job_key}",
+                        label_visibility="collapsed",
+                    )
+                with _ic2:
+                    interview_time = st.time_input(
+                        "Hora",
+                        value=datetime(2026, 1, 1, 10, 0).time(),
+                        key=f"int_time_{_job_key}",
+                        label_visibility="collapsed",
+                    )
+                interview_dt = datetime.combine(interview_date, interview_time)
+                gcal_url = google_calendar_url(title, company, link, interview_dt)
+                st.link_button("Abrir en Google Calendar", gcal_url, use_container_width=True)
 
             if advice:
                 with st.expander("💡 Consejos personalizados"):
@@ -580,31 +595,44 @@ with tab_mis_ofertas:
                 st.divider()
                 with st.expander("🎯 Preparación para Entrevista", expanded=False):
                     tech_qs = interview_prep.get("technical_questions", [])
+                    beh_qs = interview_prep.get("behavioral_questions", [])
+                    key_topics = interview_prep.get("key_topics", [])
+                    tips = interview_prep.get("preparation_tips", [])
+
+                    has_content = any([tech_qs, beh_qs, key_topics, tips])
+                    if not has_content:
+                        st.info("No hay contenido de preparación disponible.")
+
+                    st.markdown("**Preguntas Técnicas:**")
                     if tech_qs:
-                        st.markdown("**Preguntas Técnicas:**")
                         for i, qa in enumerate(tech_qs, 1):
                             st.markdown(f"**{i}. {qa.get('question', '')}**")
                             st.markdown(f"→ {qa.get('answer', '')}")
                             st.markdown("")
+                    else:
+                        st.markdown("_No disponibles_")
 
-                    beh_qs = interview_prep.get("behavioral_questions", [])
+                    st.markdown("**Preguntas Comportamentales (STAR):**")
                     if beh_qs:
-                        st.markdown("**Preguntas Comportamentales:**")
                         for i, qa in enumerate(beh_qs, 1):
                             st.markdown(f"**{i}. {qa.get('question', '')}**")
                             st.markdown(f"→ {qa.get('answer', '')}")
                             st.markdown("")
+                    else:
+                        st.markdown("_No disponibles_")
 
-                    key_topics = interview_prep.get("key_topics", [])
+                    st.markdown("**Temas Clave:**")
                     if key_topics:
-                        st.markdown("**Temas Clave:**")
                         st.markdown(", ".join(key_topics))
+                    else:
+                        st.markdown("_No disponibles_")
 
-                    tips = interview_prep.get("preparation_tips", [])
+                    st.markdown("**Consejos:**")
                     if tips:
-                        st.markdown("**Consejos:**")
                         for tip in tips:
                             st.markdown(f"• {tip}")
+                    else:
+                        st.markdown("_No disponibles_")
 
             company_profile = j.get("company_profile")
             if company_profile:
@@ -774,6 +802,10 @@ with tab_archivadas:
                     sal_display = f"{salary}€"
                     sal_source = "Aproximacion IA" if salary_is_est else "Oferta"
                     m2.metric("Salario", sal_display, help=f"Fuente: {sal_source}")
+                    if salary_is_est:
+                        st.caption("≈ Salario estimado por IA")
+                    else:
+                        st.caption("✅ Salario de la oferta")
                 else:
                     m2.metric("Salario", "No especificado")
                 m3.metric("Modalidad", mode)
@@ -815,20 +847,44 @@ with tab_archivadas:
                     st.divider()
                     with st.expander("Preparacion para Entrevista", expanded=False):
                         tech_qs = interview_prep.get("technical_questions", [])
+                        beh_qs = interview_prep.get("behavioral_questions", [])
+                        key_topics = interview_prep.get("key_topics", [])
+                        tips = interview_prep.get("preparation_tips", [])
+
+                        has_content = any([tech_qs, beh_qs, key_topics, tips])
+                        if not has_content:
+                            st.info("No hay contenido de preparación disponible.")
+
+                        st.markdown("**Preguntas Tecnicas:**")
                         if tech_qs:
-                            st.markdown("**Preguntas Tecnicas:**")
                             for i, qa in enumerate(tech_qs, 1):
                                 st.markdown(f"**{i}. {qa.get('question', '')}**")
                                 st.markdown(f"→ {qa.get('answer', '')}")
                                 st.markdown("")
+                        else:
+                            st.markdown("_No disponibles_")
 
-                        beh_qs = interview_prep.get("behavioral_questions", [])
+                        st.markdown("**Preguntas Comportamentales (STAR):**")
                         if beh_qs:
-                            st.markdown("**Preguntas Comportamentales:**")
                             for i, qa in enumerate(beh_qs, 1):
                                 st.markdown(f"**{i}. {qa.get('question', '')}**")
                                 st.markdown(f"→ {qa.get('answer', '')}")
                                 st.markdown("")
+                        else:
+                            st.markdown("_No disponibles_")
+
+                        st.markdown("**Temas Clave:**")
+                        if key_topics:
+                            st.markdown(", ".join(key_topics))
+                        else:
+                            st.markdown("_No disponibles_")
+
+                        st.markdown("**Consejos:**")
+                        if tips:
+                            for tip in tips:
+                                st.markdown(f"• {tip}")
+                        else:
+                            st.markdown("_No disponibles_")
 
                 company_profile = j.get("company_profile")
                 if company_profile:
