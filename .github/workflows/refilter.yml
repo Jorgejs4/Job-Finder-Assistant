@@ -41,6 +41,8 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run refilter
+      env:
+        USER_CITY: ${{ secrets.USER_CITY || 'sevilla' }}
       run: |
         python refilter.py --location "${{ inputs.city || 'Sevilla' }}"
 

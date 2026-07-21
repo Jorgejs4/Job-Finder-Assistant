@@ -37,6 +37,7 @@ env:
   MIN_SALARY: ${{ github.event.inputs.min_salary || secrets.MIN_SALARY || '20000' }}
   ANALYZE_LIMIT: ${{ github.event.inputs.analyze_limit || '0' }}
   ANALYZE_WORKERS: ${{ github.event.inputs.analyze_workers || '1' }}
+  USER_CITY: ${{ secrets.USER_CITY || 'sevilla' }}
 
 jobs:
   test-scrapers:
@@ -120,6 +121,7 @@ jobs:
           -e DESIRED_LOCATIONS="$DESIRED_LOCATIONS" \
           -e YEARS_OF_EXPERIENCE="$YEARS_OF_EXPERIENCE" \
           -e MIN_SALARY="$MIN_SALARY" \
+          -e USER_CITY="$USER_CITY" \
           -e CV_PATH="$CV_PATH" \
           -e USE_HEADLESS_SCRAPERS=true \
           job-scraper-full:latest
@@ -188,6 +190,7 @@ jobs:
           -e DESIRED_LOCATIONS="$DESIRED_LOCATIONS" \
           -e YEARS_OF_EXPERIENCE="$YEARS_OF_EXPERIENCE" \
           -e MIN_SALARY="$MIN_SALARY" \
+          -e USER_CITY="$USER_CITY" \
           -e CV_PATH="$CV_PATH" \
           job-scraper-full:latest \
           python analyze_pending.py --limit "$ANALYZE_LIMIT" --workers "$ANALYZE_WORKERS"
@@ -221,6 +224,7 @@ jobs:
       env:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        USER_CITY: ${{ secrets.USER_CITY || 'sevilla' }}
       run: |
         python refilter.py --location "$DESIRED_LOCATIONS"
     - name: Commit changes tras refilter

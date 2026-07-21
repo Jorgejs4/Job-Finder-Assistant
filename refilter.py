@@ -27,12 +27,8 @@ DATA_PATH = Path(__file__).resolve().parent / "results" / "data.json"
 
 
 def is_remote(job: dict) -> bool:
-    wm = str(job.get("work_mode", "")).lower()
-    if "remot" in wm or "teletrabaj" in wm or "distancia" in wm or "home office" in wm:
-        return True
-    text = f"{job.get('title', '')} {job.get('description', '')} {job.get('location', '')}".lower()
-    remote_kw = ["remoto", "remote", "teletrabajo", "distancia", "virtual", "home office"]
-    return any(kw in text for kw in remote_kw)
+    wm = config.normalize_work_mode(job.get("work_mode", ""))
+    return wm == "Remoto"
 
 
 def matches_location(job: dict, desired_cities: list) -> bool:
