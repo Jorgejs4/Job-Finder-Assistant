@@ -100,6 +100,19 @@ def load_data():
     return {"runs": []}
 
 
+def _recalc_archive_reason(job):
+    match = job.get("match_score", 0)
+    work_mode = config.normalize_work_mode(job.get("work_mode", "Presencial"))
+    location = job.get("location", "")
+    target_city = getattr(config, "USER_CITY", "")
+    if match < config.MIN_MATCH_TO_ARCHIVE:
+        return config.ArchiveReason.low_match(match)
+    if target_city and work_mode in ("Presencial", "Híbrido"):
+        if target_city.lower() not in location.lower():
+            return config.ArchiveReason.location_mismatch(work_mode, location)
+    return None
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def aggregate_all_jobs(runs):
     """Agrega todas las ofertas de todas las ejecuciones, deduplicando por URL y titulo+empresa."""
@@ -164,6 +177,13 @@ def aggregate_all_jobs(runs):
             sources = [j.get("source", "") for j in group if j.get("source")]
             if sources:
                 best["_also_on"] = ", ".join(set(sources))
+            if best.get("archived"):
+                reason = _recalc_archive_reason(best)
+                if reason:
+                    best["archive_reason"] = reason
+                else:
+                    best["archived"] = False
+                    best["archive_reason"] = ""
             deduped.append(best)
 
     return deduped
