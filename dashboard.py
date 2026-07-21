@@ -357,7 +357,7 @@ with tab_mis_ofertas:
         with f4:
             min_score = st.slider("Match minimo (solo aplica a ofertas analizadas)", 0, 100, 0)
 
-        f5, f6, f7, f8, f9 = st.columns(5)
+        f5, f6, f7, f8 = st.columns(4)
         with f5:
             sal_max = max(filter_opts["salaries"]) if filter_opts["salaries"] else 150000
             sal_range = st.slider(
@@ -368,16 +368,14 @@ with tab_mis_ofertas:
                 step=1000,
             )
         with f6:
-            salary_only_from_offer = st.checkbox("Solo salario de la oferta", value=False)
-        with f7:
             top_techs = [t for t, _ in sorted(filter_opts["techs"].items(), key=lambda x: x[1], reverse=True)[:30]]
             tech_filter = st.multiselect("Tech stack", top_techs, default=[])
-        with f8:
+        with f7:
             exp_values = sorted(filter_opts["experiences"])
             max_exp = max(exp_values) if exp_values else 10
             exp_slider_max = max(max_exp, 10)
             exp_filter = st.slider("Experiencia max (anios)", 0, exp_slider_max, exp_slider_max)
-        with f9:
+        with f8:
             location_filter = st.multiselect("Ubicacion", filter_opts["locations"], default=[])
 
         sort_options = {
@@ -393,6 +391,9 @@ with tab_mis_ofertas:
         sort_by = st.selectbox("Ordenar por", list(sort_options.keys()), index=0)
 
         search_text = st.text_input("🔎 Buscar por título, empresa o ubicación", placeholder="Ej: Python, Sevilla, Remote...")
+
+        with st.expander("⚙️ Filtros adicionales", expanded=False):
+            salary_only_from_offer = st.checkbox("Solo ofertas con salario de la oferta", value=False)
 
     filtered = []
     for j in all_jobs:
