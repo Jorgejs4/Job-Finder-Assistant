@@ -364,12 +364,15 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
     total = len(jobs_list)
     progress_bar = st.progress(0)
     status_text = st.empty()
+    log_container = st.container()
+    log_lines = []
     analyzed = 0
     errors = 0
 
     for i, job in enumerate(jobs_list):
         title = job.get("title", "?")[:50]
-        status_text.text(f"[{i+1}/{total}] Analizando: {title}...")
+        company = job.get("company", "")[:30]
+        status_text.text(f"[{i+1}/{total}] Analizando: {title} @ {company}...")
         try:
             language = config.detect_language(
                 job.get("source", ""), job.get("title", ""),
@@ -395,10 +398,22 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
             )
             time.sleep(2)
 
+            wm = config.normalize_work_mode(match_result.work_mode)
+            match_pct = match_result.match_score
+            salary = details.estimated_salary
+            exp = details.required_experience
+
+            log_lines.append(
+                f"✅ **{title}** @ {company} — "
+                f"🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} años"
+            )
+            with log_container:
+                st.markdown("\n".join(log_lines))
+
             updates = {
                 "match_score": match_result.match_score,
                 "tech_stack": match_result.tech_stack,
-                "work_mode": config.normalize_work_mode(match_result.work_mode),
+                "work_mode": wm,
                 "language": language,
                 "salary": str(details.estimated_salary),
                 "salary_is_estimate": details.salary_is_estimate,
@@ -410,7 +425,9 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
             analyzed += 1
         except Exception as e:
             errors += 1
-            st.warning(f"Error analizando '{title}': {e}")
+            log_lines.append(f"❌ **{title}** @ {company} — Error: {e}")
+            with log_container:
+                st.markdown("\n".join(log_lines))
 
         progress_bar.progress((i + 1) / total)
 
