@@ -27,7 +27,8 @@ DATA_PATH = Path(__file__).resolve().parent / "results" / "data.json"
 
 
 def is_remote(job: dict) -> bool:
-    wm = config.normalize_work_mode(job.get("work_mode", ""))
+    wm = config.reclassify_work_mode(job)
+    job["work_mode"] = wm
     return wm == "Remoto"
 
 

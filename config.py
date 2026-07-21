@@ -163,6 +163,60 @@ def normalize_work_mode(wm: str) -> str:
         return "Híbrido"
     return "Presencial"
 
+
+def reclassify_work_mode(job: dict) -> str:
+    """
+    Reclasifica work_mode usando reglas de texto sobre location, título y descripción.
+    Prioridad: ubicación > título > descripción > work_mode existente.
+    Más fiable que solo Gemini porque examina el texto crudo de la oferta.
+    """
+    loc = (job.get("location", "") or "").lower()
+    title = (job.get("title", "") or "").lower()
+    desc = (job.get("description", "") or "").lower()
+    wm_raw = (job.get("work_mode", "") or "").lower()
+
+    remote_kw = ["remoto", "remote", "teletrabajo", "teletrabajo", "distancia",
+                  "home office", "homeoffice", "100% remote", "fully remote",
+                  "trabajo desde casa", "work from anywhere", "wfh"]
+    global_kw = ["worldwide", "global", "anywhere", "earth", "planet",
+                 "latam", "europe", "americas", "emea"]
+    hybrid_kw = ["hibrido", "híbrido", "hybrid", "semipresencial", "flexible",
+                 "% remoto", "% remote"]
+
+    def has_remote(text):
+        return any(kw in text for kw in remote_kw)
+
+    def has_global(text):
+        return any(kw in text for kw in global_kw)
+
+    def has_hybrid(text):
+        return any(kw in text for kw in hybrid_kw)
+
+    # 1. Ubicación: es la fuente más fiable
+    if has_remote(loc):
+        return "Remoto"
+    if has_global(loc):
+        return "Remoto"
+    if has_hybrid(loc):
+        return "Híbrido"
+
+    # 2. Título
+    if has_remote(title):
+        return "Remoto"
+    if has_hybrid(title):
+        return "Híbrido"
+
+    # 3. Descripción — buscar声明aciones claras remotas/híbridas
+    if has_remote(desc):
+        return "Remoto"
+    if has_global(desc):
+        return "Remoto"
+    if has_hybrid(desc):
+        return "Híbrido"
+
+    # 4. Fallback: usar work_mode de Gemini, normalizado
+    return normalize_work_mode(wm_raw) or "Presencial"
+
 # Mapping de ubicaciones: expande nombres cortos a strings completos para cada scraper
 LOCATION_MAP = {
     "sevilla": {

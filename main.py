@@ -471,7 +471,8 @@ def main():
 
             job["match_score"] = match_result.match_score
             job["tech_stack"] = match_result.tech_stack
-            job["work_mode"] = config.normalize_work_mode(match_result.work_mode)
+            job["work_mode"] = match_result.work_mode
+            job["work_mode"] = config.reclassify_work_mode(job)
             if details:
                 job["tailored_advice"] = details.tailored_advice
                 salary_min = job.get("salary_min")
