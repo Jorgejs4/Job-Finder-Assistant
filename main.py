@@ -178,16 +178,26 @@ def main():
         results.save()
         sys.exit(1)
 
-    scrapers = [
-        InfoJobsScraper(),
-        LinkedInScraper(),
-        IndeedScraper(),
-        RemotiveScraper(),
-        TecnoJobsScraper(),
-        JobfluentScraper(),
-        JoobleScraper(),
-        GetOnBoardScraper(),
+    # ── SELECCIÓN DE SCRAPERS SEGÚN MODO ──
+    SCRAPERS_SIMPLE = [
+        ("InfoJobs", InfoJobsScraper),
+        ("LinkedIn", LinkedInScraper),
+        ("Remotive", RemotiveScraper),
+        ("TecnoEmpleo", TecnoJobsScraper),
+        ("Jooble", JoobleScraper),
+        ("GetOnBoard", GetOnBoardScraper),
     ]
+    SCRAPERS_HEADLESS = [
+        ("Indeed", IndeedScraper),
+        ("Jobfluent", JobfluentScraper),
+    ]
+
+    if config.USE_HEADLESS_SCRAPERS:
+        scrapers = [cls() for _, cls in SCRAPERS_SIMPLE + SCRAPERS_HEADLESS]
+        print("[Modo] FULL: usando todos los scrapers (incluye headless)")
+    else:
+        scrapers = [cls() for _, cls in SCRAPERS_SIMPLE]
+        print("[Modo] SIMPLE: solo scrapers HTTP (usa USE_HEADLESS_SCRAPERS=true para el modo completo)")
 
     roles_to_search = profile.recommended_roles[:4]
 
@@ -464,8 +474,15 @@ def main():
             job["work_mode"] = config.normalize_work_mode(match_result.work_mode)
             if details:
                 job["tailored_advice"] = details.tailored_advice
-                job["salary"] = str(details.estimated_salary)
-                job["salary_is_estimate"] = details.salary_is_estimate
+                salary_min = job.get("salary_min")
+                salary_max = job.get("salary_max")
+                if salary_min:
+                    mid = int((int(salary_min) + int(salary_max or salary_min)) / 2)
+                    job["salary"] = str(mid)
+                    job["salary_is_estimate"] = False
+                else:
+                    job["salary"] = str(details.estimated_salary)
+                    job["salary_is_estimate"] = details.salary_is_estimate
                 job["required_experience"] = details.required_experience
             results.record_enriched_job(job)
 
@@ -484,10 +501,9 @@ def main():
                 continue
 
             work_mode = match_result.work_mode
-            if work_mode != "Remoto" and desired_cities:
+            if work_mode != "Remoto" and config.USER_CITY:
                 job_loc = job.get("location", "").lower()
-                matches_city = any(city in job_loc for city in desired_cities)
-                if not matches_city:
+                if config.USER_CITY not in job_loc:
                     skipped["ubicacion"] += 1
                     continue
 

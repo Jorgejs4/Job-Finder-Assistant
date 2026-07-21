@@ -200,6 +200,8 @@ def sync_statuses_from_notion(data: dict) -> bool:
         data_path = os.path.join(RESULTS_DIR, "data.json")
         with open(data_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        load_data.clear()
+        aggregate_all_jobs.clear()
         print(f"[Sync] Estados y archivado sincronizados desde Notion")
     return updated
 
@@ -440,7 +442,7 @@ with tab_mis_ofertas:
 
         if location_filter:
             jloc = j.get("location", "").strip()
-            if jloc not in location_filter:
+            if not any(loc.lower() in jloc.lower() for loc in location_filter):
                 continue
 
         if search_text.strip():
@@ -542,6 +544,8 @@ with tab_mis_ofertas:
                 with _sc2:
                     if st.form_submit_button("Guardar", use_container_width=True):
                         if save_job_status(data, link, new_status):
+                            load_data.clear()
+                            aggregate_all_jobs.clear()
                             st.success("Guardado")
                             st.rerun()
 
@@ -552,6 +556,8 @@ with tab_mis_ofertas:
                             NotionSync().update_job_eliminar(link, True)
                         except Exception:
                             pass
+                        load_data.clear()
+                        aggregate_all_jobs.clear()
                         st.rerun()
 
             if techs:
@@ -824,6 +830,8 @@ with tab_archivadas:
                             NotionSync().update_job_eliminar(link, False)
                         except Exception:
                             pass
+                        load_data.clear()
+                        aggregate_all_jobs.clear()
                         st.rerun()
 
                 if techs:

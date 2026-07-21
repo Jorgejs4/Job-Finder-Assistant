@@ -46,8 +46,12 @@ NOTIFY_EMAIL = os.getenv("NOTIFY_EMAIL", SMTP_GMAIL_USER)
 # Límite de ofertas por plataforma por ejecución
 MAX_JOBS_PER_SCRAPER = int(os.getenv("MAX_JOBS_PER_SCRAPER", "50"))
 
+# Modo de scraping: "simple" (solo HTTP) o "full" (intenta headless/Playwright)
+USE_HEADLESS_SCRAPERS = os.getenv("USE_HEADLESS_SCRAPERS", "false").lower() in ("true", "1", "yes")
+
 # Variables globales que se configurarán en la carga de preferencias
 DESIRED_LOCATIONS = []
+USER_CITY = os.getenv("USER_CITY", "sevilla").lower()
 YEARS_OF_EXPERIENCE = 0
 MIN_SALARY = None
 CV_PATH = os.getenv("CV_PATH", str(DEFAULT_CV_PATH))
