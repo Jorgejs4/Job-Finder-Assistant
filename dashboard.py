@@ -357,14 +357,22 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
     from utils.gemini_client import GeminiClient
     from utils.cv_parser import parse_cv
 
-    config.validate_config()
+    if not config.GEMINI_API_KEYS:
+        st.error("No hay API key de Gemini configurada. Añade GEMINI_API_KEY o GEMINI_API_KEYS en los secrets de Streamlit.")
+        return 0, len(jobs_list)
+    try:
+        config.validate_config()
+    except ValueError as e:
+        st.error(f"Configuración incompleta: {e}")
+        return 0, len(jobs_list)
+
     gemini = GeminiClient()
     cv_text = parse_cv(config.CV_PATH)
 
     total = len(jobs_list)
     progress_bar = st.progress(0)
     status_text = st.empty()
-    log_container = st.container()
+    log_text = st.empty()
     log_lines = []
     analyzed = 0
     errors = 0
@@ -372,7 +380,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
     for i, job in enumerate(jobs_list):
         title = job.get("title", "?")[:50]
         company = job.get("company", "")[:30]
-        status_text.text(f"[{i+1}/{total}] Analizando: {title} @ {company}...")
+        status_text.info(f"[{i+1}/{total}] Analizando: **{title}** @ {company}...")
         try:
             language = config.detect_language(
                 job.get("source", ""), job.get("title", ""),
@@ -387,7 +395,6 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
                 experience_hint=0,
                 language=language,
             )
-            time.sleep(2)
 
             details = gemini.match_details(
                 cv_text=cv_text,
@@ -396,7 +403,6 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
                 match_result=match_result,
                 language=language,
             )
-            time.sleep(2)
 
             wm = config.normalize_work_mode(match_result.work_mode)
             match_pct = match_result.match_score
@@ -407,8 +413,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
                 f"✅ **{title}** @ {company} — "
                 f"🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} años"
             )
-            with log_container:
-                st.markdown("\n".join(log_lines))
+            log_text.markdown("<br>".join(log_lines), unsafe_allow_html=True)
 
             updates = {
                 "match_score": match_result.match_score,
@@ -426,8 +431,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
         except Exception as e:
             errors += 1
             log_lines.append(f"❌ **{title}** @ {company} — Error: {e}")
-            with log_container:
-                st.markdown("\n".join(log_lines))
+            log_text.markdown("<br>".join(log_lines), unsafe_allow_html=True)
 
         progress_bar.progress((i + 1) / total)
 
