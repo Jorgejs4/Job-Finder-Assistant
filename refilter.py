@@ -37,13 +37,21 @@ def matches_location(job: dict, desired_cities: list) -> bool:
     return any(city in job_loc for city in desired_cities)
 
 
-def should_keep(job: dict, desired_cities: list) -> bool:
+def classify_archive_reason(job: dict, desired_cities: list) -> str | None:
     match = job.get("match_score", 0) or 0
     if match < 10:
-        return False
-    if is_remote(job):
-        return True
-    return matches_location(job, desired_cities)
+        return f"match < 10% ({match}%)"
+    wm = (job.get("work_mode", "") or "").lower()
+    if wm in ("presencial", "híbrido", "hybrid"):
+        loc = (job.get("location", "") or "").lower()
+        city_match = any(c in loc for c in desired_cities)
+        if not city_match:
+            return f"{job.get('work_mode', '?')} fuera de ciudad objetivo ({job.get('location', '?')})"
+    return None
+
+
+def should_keep(job: dict, desired_cities: list) -> bool:
+    return classify_archive_reason(job, desired_cities) is None
 
 
 def main():
@@ -104,11 +112,13 @@ def main():
         if job.get("archived"):
             already_archived += 1
             continue
-        if should_keep(job, desired_cities):
+        reason = classify_archive_reason(job, desired_cities)
+        if reason is None:
             kept += 1
         else:
             to_archive += 1
             job["archived"] = True
+            job["archive_reason"] = reason
             newly_archived += 1
             if len(examples) < 10:
                 examples.append(job)

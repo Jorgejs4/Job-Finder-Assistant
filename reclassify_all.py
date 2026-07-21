@@ -100,6 +100,7 @@ def main():
         match = job.get("match_score", 0) or 0
         if match < 10:
             job["archived"] = True
+            job["archive_reason"] = f"match < 10% ({match}%)"
             archived_count += 1
             if len(archive_examples) < 15:
                 archive_examples.append(job)
@@ -113,6 +114,7 @@ def main():
             kept += 1
         else:
             job["archived"] = True
+            job["archive_reason"] = f"{wm} fuera de ciudad objetivo ({job.get('location', '?')})"
             archived_count += 1
             if len(archive_examples) < 15:
                 archive_examples.append(job)

@@ -271,13 +271,17 @@ def save_job_status(data: dict, link: str, new_status: str) -> bool:
     return updated
 
 
-def save_job_archived(data: dict, link: str, archived: bool) -> bool:
+def save_job_archived(data: dict, link: str, archived: bool, reason: str | None = None) -> bool:
     """Marca/desmarca una oferta como archivada en data.json."""
     updated = False
     for run in data.get("runs", []):
         for job in run.get("jobs", []):
             if job.get("link") == link:
                 job["archived"] = archived
+                if archived and reason:
+                    job["archive_reason"] = reason
+                elif not archived:
+                    job.pop("archive_reason", None)
                 updated = True
     if updated:
         data_path = os.path.join(RESULTS_DIR, "data.json")
@@ -551,7 +555,7 @@ with tab_mis_ofertas:
 
             if not j.get("archived"):
                 if st.button("Archivar oferta", key=f"arch_{_job_key}", use_container_width=True):
-                    if save_job_archived(data, link, True):
+                    if save_job_archived(data, link, True, reason="Archivado manualmente"):
                         try:
                             NotionSync().update_job_eliminar(link, True)
                         except Exception:
@@ -758,19 +762,34 @@ with tab_archivadas:
     else:
         st.subheader(f"📦 {len(archived_jobs)} ofertas archivadas")
 
-        with st.expander("🔍 Buscar", expanded=False):
+        with st.expander("🔍 Buscar y filtrar", expanded=False):
             search_archived = st.text_input(
                 "🔎 Buscar por titulo, empresa o ubicacion",
                 placeholder="Ej: Python, Sevilla...",
                 key="search_archived",
+            )
+            all_modes_arch = sorted(set(
+                config.normalize_work_mode(j.get("work_mode", "N/A"))
+                for j in archived_jobs
+            ))
+            filter_mode_arch = st.multiselect(
+                "Modalidad",
+                options=all_modes_arch,
+                default=[],
+                key="filter_mode_arch",
             )
 
         filtered_archived = archived_jobs
         if search_archived.strip():
             q = search_archived.lower()
             filtered_archived = [
-                j for j in archived_jobs
+                j for j in filtered_archived
                 if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
+            ]
+        if filter_mode_arch:
+            filtered_archived = [
+                j for j in filtered_archived
+                if config.normalize_work_mode(j.get("work_mode", "N/A")) in filter_mode_arch
             ]
 
         for j in filtered_archived:
@@ -821,6 +840,9 @@ with tab_archivadas:
 
                 if j.get("location"):
                     st.markdown(f"**Ubicacion:** {j['location']}")
+
+                if j.get("archive_reason"):
+                    st.warning(f"**Razon de archivado:** {j['archive_reason']}")
 
                 _job_key_arch = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
 
