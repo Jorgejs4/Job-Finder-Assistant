@@ -24,6 +24,18 @@ from utils.feedback_manager import FeedbackManager
 import config
 from notion_sync import NotionSync
 
+import logging
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
+
+class _DeprecationFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        return "Please replace" not in msg and "will be removed after" not in msg
+
+for _h in logging.root.handlers[:]:
+    _h.addFilter(_DeprecationFilter())
+
 st.set_page_config(
     page_title="Job Scraper Dashboard",
     page_icon="🔍",
@@ -352,19 +364,14 @@ def save_job_analysis(data: dict, link: str, updates: dict) -> bool:
     return updated
 
 
-def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
-    """Reanaliza ofertas sin analizar usando Gemini. Devuelve (analyzed, errors)."""
+def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
+    """Reanaliza ofertas sin analizar usando Gemini. Devuelve dict con resultados."""
     from utils.gemini_client import GeminiClient
     from utils.cv_parser import parse_cv
 
     if not config.GEMINI_API_KEYS:
         st.error("No hay API key de Gemini configurada. Añade GEMINI_API_KEY o GEMINI_API_KEYS en los secrets de Streamlit.")
-        return 0, len(jobs_list)
-    try:
-        config.validate_config()
-    except ValueError as e:
-        st.error(f"Configuracion incompleta: {e}")
-        return 0, len(jobs_list)
+        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [], "key_info": []}
 
     gemini = GeminiClient()
     cv_text = parse_cv(config.CV_PATH)
@@ -372,6 +379,11 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
     total = len(jobs_list)
     analyzed = 0
     errors = 0
+    key_info = []
+
+    num_keys = gemini.key_pool.total_keys
+    masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
+    key_info.append(f"API key activa: {masked} (1/{num_keys})")
 
     with st.status(f"Analizando {total} ofertas...", expanded=True) as status:
         progress_bar = st.progress(0)
@@ -380,7 +392,9 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
         for i, job in enumerate(jobs_list):
             title = job.get("title", "?")[:50]
             company = job.get("company", "")[:30]
-            st.write(f"[{i+1}/{total}] **{title}** @ {company}")
+            current_idx = gemini.key_pool.active_index
+            current_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
+            st.write(f"[{i+1}/{total}] **{title}** @ {company} — key {current_masked}")
             try:
                 language = config.detect_language(
                     job.get("source", ""), job.get("title", ""),
@@ -428,6 +442,11 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
                 errors += 1
                 log_lines.append(f"❌ {title} @ {company} — Error: {e}")
 
+            new_idx = gemini.key_pool.active_index
+            new_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
+            if new_idx != current_idx:
+                key_info.append(f"Key rotada a: {new_masked} ({new_idx + 1}/{num_keys})")
+
             progress_bar.progress((i + 1) / total)
 
         status.update(label=f"Completado: {analyzed} analizadas, {errors} errores", state="complete")
@@ -437,7 +456,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
         for line in log_lines:
             st.markdown(line)
 
-    return analyzed, errors
+    return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
 
 
 def parse_salary(val):
@@ -932,6 +951,24 @@ with tab_mis_ofertas:
 # TAB 2: OFERTAS SIN ANALIZAR
 # ═══════════════════════════════════════════════════════════════
 with tab_sin_analizar:
+    if "reanalyze_result" in st.session_state:
+        res = st.session_state["reanalyze_result"]
+        if res["analyzed"] > 0 or res["errors"] > 0:
+            st.subheader("📊 Resultado del último reanalizado")
+            col1, col2 = st.columns(2)
+            col1.metric("✅ Analizadas", res["analyzed"])
+            col2.metric("❌ Errores", res["errors"])
+            if res["key_info"]:
+                st.caption("🔑 " + " → ".join(res["key_info"]))
+            if res["log_lines"]:
+                with st.expander("Ver detalle de resultados", expanded=True):
+                    for line in res["log_lines"]:
+                        st.markdown(line)
+            if st.button("✖ Limpiar resultados", key="clear_reanalyze"):
+                del st.session_state["reanalyze_result"]
+                st.rerun()
+            st.divider()
+
     unanalyzed_jobs = [j for j in all_jobs if j.get("needs_analysis")]
 
     if not unanalyzed_jobs:
@@ -948,10 +985,16 @@ with tab_sin_analizar:
                 "(Settings > Secrets) para usar el reanalisis."
             )
         else:
+            num_keys = len(config.GEMINI_API_KEYS)
+            first_key = config.GEMINI_API_KEYS[0]
+            masked_first = f"{first_key[:6]}...{first_key[-4:]}" if len(first_key) > 8 else "****"
+            st.caption(f"🔑 {num_keys} API key(s) configurada(s) — activa: {masked_first}")
+
             if st.button("🔍 Reanalizar todas las ofertas", type="primary", use_container_width=True):
                 try:
-                    analyzed, errors = reanalyze_jobs_with_gemini(unanalyzed_jobs)
-                    if analyzed > 0:
+                    result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
+                    if result["analyzed"] > 0:
+                        st.session_state["reanalyze_result"] = result
                         load_data.clear()
                         aggregate_all_jobs.clear()
                         st.rerun()
