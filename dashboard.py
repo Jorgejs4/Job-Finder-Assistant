@@ -148,6 +148,25 @@ def aggregate_all_jobs(runs):
     for job in jobs_by_url.values():
         if job.get("work_mode"):
             job["work_mode"] = config.normalize_work_mode(job["work_mode"])
+        match = job.get("match_score") or 0
+        wm = job.get("work_mode", "Presencial")
+        loc = job.get("location", "")
+        tc = getattr(config, "USER_CITY", "")
+        should_archive = False
+        reason = None
+        if match < config.MIN_MATCH_TO_ARCHIVE:
+            should_archive = True
+            reason = config.ArchiveReason.low_match(match)
+        elif tc and wm in ("Presencial", "Híbrido"):
+            if tc.lower() not in loc.lower():
+                should_archive = True
+                reason = config.ArchiveReason.location_mismatch(wm, loc)
+        if should_archive:
+            job["archived"] = True
+            job["archive_reason"] = reason
+        else:
+            job["archived"] = False
+            job.pop("archive_reason", None)
 
     all_jobs = list(jobs_by_url.values())
     if not all_jobs:
@@ -861,7 +880,7 @@ with tab_archivadas:
                 if j.get("location"):
                     st.markdown(f"**Ubicacion:** {j['location']}")
 
-                if j.get("archive_reason"):
+                if j.get("archived") and j.get("archive_reason"):
                     st.warning(f"**Razon de archivado:** {j['archive_reason']}")
 
                 _job_key_arch = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
