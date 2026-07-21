@@ -225,6 +225,9 @@ jobs:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         USER_CITY: ${{ secrets.USER_CITY || 'sevilla' }}
+        DESIRED_LOCATIONS: ${{ github.event.inputs.desired_locations || secrets.DESIRED_LOCATIONS || 'Sevilla,Remoto' }}
+        YEARS_OF_EXPERIENCE: '0'
+        MIN_SALARY: '0'
       run: |
         python refilter.py --location "$DESIRED_LOCATIONS"
     - name: Commit changes tras refilter
