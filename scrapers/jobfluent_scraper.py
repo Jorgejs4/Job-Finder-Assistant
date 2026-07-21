@@ -2,18 +2,19 @@ import re
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 from scrapers.base_scraper import BaseScraper
+import config
 
 
 class JobfluentScraper(BaseScraper):
     """
     Scraper de Jobfluent.com — portal tech-oriented.
     """
-    MAX_RESULTS = 50
+    MAX_RESULTS = config.MAX_JOBS_PER_SCRAPER
 
     def _fetch(self, url: str, params: dict = None) -> str:
         try:
             from curl_cffi import requests as cffi_requests
-            resp = cffi_requests.get(url, params=params, impersonate="chrome131", timeout=20)
+            resp = cffi_requests.get(url, params=params, impersonate=config.IMPERSONATE_BROWSER, timeout=config.REQUEST_TIMEOUT)
             if resp.status_code == 200:
                 return resp.text
             print(f"[Jobfluent] curl_cffi status {resp.status_code}")

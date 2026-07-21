@@ -56,6 +56,78 @@ YEARS_OF_EXPERIENCE = 0
 MIN_SALARY = None
 CV_PATH = os.getenv("CV_PATH", str(DEFAULT_CV_PATH))
 
+# === UMBRALES DE CLASIFICACIÓN Y FILTRADO ===
+MIN_MATCH_TO_ARCHIVE = int(os.getenv("MIN_MATCH_TO_ARCHIVE", "10"))
+MIN_MATCH_TO_DISCARD = int(os.getenv("MIN_MATCH_TO_DISCARD", "35"))
+MIN_MATCH_FOR_INTERVIEW_PREP = int(os.getenv("MIN_MATCH_FOR_INTERVIEW_PREP", "50"))
+MIN_MATCH_FOR_COMPANY_RESEARCH = int(os.getenv("MIN_MATCH_FOR_COMPANY_RESEARCH", "60"))
+EXPERIENCE_TOLERANCE_YEARS = int(os.getenv("EXPERIENCE_TOLERANCE_YEARS", "2"))
+MAX_JOBS_FOR_AI_ANALYSIS = int(os.getenv("MAX_JOBS_FOR_AI_ANALYSIS", "200"))
+MAX_GEMINI_WORKERS = int(os.getenv("MAX_GEMINI_WORKERS", "3"))
+GEMINI_RATE_LIMIT_SECONDS = float(os.getenv("GEMINI_RATE_LIMIT_SECONDS", "6"))
+GEMINI_RATE_LIMIT_ANALYSIS = float(os.getenv("GEMINI_RATE_LIMIT_ANALYSIS", "10"))
+FOLLOWUP_REMINDER_DAYS = int(os.getenv("FOLLOWUP_REMINDER_DAYS", "5"))
+MAX_SALARY_SLIDER = int(os.getenv("MAX_SALARY_SLIDER", "150000"))
+
+# === SCRAPERS: CONFIGURACIÓN CENTRALIZADA ===
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "20"))
+IMPERSONATE_BROWSER = os.getenv("IMPERSONATE_BROWSER", "chrome131")
+IMPERSONATE_FALLBACKS = [s.strip() for s in os.getenv("IMPERSONATE_FALLBACKS", "chrome131,chrome120,safari17_0").split(",")]
+MAX_DESCRIPTION_LENGTH = int(os.getenv("MAX_DESCRIPTION_LENGTH", "500"))
+INDEED_MAX_AGE_DAYS = int(os.getenv("INDEED_MAX_AGE_DAYS", "7"))
+REMOTIVE_CATEGORY = os.getenv("REMOTIVE_CATEGORY", "software-dev")
+GETONBRD_CATEGORY = os.getenv("GETONBRD_CATEGORY", "programming")
+
+# === HOSTING ===
+GITHUB_REPO = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
+CV_BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/results/cvs"
+
+# === KEYWORDS DE CLASIFICACIÓN (FUENTE ÚNICA DE VERDAD) ===
+REMOTE_KEYWORDS = [
+    "remoto", "remote", "teletrabajo", "distancia",
+    "home office", "homeoffice", "work from anywhere", "wfh",
+]
+REMOTE_STRICT_PHRASES = [
+    "100% remote", "fully remote", "100% remoto", "trabajo 100% remoto",
+    "position is remote", "puesto remoto", "modalidad remota",
+    "trabajo totalmente remoto", "fully-remote", "all remote",
+]
+GLOBAL_KEYWORDS = [
+    "worldwide", "global", "anywhere", "earth", "planet",
+    "latam", "europe", "americas", "emea",
+]
+HYBRID_KEYWORDS = [
+    "hibrido", "híbrido", "hybrid", "semipresencial",
+    "% remoto", "% remote",
+]
+GEO_RESTRICT_KEYWORDS = [
+    "must reside", "residir en", "reside in", "residents of",
+    "solo para candidatos", "solo para residentes", "only for residents",
+    "only for candidates", "solo locales", "solo local", "localmente",
+    "must be located", "debe residir", "debe estar ubicado",
+    "only available in", "solo disponible en",
+]
+
+# === RAZONES DE ARCHIVADO (CONSTANTES CENTRALIZADAS) ===
+class ArchiveReason:
+    LOW_MATCH = "match < {threshold}% ({actual}%)"
+    GEO_RESTRICTION = "Restriccion geografica ({detail})"
+    LOCATION_MISMATCH = "{mode} fuera de ciudad objetivo ({location})"
+    MANUAL = "Archivado manualmente"
+
+    @classmethod
+    def low_match(cls, actual: int) -> str:
+        return cls.LOW_MATCH.format(threshold=MIN_MATCH_TO_ARCHIVE, actual=actual)
+
+    @classmethod
+    def geo_restriction(cls, detail: str) -> str:
+        return cls.GEO_RESTRICTION.format(detail=detail)
+
+    @classmethod
+    def location_mismatch(cls, mode: str, location: str) -> str:
+        return cls.LOCATION_MISMATCH.format(mode=mode, location=location)
+
+
 # Traducción de roles ES → EN para scrapers internacionales
 ROLE_TRANSLATIONS = {
     "desarrollador backend": "backend developer",
@@ -167,55 +239,55 @@ def normalize_work_mode(wm: str) -> str:
 def reclassify_work_mode(job: dict) -> str:
     """
     Reclasifica work_mode usando reglas de texto sobre location, título y descripción.
-    Prioridad: ubicación > título > descripción > work_mode existente.
-    Más fiable que solo Gemini porque examina el texto crudo de la oferta.
+    Prioridad: ubicación > título > work_mode existente > descripción (solo frases explícitas).
+    Usa keywords centralizadas en module-level (REMOTE_KEYWORDS, etc.)
     """
     loc = (job.get("location", "") or "").lower()
     title = (job.get("title", "") or "").lower()
     desc = (job.get("description", "") or "").lower()
     wm_raw = (job.get("work_mode", "") or "").lower()
 
-    remote_kw = ["remoto", "remote", "teletrabajo", "teletrabajo", "distancia",
-                  "home office", "homeoffice", "100% remote", "fully remote",
-                  "trabajo desde casa", "work from anywhere", "wfh"]
-    global_kw = ["worldwide", "global", "anywhere", "earth", "planet",
-                 "latam", "europe", "americas", "emea"]
-    hybrid_kw = ["hibrido", "híbrido", "hybrid", "semipresencial", "flexible",
-                 "% remoto", "% remote"]
-
-    def has_remote(text):
-        return any(kw in text for kw in remote_kw)
-
-    def has_global(text):
-        return any(kw in text for kw in global_kw)
-
-    def has_hybrid(text):
-        return any(kw in text for kw in hybrid_kw)
+    def _any_in(keywords, text):
+        return any(kw in text for kw in keywords)
 
     # 1. Ubicación: es la fuente más fiable
-    if has_remote(loc):
+    if _any_in(REMOTE_KEYWORDS, loc):
         return "Remoto"
-    if has_global(loc):
+    if _any_in(GLOBAL_KEYWORDS, loc):
         return "Remoto"
-    if has_hybrid(loc):
+    if _any_in(HYBRID_KEYWORDS, loc):
         return "Híbrido"
 
     # 2. Título
-    if has_remote(title):
+    if _any_in(REMOTE_KEYWORDS, title):
         return "Remoto"
-    if has_hybrid(title):
+    if _any_in(HYBRID_KEYWORDS, title):
         return "Híbrido"
 
-    # 3. Descripción — buscar声明aciones claras remotas/híbridas
-    if has_remote(desc):
+    # 3. Descripción: SOLO frases explícitas y categóricas (antes de Gemini)
+    if _any_in(REMOTE_STRICT_PHRASES, desc):
         return "Remoto"
-    if has_global(desc):
+    if _any_in(GLOBAL_KEYWORDS, desc):
         return "Remoto"
-    if has_hybrid(desc):
+    if _any_in(HYBRID_KEYWORDS, desc):
         return "Híbrido"
 
-    # 4. Fallback: usar work_mode de Gemini, normalizado
-    return normalize_work_mode(wm_raw) or "Presencial"
+    # 4. Si ubicación y título NO dicen remoto, y descripción NO tiene frases
+    #    explícitas → override de Gemini (Gemini se equivoca a menudo)
+    wm_norm = normalize_work_mode(wm_raw)
+    if wm_norm == "Remoto":
+        # Solo aceptar "Remoto" de Gemini si la ubicación es ambigua (sin city concreta)
+        loc_words = loc.split()
+        has_specific_city = len(loc_words) >= 2 and not _any_in(GLOBAL_KEYWORDS + REMOTE_KEYWORDS, loc)
+        if has_specific_city:
+            return "Presencial"
+
+    # 5. Work_mode existente de Gemini (fallback)
+    if wm_norm and wm_norm != "N/A":
+        return wm_norm
+
+    # 6. Fallback
+    return "Presencial"
 
 # Mapping de ubicaciones: expande nombres cortos a strings completos para cada scraper
 LOCATION_MAP = {

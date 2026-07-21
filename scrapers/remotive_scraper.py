@@ -23,9 +23,9 @@ class RemotiveScraper(BaseScraper):
 
         try:
             params = {
-                "category": "software-dev",
+                "category": config.REMOTIVE_CATEGORY,
                 "search": search_query,
-                "limit": "50"
+                "limit": str(config.MAX_JOBS_PER_SCRAPER)
             }
             response = self.client.get("https://remotive.com/api/remote-jobs", params=params)
             if response.status_code != 200:

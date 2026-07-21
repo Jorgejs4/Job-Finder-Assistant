@@ -97,27 +97,34 @@ def main():
     archive_examples = []
 
     for job in jobs_list:
+        wm = config.reclassify_work_mode(job)
+        job["work_mode"] = wm
+
+        reason = None
         match = job.get("match_score", 0) or 0
-        if match < 10:
+
+        for kw in config.GEO_RESTRICT_KEYWORDS:
+            loc_title_desc = f"{(job.get('location','') or '')} {(job.get('title','') or '')} {(job.get('description','') or '')}".lower()
+            if kw in loc_title_desc:
+                reason = config.ArchiveReason.geo_restriction(kw)
+                break
+
+        if not reason and match < config.MIN_MATCH_TO_ARCHIVE:
+            reason = config.ArchiveReason.low_match(match)
+
+        if not reason and wm != "Remoto":
+            loc = (job.get("location", "") or "").lower()
+            if city not in loc:
+                reason = config.ArchiveReason.location_mismatch(wm, job.get("location", "?"))
+
+        if reason:
             job["archived"] = True
-            job["archive_reason"] = f"match < 10% ({match}%)"
+            job["archive_reason"] = reason
             archived_count += 1
             if len(archive_examples) < 15:
                 archive_examples.append(job)
-            continue
-        wm = job.get("work_mode", "")
-        if wm == "Remoto":
-            kept += 1
-            continue
-        loc = (job.get("location", "") or "").lower()
-        if city in loc:
-            kept += 1
         else:
-            job["archived"] = True
-            job["archive_reason"] = f"{wm} fuera de ciudad objetivo ({job.get('location', '?')})"
-            archived_count += 1
-            if len(archive_examples) < 15:
-                archive_examples.append(job)
+            kept += 1
 
     print(f"\n[Filtro] {kept} ofertas se quedan, {archived_count} se archivan")
 

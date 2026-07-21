@@ -14,7 +14,7 @@ class JoobleScraper(BaseScraper):
     """
     API_URL = "https://jooble.org/api"
     HTML_URL = "https://es.jooble.org/SearchResult"
-    MAX_RESULTS = 50
+    MAX_RESULTS = config.MAX_JOBS_PER_SCRAPER
 
     def _fetch_api(self, query: str, location: str) -> list:
         """Intenta usar la API de Jooble (si hay API key configurada)."""
@@ -46,7 +46,7 @@ class JoobleScraper(BaseScraper):
                 "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
                 "Referer": "https://es.jooble.org/",
             }
-            for imp in ["chrome131", "chrome120", "safari17_0"]:
+            for imp in config.IMPERSONATE_FALLBACKS:
                 try:
                     resp = cffi_requests.get(
                         url, params=params, headers=headers,

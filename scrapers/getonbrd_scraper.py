@@ -12,7 +12,7 @@ class GetOnBoardScraper(BaseScraper):
     Busca trabajos remotos de programación.
     """
     BASE_URL = "https://www.getonbrd.com/jobs/programming"
-    MAX_RESULTS = 50
+    MAX_RESULTS = config.MAX_JOBS_PER_SCRAPER
 
     def _fetch(self, url: str) -> str:
         """Fetch con curl_cffi."""
@@ -64,7 +64,7 @@ class GetOnBoardScraper(BaseScraper):
             return {
                 "title": title,
                 "company": company or "No especificada",
-                "location": location or "LATAM (Remoto)",
+                "location": location or "LATAM",
                 "link": href,
                 "description": title,
                 "date_posted": "Reciente",

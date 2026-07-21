@@ -3,6 +3,7 @@ import json
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 from scrapers.base_scraper import BaseScraper
+import config
 
 
 class WelcomeToTheJungleScraper(BaseScraper):
@@ -11,7 +12,7 @@ class WelcomeToTheJungleScraper(BaseScraper):
     Usa curl_cffi y fallback a HTML scraping.
     NOTA: Glassdoor es agresivo con anti-bot, puede fallar en CI.
     """
-    MAX_RESULTS = 50
+    MAX_RESULTS = config.MAX_JOBS_PER_SCRAPER
 
     def _fetch(self, url: str, params: dict = None) -> str:
         try:
@@ -22,7 +23,7 @@ class WelcomeToTheJungleScraper(BaseScraper):
             }
             resp = cffi_requests.get(
                 url, params=params, headers=headers,
-                impersonate="chrome131", timeout=20
+                impersonate=config.IMPERSONATE_BROWSER, timeout=config.REQUEST_TIMEOUT
             )
             if resp.status_code == 200:
                 return resp.text

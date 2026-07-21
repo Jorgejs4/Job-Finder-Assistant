@@ -316,16 +316,15 @@ def main():
     jobs_to_process.sort(key=lambda j: source_priority.get(j.get("source", ""), 99))
 
     desired_cities = [loc for loc in config.DESIRED_LOCATIONS if loc not in ["remoto", "remote"]]
-    remote_kw = ["remoto", "remote", "teletrabajo", "distancia", "virtual", "home office"]
     filtered_jobs = []
     for job in jobs_to_process:
         job_loc = job.get("location", "").lower()
         job_title = job.get("title", "").lower()
         job_desc = job.get("description", "").lower()
         is_remote = (
-            any(kw in job_loc for kw in remote_kw) or
-            any(kw in job_title for kw in remote_kw) or
-            any(kw in job_desc for kw in remote_kw)
+            any(kw in job_loc for kw in config.REMOTE_KEYWORDS) or
+            any(kw in job_title for kw in config.REMOTE_KEYWORDS) or
+            any(kw in job_desc for kw in config.REMOTE_KEYWORDS)
         )
         matches_city = any(city in job_loc for city in desired_cities)
         if is_remote or matches_city:
@@ -345,8 +344,8 @@ def main():
     if keyword_skipped:
         print(f"[Filtro] {keyword_skipped} ofertas no-tech eliminadas por keywords")
 
-    jobs_to_process = keyword_filtered[:200]
-    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx 200 para análisis IA)")
+    jobs_to_process = keyword_filtered[:config.MAX_JOBS_FOR_AI_ANALYSIS]
+    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx {config.MAX_JOBS_FOR_AI_ANALYSIS} para análisis IA)")
 
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
@@ -364,12 +363,11 @@ def main():
 
     # ── FASE 2: Análisis Gemini paralelo + Notion ──
     t2 = time.time()
-    rate_limiter = RateLimiter(min_interval=10.0)
+    rate_limiter = RateLimiter(min_interval=config.GEMINI_RATE_LIMIT_ANALYSIS)
     new_jobs_added = 0
     analyzed_count = 0
     high_match_jobs = []
     stop_event = threading.Event()
-    MAX_GEMINI_WORKERS = 3
 
     # ── Procesar feedback pendiente de CVs anteriores ──
     pending_feedback = feedback_mgr.get_pending()
@@ -413,7 +411,7 @@ def main():
                 )
                 if pdf_path:
                     slug = os.path.basename(pdf_path)
-                    cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                    cv_url = f"config.CV_BASE_URL/{slug}"
                     # Actualizar URL en data.json
                     for run in existing_data.get("runs", []):
                         for j in run.get("jobs", []):
@@ -421,7 +419,7 @@ def main():
                                 j["custom_cv_url"] = cv_url
                                 if cl_pdf_path:
                                     cl_slug = os.path.basename(cl_pdf_path)
-                                    j["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
+                                    j["cover_letter_pdf_url"] = f"config.CV_BASE_URL/{cl_slug}"
                                 break
                     with open(results.data_path, "w", encoding="utf-8") as f:
                         import json
@@ -439,18 +437,18 @@ def main():
                 print(f"    [Error] Regenerando CV: {e}")
                 feedback_mgr.mark_done(fb_job_id)
 
-    print(f"\n[Análisis] Procesando {min(len(pre_filtered), 200)} ofertas con 3 hilos Gemini...")
+    print(f"\n[Análisis] Procesando {min(len(pre_filtered), config.MAX_JOBS_FOR_AI_ANALYSIS)} ofertas con {config.MAX_GEMINI_WORKERS} hilos Gemini...")
 
     pending_futures = []
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        for job in pre_filtered[:200]:
+    with ThreadPoolExecutor(max_workers=config.MAX_GEMINI_WORKERS) as executor:
+        for job in pre_filtered[:config.MAX_JOBS_FOR_AI_ANALYSIS]:
             if stop_event.is_set():
                 break
             future = executor.submit(_analyze_single_job, (gemini, job, cv_text, rate_limiter, stop_event))
             pending_futures.append(future)
 
         for future in as_completed(pending_futures):
-            if analyzed_count >= 200:
+            if analyzed_count >= config.MAX_JOBS_FOR_AI_ANALYSIS:
                 stop_event.set()
                 break
             if stop_event.is_set():
@@ -487,7 +485,7 @@ def main():
                 job["required_experience"] = details.required_experience
             results.record_enriched_job(job)
 
-            if match_result.match_score < 35:
+            if match_result.match_score < config.MIN_MATCH_TO_DISCARD:
                 skipped["bajo_match"] += 1
                 continue
 
@@ -496,12 +494,12 @@ def main():
                     skipped["bajo_match"] += 1
                     continue
 
-            max_exp = config.YEARS_OF_EXPERIENCE + 2
+            max_exp = config.YEARS_OF_EXPERIENCE + config.EXPERIENCE_TOLERANCE_YEARS
             if max_exp > 0 and details and details.required_experience > max_exp:
                 skipped["experiencia"] += 1
                 continue
 
-            work_mode = match_result.work_mode
+            work_mode = job.get("work_mode", "")
             if work_mode != "Remoto" and config.USER_CITY:
                 job_loc = job.get("location", "").lower()
                 if config.USER_CITY not in job_loc:
@@ -562,18 +560,18 @@ def main():
                     )
                     if pdf_path:
                         slug = os.path.basename(pdf_path)
-                        cv_url = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{slug}"
+                        cv_url = f"config.CV_BASE_URL/{slug}"
                         job["custom_cv_url"] = cv_url
                         if html_path:
                             job["custom_cv_html"] = os.path.basename(html_path)
                         if cl_pdf_path:
                             cl_slug = os.path.basename(cl_pdf_path)
-                            job["cover_letter_pdf_url"] = f"https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/{cl_slug}"
+                            job["cover_letter_pdf_url"] = f"config.CV_BASE_URL/{cl_slug}"
                 except Exception as e:
                     print(f"    [CV] Error generando CV: {e}")
 
-            # Generar guía de entrevista para ofertas con match >= 50
-            if match_result.match_score >= 50:
+            # Generar guía de entrevista para ofertas con match suficiente
+            if match_result.match_score >= config.MIN_MATCH_FOR_INTERVIEW_PREP:
                 try:
                     rate_limiter.wait()
                     techs_str = ", ".join(job.get("tech_stack", [])[:10])
@@ -590,8 +588,8 @@ def main():
                 except Exception as e:
                     print(f"    [Entrevista] Error generando interview prep: {e}")
 
-            # Investigar empresa para ofertas con match >= 60
-            if match_result.match_score >= 60:
+            # Investigar empresa para ofertas con match suficiente
+            if match_result.match_score >= config.MIN_MATCH_FOR_COMPANY_RESEARCH:
                 try:
                     rate_limiter.wait()
                     company_profile = gemini.research_company(

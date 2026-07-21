@@ -87,7 +87,7 @@ def load_data():
     if os.path.exists(data_path):
         with open(data_path, "r", encoding="utf-8") as f:
             return json.load(f)
-    github_repo = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
+    github_repo = config.GITHUB_REPO
     url = f"https://api.github.com/repos/{github_repo}/contents/results/data.json"
     try:
         resp = httpx.get(url, timeout=10, follow_redirects=True)
@@ -365,12 +365,12 @@ with tab_mis_ofertas:
 
         f5, f6, f7, f8 = st.columns(4)
         with f5:
-            sal_max = max(filter_opts["salaries"]) if filter_opts["salaries"] else 150000
+            sal_max = max(filter_opts["salaries"]) if filter_opts["salaries"] else config.MAX_SALARY_SLIDER
             sal_range = st.slider(
                 "Rango salarial",
                 min_value=0,
-                max_value=max(150000, sal_max + 10000),
-                value=(0, max(150000, sal_max + 10000)),
+                max_value=max(config.MAX_SALARY_SLIDER, sal_max + 10000),
+                value=(0, max(config.MAX_SALARY_SLIDER, sal_max + 10000)),
                 step=1000,
             )
         with f6:
@@ -509,7 +509,7 @@ with tab_mis_ofertas:
             except (ValueError, TypeError):
                 pass
 
-        if days_applied >= 5:
+        if days_applied >= config.FOLLOWUP_REMINDER_DAYS:
             header_parts.append(f"[⏰ {status} — {days_applied}d]")
         else:
             header_parts.append(f"[{status}]")
@@ -555,7 +555,7 @@ with tab_mis_ofertas:
 
             if not j.get("archived"):
                 if st.button("Archivar oferta", key=f"arch_{_job_key}", use_container_width=True):
-                    if save_job_archived(data, link, True, reason="Archivado manualmente"):
+                    if save_job_archived(data, link, True, reason=config.ArchiveReason.MANUAL):
                         try:
                             NotionSync().update_job_eliminar(link, True)
                         except Exception:
@@ -1021,7 +1021,7 @@ with tab_pipeline:
             try:
                 first = datetime.fromisoformat(j["_first_seen"])
                 days = (datetime.now() - first).days
-                if days >= 5:
+                if days >= config.FOLLOWUP_REMINDER_DAYS:
                     j["_days_applied"] = days
                     follow_up_needed.append(j)
             except (ValueError, TypeError):

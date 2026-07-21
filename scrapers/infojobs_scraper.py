@@ -10,7 +10,7 @@ class InfoJobsScraper(BaseScraper):
         """Fetch usando curl_cffi para evadir protecciones anti-bot (Distil Networks)."""
         try:
             from curl_cffi import requests as cffi_requests
-            resp = cffi_requests.get(url, impersonate="chrome131", timeout=20)
+            resp = cffi_requests.get(url, impersonate=config.IMPERSONATE_BROWSER, timeout=config.REQUEST_TIMEOUT)
             if resp.status_code == 200:
                 return resp.text
             print(f"[InfoJobs] curl_cffi devolvió status {resp.status_code}")

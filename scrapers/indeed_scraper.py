@@ -21,11 +21,11 @@ class IndeedScraper(BaseScraper):
                 "Sec-Fetch-Site": "same-origin",
                 "Upgrade-Insecure-Requests": "1",
             }
-            for impersonation in ["chrome131", "chrome120", "safari17_0"]:
+            for impersonation in config.IMPERSONATE_FALLBACKS:
                 try:
                     resp = cffi_requests.get(
                         url, params=params, headers=headers,
-                        impersonate=impersonation, timeout=20
+                        impersonate=impersonation, timeout=config.REQUEST_TIMEOUT
                     )
                     if resp.status_code == 200:
                         return resp.text
@@ -33,7 +33,7 @@ class IndeedScraper(BaseScraper):
                         cookies = {"CONSENT": "YES+cb.20210328-17-p0.en+FX+410"}
                         resp2 = cffi_requests.get(
                             url, params=params, headers=headers, cookies=cookies,
-                            impersonate=impersonation, timeout=20
+                            impersonate=impersonation, timeout=config.REQUEST_TIMEOUT
                         )
                         if resp2.status_code == 200:
                             return resp2.text

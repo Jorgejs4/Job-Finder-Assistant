@@ -10,7 +10,7 @@ class TecnoJobsScraper(BaseScraper):
     Scraper de Tecnoempleo.com — portal IT/tech líder en España.
     Usa curl_cffi para evadir protecciones anti-bot.
     """
-    MAX_RESULTS = 50
+    MAX_RESULTS = config.MAX_JOBS_PER_SCRAPER
     TECNOEMPLEO_PROVINCES = {
         "sevilla": "274", "madrid": "263", "barcelona": "240",
         "valencia": "279", "malaga": "291", "bizkaia": "480",
@@ -21,7 +21,7 @@ class TecnoJobsScraper(BaseScraper):
     def _fetch(self, url: str, params: dict = None) -> str:
         try:
             from curl_cffi import requests as cffi_requests
-            resp = cffi_requests.get(url, params=params, impersonate="chrome131", timeout=20)
+            resp = cffi_requests.get(url, params=params, impersonate=config.IMPERSONATE_BROWSER, timeout=config.REQUEST_TIMEOUT)
             if resp.status_code == 200:
                 return resp.text
             print(f"[TecnoEmpleo] curl_cffi status {resp.status_code}")

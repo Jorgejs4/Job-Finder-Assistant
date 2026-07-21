@@ -38,15 +38,24 @@ def matches_location(job: dict, desired_cities: list) -> bool:
 
 
 def classify_archive_reason(job: dict, desired_cities: list) -> str | None:
+    loc = (job.get("location", "") or "").lower()
+    title = (job.get("title", "") or "").lower()
+    desc = (job.get("description", "") or "").lower()
+    combined = f"{loc} {title} {desc}"
+
+    for kw in config.GEO_RESTRICT_KEYWORDS:
+        if kw in combined:
+            return config.ArchiveReason.geo_restriction(kw)
+
     match = job.get("match_score", 0) or 0
-    if match < 10:
-        return f"match < 10% ({match}%)"
-    wm = (job.get("work_mode", "") or "").lower()
-    if wm in ("presencial", "híbrido", "hybrid"):
-        loc = (job.get("location", "") or "").lower()
+    if match < config.MIN_MATCH_TO_ARCHIVE:
+        return config.ArchiveReason.low_match(match)
+
+    wm = config.normalize_work_mode(job.get("work_mode", "") or "")
+    if wm in ("Presencial", "Híbrido"):
         city_match = any(c in loc for c in desired_cities)
         if not city_match:
-            return f"{job.get('work_mode', '?')} fuera de ciudad objetivo ({job.get('location', '?')})"
+            return config.ArchiveReason.location_mismatch(wm, job.get("location", "?"))
     return None
 
 
@@ -108,20 +117,43 @@ def main():
     newly_archived = 0
     examples = []
 
+    # Decidir por URL deduplicada, luego aplicar a TODAS las copias
+    archive_urls = set()
+    keep_urls = set()
     for url, job in all_jobs.items():
         if job.get("archived"):
             already_archived += 1
             continue
+        # Reclasificar work_mode antes de filtrar
+        job["work_mode"] = config.reclassify_work_mode(job)
         reason = classify_archive_reason(job, desired_cities)
         if reason is None:
             kept += 1
+            keep_urls.add(url)
         else:
             to_archive += 1
-            job["archived"] = True
-            job["archive_reason"] = reason
-            newly_archived += 1
+            archive_urls.add((url, reason))
             if len(examples) < 10:
                 examples.append(job)
+
+    # Aplicar decided a TODAS las copias en TODOS los runs
+    if archive_urls:
+        archive_map = {url: reason for url, reason in archive_urls}
+        for run in data.get("runs", []):
+            for job in run.get("jobs", []):
+                url = job.get("link", "")
+                if url in archive_map and not job.get("archived"):
+                    job["archived"] = True
+                    job["archive_reason"] = archive_map[url]
+                    newly_archived += 1
+    # Also unarchive URLs that should be kept
+    if keep_urls:
+        for run in data.get("runs", []):
+            for job in run.get("jobs", []):
+                url = job.get("link", "")
+                if url in keep_urls and job.get("archived"):
+                    job["archived"] = False
+                    job.pop("archive_reason", None)
 
     print(f"  OK se mantienen: {kept}")
     print(f"  Ya archivadas: {already_archived}")

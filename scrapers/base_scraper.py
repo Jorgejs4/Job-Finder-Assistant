@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
 import httpx
+import config
 
 class BaseScraper(ABC):
     """
@@ -14,7 +15,7 @@ class BaseScraper(ABC):
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Connection": "keep-alive"
         }
-        self.client = httpx.Client(headers=self.headers, follow_redirects=True, timeout=15.0)
+        self.client = httpx.Client(headers=self.headers, follow_redirects=True, timeout=config.REQUEST_TIMEOUT)
 
     @abstractmethod
     def scrape_jobs(self, search_query: str, locations: List[str]) -> List[Dict[str, Any]]:
