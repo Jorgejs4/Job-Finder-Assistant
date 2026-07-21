@@ -97,6 +97,13 @@ def main():
     archive_examples = []
 
     for job in jobs_list:
+        match = job.get("match_score", 0) or 0
+        if match < 10:
+            job["archived"] = True
+            archived_count += 1
+            if len(archive_examples) < 15:
+                archive_examples.append(job)
+            continue
         wm = job.get("work_mode", "")
         if wm == "Remoto":
             kept += 1

@@ -38,6 +38,9 @@ def matches_location(job: dict, desired_cities: list) -> bool:
 
 
 def should_keep(job: dict, desired_cities: list) -> bool:
+    match = job.get("match_score", 0) or 0
+    if match < 10:
+        return False
     if is_remote(job):
         return True
     return matches_location(job, desired_cities)
@@ -97,22 +100,18 @@ def main():
     newly_archived = 0
     examples = []
 
-    for run in data.get("runs", []):
-        for job in run.get("jobs", []):
-            url = job.get("link", "")
-            if not url:
-                continue
-            if job.get("archived"):
-                already_archived += 1
-                continue
-            if should_keep(job, desired_cities):
-                kept += 1
-            else:
-                to_archive += 1
-                job["archived"] = True
-                newly_archived += 1
-                if len(examples) < 10:
-                    examples.append(job)
+    for url, job in all_jobs.items():
+        if job.get("archived"):
+            already_archived += 1
+            continue
+        if should_keep(job, desired_cities):
+            kept += 1
+        else:
+            to_archive += 1
+            job["archived"] = True
+            newly_archived += 1
+            if len(examples) < 10:
+                examples.append(job)
 
     print(f"  OK se mantienen: {kept}")
     print(f"  Ya archivadas: {already_archived}")
