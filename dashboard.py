@@ -425,7 +425,14 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                 salary = details.estimated_salary
                 exp = details.required_experience
 
-                log_lines.append(f"✅ {title} @ {company} — 🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} anyos")
+                _temp_job = {"match_score": match_pct, "work_mode": wm, "location": job.get("location", "")}
+                _archive_reason = _recalc_archive_reason(_temp_job)
+                if _archive_reason:
+                    disposition = f"📦 Archivada — {_archive_reason}"
+                else:
+                    disposition = "📋 Mis ofertas"
+
+                log_lines.append(f"✅ {title} @ {company} — 🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} anyos | {disposition}")
 
                 updates = {
                     "match_score": match_result.match_score,
@@ -463,7 +470,11 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
     if errors > 0:
         st.warning(f"⚠ {errors} ofertas tuvieron errores. Revisa el detalle arriba.")
 
-    return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
+    archived_count = sum(1 for l in log_lines if "Archivada" in l)
+    mis_ofertas_count = sum(1 for l in log_lines if "Mis ofertas" in l)
+
+    return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info,
+            "archived": archived_count, "mis_ofertas": mis_ofertas_count}
 
 
 def parse_salary(val):
@@ -962,9 +973,11 @@ with tab_sin_analizar:
         res = st.session_state["reanalyze_result"]
         if res["analyzed"] > 0 or res["errors"] > 0:
             st.subheader("📊 Resultado del último reanalizado")
-            col1, col2 = st.columns(2)
-            col1.metric("✅ Analizadas", res["analyzed"])
-            col2.metric("❌ Errores", res["errors"])
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("✅ Analizadas", res["analyzed"])
+            c2.metric("❌ Errores", res["errors"])
+            c3.metric("📦 Archivadas", res.get("archived", 0))
+            c4.metric("📋 Mis ofertas", res.get("mis_ofertas", 0))
             if res["key_info"]:
                 st.caption("🔑 " + " → ".join(res["key_info"]))
             if res["log_lines"]:
