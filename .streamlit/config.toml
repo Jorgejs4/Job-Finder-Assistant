@@ -1,2 +1,8 @@
 [logger]
-level = "warning"
+level = "error"
+
+[client]
+showErrorDetails = "none"
+
+[global]
+suppressDeprecationWarnings = true

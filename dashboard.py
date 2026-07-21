@@ -24,17 +24,8 @@ from utils.feedback_manager import FeedbackManager
 import config
 from notion_sync import NotionSync
 
-import logging
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
-
-class _DeprecationFilter(logging.Filter):
-    def filter(self, record):
-        msg = record.getMessage()
-        return "Please replace" not in msg and "will be removed after" not in msg
-
-for _h in logging.root.handlers[:]:
-    _h.addFilter(_DeprecationFilter())
 
 st.set_page_config(
     page_title="Job Scraper Dashboard",
@@ -373,8 +364,19 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
         st.error("No hay API key de Gemini configurada. Añade GEMINI_API_KEY o GEMINI_API_KEYS en los secrets de Streamlit.")
         return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [], "key_info": []}
 
-    gemini = GeminiClient()
-    cv_text = parse_cv(config.CV_PATH)
+    st.info("Inicializando Gemini...")
+    try:
+        gemini = GeminiClient()
+    except Exception as e:
+        st.error(f"Error al crear GeminiClient: {e}")
+        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error: {e}"], "key_info": []}
+
+    st.info("Parseando CV...")
+    try:
+        cv_text = parse_cv(config.CV_PATH)
+    except Exception as e:
+        st.error(f"Error al parsear CV: {e}")
+        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error CV: {e}"], "key_info": []}
 
     total = len(jobs_list)
     analyzed = 0
@@ -455,6 +457,11 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
         st.subheader("Resultados del analisis")
         for line in log_lines:
             st.markdown(line)
+
+    if analyzed > 0:
+        st.success(f"✅ {analyzed} ofertas analizadas y guardadas correctamente.")
+    if errors > 0:
+        st.warning(f"⚠ {errors} ofertas tuvieron errores. Revisa el detalle arriba.")
 
     return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
 
