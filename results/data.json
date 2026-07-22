@@ -471,25 +471,7 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 6,
-          "_scraper": "InfoJobsScraper",
-          "match_score": 45,
-          "tech_stack": [
-            ".NET",
-            "C#",
-            "ASP.NET Web API",
-            "Vue.js",
-            "MySQL",
-            "Git",
-            "Visual Basic .NET",
-            "Windows Server",
-            "IIS"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 5,
-          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos técnicos que superaste. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de negocio complejo. Incluye proyectos donde hayas gestionado despliegues en IIS y Windows Server para demostrar que puedes cubrir el apoyo en infraestructura que solicitan."
+          "_scraper": "InfoJobsScraper"
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -775,25 +757,7 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 6,
-          "_scraper": "InfoJobsScraper",
-          "match_score": 45,
-          "tech_stack": [
-            ".NET",
-            "C#",
-            "ASP.NET Web API",
-            "Vue.js",
-            "MySQL",
-            "Git",
-            "Visual Basic .NET",
-            "Windows Server",
-            "IIS"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 5,
-          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos técnicos que superaste. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de negocio complejo. Incluye proyectos donde hayas gestionado despliegues en IIS y Windows Server para demostrar que puedes cubrir el apoyo en infraestructura que solicitan."
+          "_scraper": "InfoJobsScraper"
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -1215,25 +1179,7 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 6,
-          "_scraper": "InfoJobsScraper",
-          "match_score": 45,
-          "tech_stack": [
-            ".NET",
-            "C#",
-            "ASP.NET Web API",
-            "Vue.js",
-            "MySQL",
-            "Git",
-            "Visual Basic .NET",
-            "Windows Server",
-            "IIS"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 5,
-          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos técnicos que superaste. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de negocio complejo. Incluye proyectos donde hayas gestionado despliegues en IIS y Windows Server para demostrar que puedes cubrir el apoyo en infraestructura que solicitan."
+          "_scraper": "InfoJobsScraper"
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -1461,7 +1407,9 @@
           "description": "Desarrollador Full-Stack",
           "date_posted": "Reciente",
           "source": "GetOnBoard",
-          "_scraper": "GetOnBoardScraper"
+          "_scraper": "GetOnBoardScraper",
+          "archived": true,
+          "archive_reason": "Archivado manualmente"
         },
         {
           "title": "Desarrollador(a) Full-Stack Junior (Ruby on Rails)",
@@ -1971,7 +1919,9 @@
           "description": "Desarrollador Full-Stack",
           "date_posted": "Reciente",
           "source": "GetOnBoard",
-          "_scraper": "GetOnBoardScraper"
+          "_scraper": "GetOnBoardScraper",
+          "archived": true,
+          "archive_reason": "Archivado manualmente"
         },
         {
           "title": "Desarrollador(a) Full-Stack Junior (Ruby on Rails)",
@@ -2981,7 +2931,9 @@
           "description": "Desarrollador Full-Stack",
           "date_posted": "Reciente",
           "source": "GetOnBoard",
-          "_scraper": "GetOnBoardScraper"
+          "_scraper": "GetOnBoardScraper",
+          "archived": true,
+          "archive_reason": "Archivado manualmente"
         },
         {
           "title": "Desarrollador(a) Full-Stack Junior (Ruby on Rails)",
@@ -13808,10 +13760,11 @@
           "salary": "35000",
           "salary_is_estimate": true,
           "required_experience": 3,
-          "archived": false,
+          "archived": true,
           "_first_seen": "2026-07-20T09:54:31.193657",
           "_last_seen": "2026-07-20T19:33:50.908103",
-          "_last_run_id": "20260720_193350"
+          "_last_run_id": "20260720_193350",
+          "archive_reason": "Archivado manualmente"
         },
         {
           "title": "Freelance Full-Stack AI Automation",
