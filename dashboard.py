@@ -363,79 +363,80 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> tuple:
     try:
         config.validate_config()
     except ValueError as e:
-        st.error(f"Configuración incompleta: {e}")
+        st.error(f"Configuracion incompleta: {e}")
         return 0, len(jobs_list)
 
     gemini = GeminiClient()
     cv_text = parse_cv(config.CV_PATH)
 
     total = len(jobs_list)
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    log_text = st.empty()
-    log_lines = []
     analyzed = 0
     errors = 0
 
-    for i, job in enumerate(jobs_list):
-        title = job.get("title", "?")[:50]
-        company = job.get("company", "")[:30]
-        status_text.info(f"[{i+1}/{total}] Analizando: **{title}** @ {company}...")
-        try:
-            language = config.detect_language(
-                job.get("source", ""), job.get("title", ""),
-                job.get("description", "") or job.get("title", "")
-            )
-            desc = job.get("description", "") or job.get("title", "")
+    with st.status(f"Analizando {total} ofertas...", expanded=True) as status:
+        progress_bar = st.progress(0)
+        log_lines = []
 
-            match_result = gemini.match_offer(
-                cv_text=cv_text,
-                offer_title=job["title"],
-                offer_description=desc,
-                experience_hint=0,
-                language=language,
-            )
+        for i, job in enumerate(jobs_list):
+            title = job.get("title", "?")[:50]
+            company = job.get("company", "")[:30]
+            st.write(f"[{i+1}/{total}] **{title}** @ {company}")
+            try:
+                language = config.detect_language(
+                    job.get("source", ""), job.get("title", ""),
+                    job.get("description", "") or job.get("title", "")
+                )
+                desc = job.get("description", "") or job.get("title", "")
 
-            details = gemini.match_details(
-                cv_text=cv_text,
-                offer_title=job["title"],
-                offer_description=desc,
-                match_result=match_result,
-                language=language,
-            )
+                match_result = gemini.match_offer(
+                    cv_text=cv_text,
+                    offer_title=job["title"],
+                    offer_description=desc,
+                    experience_hint=0,
+                    language=language,
+                )
 
-            wm = config.normalize_work_mode(match_result.work_mode)
-            match_pct = match_result.match_score
-            salary = details.estimated_salary
-            exp = details.required_experience
+                details = gemini.match_details(
+                    cv_text=cv_text,
+                    offer_title=job["title"],
+                    offer_description=desc,
+                    match_result=match_result,
+                    language=language,
+                )
 
-            log_lines.append(
-                f"✅ **{title}** @ {company} — "
-                f"🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} años"
-            )
-            log_text.markdown("<br>".join(log_lines), unsafe_allow_html=True)
+                wm = config.normalize_work_mode(match_result.work_mode)
+                match_pct = match_result.match_score
+                salary = details.estimated_salary
+                exp = details.required_experience
 
-            updates = {
-                "match_score": match_result.match_score,
-                "tech_stack": match_result.tech_stack,
-                "work_mode": wm,
-                "language": language,
-                "salary": str(details.estimated_salary),
-                "salary_is_estimate": details.salary_is_estimate,
-                "required_experience": details.required_experience,
-                "tailored_advice": details.tailored_advice,
-            }
-            save_job_analysis(data, job["link"], updates)
-            job.update(updates)
-            analyzed += 1
-        except Exception as e:
-            errors += 1
-            log_lines.append(f"❌ **{title}** @ {company} — Error: {e}")
-            log_text.markdown("<br>".join(log_lines), unsafe_allow_html=True)
+                log_lines.append(f"✅ {title} @ {company} — 🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} anyos")
 
-        progress_bar.progress((i + 1) / total)
+                updates = {
+                    "match_score": match_result.match_score,
+                    "tech_stack": match_result.tech_stack,
+                    "work_mode": wm,
+                    "language": language,
+                    "salary": str(details.estimated_salary),
+                    "salary_is_estimate": details.salary_is_estimate,
+                    "required_experience": details.required_experience,
+                    "tailored_advice": details.tailored_advice,
+                }
+                save_job_analysis(data, job["link"], updates)
+                job.update(updates)
+                analyzed += 1
+            except Exception as e:
+                errors += 1
+                log_lines.append(f"❌ {title} @ {company} — Error: {e}")
 
-    status_text.success(f"Completado: {analyzed} analizadas, {errors} errores")
+            progress_bar.progress((i + 1) / total)
+
+        status.update(label=f"Completado: {analyzed} analizadas, {errors} errores", state="complete")
+
+    if log_lines:
+        st.subheader("Resultados del analisis")
+        for line in log_lines:
+            st.markdown(line)
+
     return analyzed, errors
 
 
@@ -446,6 +447,36 @@ def parse_salary(val):
         return int(str(val).replace(".", "").replace(",", ""))
     except (ValueError, TypeError):
         return None
+
+
+PAGE_SIZE = 20
+
+
+def paginate(items: list, key_prefix: str):
+    """Muestra items con paginacion (PAGE_SIZE por defecto + boton 'Mostrar mas')."""
+    state_key = f"page_{key_prefix}"
+    if state_key not in st.session_state:
+        st.session_state[state_key] = 1
+
+    total = len(items)
+    pages = (total + PAGE_SIZE - 1) // PAGE_SIZE
+    current = min(st.session_state[state_key], pages)
+    shown = current * PAGE_SIZE
+
+    for j in items[:shown]:
+        yield j
+
+    if shown < total:
+        remaining = total - shown
+        if st.button(f"Mostrar mas ({remaining} restantes)", key=f"btn_{key_prefix}", use_container_width=True):
+            st.session_state[state_key] = current + 1
+            st.rerun()
+
+
+def reset_pagination(key_prefix: str):
+    """Resetea la paginacion (llamar cuando cambian filtros)."""
+    state_key = f"page_{key_prefix}"
+    st.session_state[state_key] = 1
 
 
 data = load_data()
@@ -613,7 +644,7 @@ with tab_mis_ofertas:
 
     st.write(f"**{len(filtered)}** ofertas tras filtros")
 
-    for j in filtered:
+    for j in paginate(filtered, "mis_ofertas"):
         title = j.get("title", "N/A")
         company = j.get("company", "N/A")
         match = j.get("match_score", 0)
@@ -932,7 +963,7 @@ with tab_sin_analizar:
                 if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
             ]
 
-        for j in filtered_unanalyzed:
+        for j in paginate(filtered_unanalyzed, "sin_analizar"):
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             source = j.get("source", "N/A")
@@ -991,7 +1022,7 @@ with tab_archivadas:
                 if config.normalize_work_mode(j.get("work_mode", "N/A")) in filter_mode_arch
             ]
 
-        for j in filtered_archived:
+        for j in paginate(filtered_archived, "archivadas"):
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             match = j.get("match_score", 0)
