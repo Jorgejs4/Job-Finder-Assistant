@@ -489,7 +489,7 @@
           "salary": "42000",
           "salary_is_estimate": true,
           "required_experience": 5,
-          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos superados. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de alta precisión. Incluye ejemplos concretos de optimización de consultas en MySQL y tu experiencia gestionando despliegues en IIS, ya que buscan un perfil con autonomía en infraestructura."
+          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos técnicos que superaste. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de negocio complejo. Incluye proyectos donde hayas gestionado despliegues en IIS y Windows Server para demostrar que puedes cubrir el apoyo en infraestructura que solicitan."
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -551,30 +551,7 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 3,
-          "_scraper": "InfoJobsScraper",
-          "match_score": 45,
-          "tech_stack": [
-            "PHP",
-            "Laravel",
-            "Blade",
-            "Vue2",
-            "Eloquent",
-            "MySQL",
-            "Figma",
-            "GIT",
-            "SSH",
-            "WebSockets",
-            "Postman",
-            "Insomnia",
-            "Jira",
-            "Bitbucket"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 3,
-          "tailored_advice": "Dado que la oferta enfatiza el liderazgo y la gestión de equipos, destaca en tu CV experiencias previas donde hayas coordinado desarrolladores o liderado proyectos de principio a fin. Asegúrate de incluir ejemplos concretos de cómo has aplicado principios SOLID y TDD en entornos Laravel, ya que son requisitos técnicos clave. Si tienes experiencia con el ecosistema específico de Laravel (Horizon, Echo, Forge), resáltalo en una sección de 'Tecnologías Avanzadas'. Finalmente, al ser un puesto con interlocución técnica, menciona tu capacidad para traducir requisitos de negocio a soluciones técnicas, alineándote con la metodología ágil que solicitan."
+          "_scraper": "InfoJobsScraper"
         },
         {
           "title": "Application engineer",
@@ -816,7 +793,7 @@
           "salary": "42000",
           "salary_is_estimate": true,
           "required_experience": 5,
-          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos superados. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de alta precisión. Incluye ejemplos concretos de optimización de consultas en MySQL y tu experiencia gestionando despliegues en IIS, ya que buscan un perfil con autonomía en infraestructura."
+          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos técnicos que superaste. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de negocio complejo. Incluye proyectos donde hayas gestionado despliegues en IIS y Windows Server para demostrar que puedes cubrir el apoyo en infraestructura que solicitan."
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -844,30 +821,7 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 3,
-          "_scraper": "InfoJobsScraper",
-          "match_score": 45,
-          "tech_stack": [
-            "PHP",
-            "Laravel",
-            "Blade",
-            "Vue2",
-            "Eloquent",
-            "MySQL",
-            "Figma",
-            "GIT",
-            "SSH",
-            "WebSockets",
-            "Postman",
-            "Insomnia",
-            "Jira",
-            "Bitbucket"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 3,
-          "tailored_advice": "Dado que la oferta enfatiza el liderazgo y la gestión de equipos, destaca en tu CV experiencias previas donde hayas coordinado desarrolladores o liderado proyectos de principio a fin. Asegúrate de incluir ejemplos concretos de cómo has aplicado principios SOLID y TDD en entornos Laravel, ya que son requisitos técnicos clave. Si tienes experiencia con el ecosistema específico de Laravel (Horizon, Echo, Forge), resáltalo en una sección de 'Tecnologías Avanzadas'. Finalmente, al ser un puesto con interlocución técnica, menciona tu capacidad para traducir requisitos de negocio a soluciones técnicas, alineándote con la metodología ágil que solicitan."
+          "_scraper": "InfoJobsScraper"
         },
         {
           "title": "Application engineer",
@@ -1279,7 +1233,7 @@
           "salary": "42000",
           "salary_is_estimate": true,
           "required_experience": 5,
-          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos superados. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de alta precisión. Incluye ejemplos concretos de optimización de consultas en MySQL y tu experiencia gestionando despliegues en IIS, ya que buscan un perfil con autonomía en infraestructura."
+          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos técnicos que superaste. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de negocio complejo. Incluye proyectos donde hayas gestionado despliegues en IIS y Windows Server para demostrar que puedes cubrir el apoyo en infraestructura que solicitan."
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -1307,30 +1261,7 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 3,
-          "_scraper": "InfoJobsScraper",
-          "match_score": 45,
-          "tech_stack": [
-            "PHP",
-            "Laravel",
-            "Blade",
-            "Vue2",
-            "Eloquent",
-            "MySQL",
-            "Figma",
-            "GIT",
-            "SSH",
-            "WebSockets",
-            "Postman",
-            "Insomnia",
-            "Jira",
-            "Bitbucket"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 3,
-          "tailored_advice": "Dado que la oferta enfatiza el liderazgo y la gestión de equipos, destaca en tu CV experiencias previas donde hayas coordinado desarrolladores o liderado proyectos de principio a fin. Asegúrate de incluir ejemplos concretos de cómo has aplicado principios SOLID y TDD en entornos Laravel, ya que son requisitos técnicos clave. Si tienes experiencia con el ecosistema específico de Laravel (Horizon, Echo, Forge), resáltalo en una sección de 'Tecnologías Avanzadas'. Finalmente, al ser un puesto con interlocución técnica, menciona tu capacidad para traducir requisitos de negocio a soluciones técnicas, alineándote con la metodología ágil que solicitan."
+          "_scraper": "InfoJobsScraper"
         },
         {
           "title": "Application engineer",
@@ -8173,30 +8104,7 @@
           "_scraper": "InfoJobsScraper",
           "_first_seen": "2026-07-21T20:17:05.219282",
           "_last_seen": "2026-07-21T20:17:05.219282",
-          "_last_run_id": "20260721_201705",
-          "match_score": 45,
-          "tech_stack": [
-            "PHP",
-            "Laravel",
-            "Blade",
-            "Vue2",
-            "Eloquent",
-            "MySQL",
-            "Figma",
-            "GIT",
-            "SSH",
-            "WebSockets",
-            "Postman",
-            "Insomnia",
-            "Jira",
-            "Bitbucket"
-          ],
-          "work_mode": "Presencial",
-          "language": "es",
-          "salary": "42000",
-          "salary_is_estimate": true,
-          "required_experience": 3,
-          "tailored_advice": "Dado que la oferta enfatiza el liderazgo y la gestión de equipos, destaca en tu CV experiencias previas donde hayas coordinado desarrolladores o liderado proyectos de principio a fin. Asegúrate de incluir ejemplos concretos de cómo has aplicado principios SOLID y TDD en entornos Laravel, ya que son requisitos técnicos clave. Si tienes experiencia con el ecosistema específico de Laravel (Horizon, Echo, Forge), resáltalo en una sección de 'Tecnologías Avanzadas'. Finalmente, al ser un puesto con interlocución técnica, menciona tu capacidad para traducir requisitos de negocio a soluciones técnicas, alineándote con la metodología ágil que solicitan."
+          "_last_run_id": "20260721_201705"
         },
         {
           "title": "Application engineer",
