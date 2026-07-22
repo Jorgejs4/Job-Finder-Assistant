@@ -938,13 +938,25 @@ with tab_sin_analizar:
         st.info("No hay ofertas sin analizar. Todas las ofertas han sido procesadas por Gemini.")
     else:
         st.subheader(f"📋 {len(unanalyzed_jobs)} ofertas sin analizar")
-        st.caption("Estas ofertas no pudieron ser clasificadas automaticamente por Gemini y necesitan un análisis.")
+        st.caption("Estas ofertas no pudieron ser clasificadas automaticamente por Gemini y necesitan un analisis.")
 
-        if st.button("🔍 Reanalizar todas las ofertas", type="primary", use_container_width=True):
-            analyzed, errors = reanalyze_jobs_with_gemini(unanalyzed_jobs)
-            load_data.clear()
-            aggregate_all_jobs.clear()
-            st.rerun()
+        has_gemini = bool(config.GEMINI_API_KEYS)
+        if not has_gemini:
+            st.warning(
+                "No hay API key de Gemini configurada. "
+                "Anade **GEMINI_API_KEY** o **GEMINI_API_KEYS** en los secrets de Streamlit Cloud "
+                "(Settings > Secrets) para usar el reanalisis."
+            )
+        else:
+            if st.button("🔍 Reanalizar todas las ofertas", type="primary", use_container_width=True):
+                try:
+                    analyzed, errors = reanalyze_jobs_with_gemini(unanalyzed_jobs)
+                    if analyzed > 0:
+                        load_data.clear()
+                        aggregate_all_jobs.clear()
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error inesperado durante el reanalisis: {e}")
 
         st.divider()
 
