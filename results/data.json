@@ -471,7 +471,25 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 6,
-          "_scraper": "InfoJobsScraper"
+          "_scraper": "InfoJobsScraper",
+          "match_score": 45,
+          "tech_stack": [
+            ".NET",
+            "C#",
+            "ASP.NET Web API",
+            "Vue.js",
+            "MySQL",
+            "Git",
+            "Visual Basic .NET",
+            "Windows Server",
+            "IIS"
+          ],
+          "work_mode": "Presencial",
+          "language": "es",
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos superados. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de alta precisión. Incluye ejemplos concretos de optimización de consultas en MySQL y tu experiencia gestionando despliegues en IIS, ya que buscan un perfil con autonomía en infraestructura."
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -757,7 +775,25 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 6,
-          "_scraper": "InfoJobsScraper"
+          "_scraper": "InfoJobsScraper",
+          "match_score": 45,
+          "tech_stack": [
+            ".NET",
+            "C#",
+            "ASP.NET Web API",
+            "Vue.js",
+            "MySQL",
+            "Git",
+            "Visual Basic .NET",
+            "Windows Server",
+            "IIS"
+          ],
+          "work_mode": "Presencial",
+          "language": "es",
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos superados. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de alta precisión. Incluye ejemplos concretos de optimización de consultas en MySQL y tu experiencia gestionando despliegues en IIS, ya que buscan un perfil con autonomía en infraestructura."
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
@@ -1179,7 +1215,25 @@
           "salary_min": null,
           "salary_max": null,
           "experience_hint": 6,
-          "_scraper": "InfoJobsScraper"
+          "_scraper": "InfoJobsScraper",
+          "match_score": 45,
+          "tech_stack": [
+            ".NET",
+            "C#",
+            "ASP.NET Web API",
+            "Vue.js",
+            "MySQL",
+            "Git",
+            "Visual Basic .NET",
+            "Windows Server",
+            "IIS"
+          ],
+          "work_mode": "Presencial",
+          "language": "es",
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Destaca en tu CV tu experiencia específica en procesos de migración de .NET Framework a .NET Core/8, ya que es un punto crítico para esta empresa. Si has trabajado refactorizando código legado (especialmente VB.NET a C#), asegúrate de detallar los retos superados. Dado que es una empresa biotecnológica, enfatiza tu capacidad para trabajar en entornos regulados o de alta precisión. Incluye ejemplos concretos de optimización de consultas en MySQL y tu experiencia gestionando despliegues en IIS, ya que buscan un perfil con autonomía en infraestructura."
         },
         {
           "title": "FullStack developer Angular - 80% Remoto",
