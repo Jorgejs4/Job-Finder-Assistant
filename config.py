@@ -80,6 +80,7 @@ GETONBRD_CATEGORY = os.getenv("GETONBRD_CATEGORY", "programming")
 
 # === HOSTING ===
 GITHUB_REPO = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 CV_BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/results/cvs"
 
 # === KEYWORDS DE CLASIFICACIÓN (FUENTE ÚNICA DE VERDAD) ===
@@ -371,10 +372,6 @@ def get_location_for(scraper_name: str, location_key: str) -> str:
 def validate_config():
     """Valida que las credenciales críticas estén configuradas."""
     missing = []
-    if not NOTION_TOKEN:
-        missing.append("NOTION_TOKEN")
-    if not NOTION_DATABASE_ID:
-        missing.append("NOTION_DATABASE_ID")
     if not GEMINI_API_KEYS:
         missing.append("GEMINI_API_KEY o GEMINI_API_KEYS")
 
@@ -438,6 +435,12 @@ def load_preferences():
             MIN_SALARY = None
     else:
         MIN_SALARY = None
+
+# Database
+DATABASE_PATH = os.getenv("DATABASE_PATH", "")
+
+# Notion sync (opcional desde el dashboard — solo se usa en pipeline)
+DISABLE_NOTION_SYNC = os.getenv("DISABLE_NOTION_SYNC", "false").lower() in ("true", "1", "yes")
 
 # Webhook configuration (opcional)
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")

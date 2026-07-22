@@ -413,18 +413,13 @@ def main():
                 if pdf_path:
                     slug = os.path.basename(pdf_path)
                     cv_url = f"config.CV_BASE_URL/{slug}"
-                    # Actualizar URL en data.json
-                    for run in existing_data.get("runs", []):
-                        for j in run.get("jobs", []):
-                            if j.get("title") == fb_title and j.get("company") == fb_company:
-                                j["custom_cv_url"] = cv_url
-                                if cl_pdf_path:
-                                    cl_slug = os.path.basename(cl_pdf_path)
-                                    j["cover_letter_pdf_url"] = f"config.CV_BASE_URL/{cl_slug}"
-                                break
-                    with open(results.data_path, "w", encoding="utf-8") as f:
-                        import json
-                        json.dump(existing_data, f, ensure_ascii=False, indent=2)
+                    if found_job.get("link"):
+                        found_job["custom_cv_url"] = cv_url
+                        if cl_pdf_path:
+                            cl_slug = os.path.basename(cl_pdf_path)
+                            found_job["cover_letter_pdf_url"] = f"config.CV_BASE_URL/{cl_slug}"
+                        from utils.database import Database
+                        Database().upsert_job(found_job)
                     # Actualizar Notion si la oferta existe
                     existing_job = notion_sync.find_existing_job(fb_title, fb_company)
                     if existing_job:

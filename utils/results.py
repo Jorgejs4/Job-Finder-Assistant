@@ -4,18 +4,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 
+from utils.database import Database
+
 
 class ResultsManager:
-    """
-    Guarda todos los resultados en un único archivo data.json que se acumula.
-    Cada ejecución se añade al inicio de la lista (más reciente primero).
-    """
     def __init__(self, results_dir: str = None):
         if results_dir is None:
             results_dir = os.path.join(Path(__file__).resolve().parent.parent, "results")
         self.results_dir = results_dir
         os.makedirs(self.results_dir, exist_ok=True)
-        self.data_path = os.path.join(self.results_dir, "data.json")
+        self.data_path_legacy = os.path.join(self.results_dir, "data.json")
         self.pending_path = os.path.join(self.results_dir, "notion_pending.json")
         self.run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.run_data = {
@@ -28,6 +26,8 @@ class ResultsManager:
             "_analyzed_count": 0,
             "_analyzed_by_gemini": 0,
         }
+        self._db = Database()
+        self._migrate_if_needed()
 
     def record_scraper_result(self, name: str, jobs: List[Dict], failed: bool = False, error_msg: str = ""):
         self.run_data["scraper_stats"][name] = {
@@ -65,7 +65,6 @@ class ResultsManager:
         self.run_data["_analyzed_by_gemini"] = count
 
     def record_enriched_job(self, job: dict):
-        """Guarda un job enriquecido (con match_score, tech_stack, etc.) en run_data."""
         enriched_fields = [
             "match_score", "tech_stack", "work_mode", "tailored_advice",
             "salary", "salary_is_estimate", "required_experience",
@@ -84,46 +83,57 @@ class ResultsManager:
         self.run_data["jobs"].append(job)
 
     def save(self) -> str:
-        # Cargar datos existentes
-        data = self._load_data()
-        
-        # Añadir esta ejecución al inicio (más reciente primero)
-        data["runs"].insert(0, self.run_data)
-        
-        # Mantener solo las últimas 100 ejecuciones para no crecer infinitamente
-        if len(data["runs"]) > 100:
-            data["runs"] = data["runs"][:100]
-        
-        # Guardar
-        with open(self.data_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        
-        run_count = len(data["runs"])
-        print(f"[Results] Guardado en {self.data_path} ({run_count} ejecuciones)")
-        return self.data_path
+        self._db.create_run(self.run_data)
+        links = []
+        for job in self.run_data["jobs"]:
+            self._db.upsert_job(job)
+            link = job.get("link", "")
+            if link:
+                links.append(link)
+        if links:
+            self._db.add_run_jobs(self.run_id, links)
+        self._db.export_data_json()
+        run_count = len(self._db.get_all_runs())
+        print(f"[Results] Guardado en BD ({run_count} ejecuciones)")
+        return str(self._db.db_path)
 
     def _load_data(self) -> dict:
-        if os.path.exists(self.data_path):
-            try:
-                with open(self.data_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                if "runs" in data:
-                    return data
-            except (json.JSONDecodeError, KeyError):
-                pass
-        return {"runs": []}
+        runs_data = self._db.get_all_runs()
+        if not runs_data:
+            return {"runs": []}
+
+        runs = []
+        for run in runs_data:
+            run_id = run["run_id"]
+            job_links = self._db.get_run_job_links(run_id)
+            jobs = []
+            for link in job_links:
+                job = self._db.get_job_by_link(link)
+                if job:
+                    jobs.append(job)
+            run["jobs"] = jobs
+            runs.append(run)
+        return {"runs": runs}
 
     def load_all_runs(self) -> List[Dict]:
         data = self._load_data()
         return data.get("runs", [])
 
     def load_latest_run(self) -> dict:
-        runs = self.load_all_runs()
-        return runs[0] if runs else {}
+        latest = self._db.get_latest_run()
+        if not latest:
+            return {}
+        job_links = self._db.get_run_job_links(latest["run_id"])
+        jobs = []
+        for link in job_links:
+            job = self._db.get_job_by_link(link)
+            if job:
+                jobs.append(job)
+        latest["jobs"] = jobs
+        return latest
 
     def get_history(self) -> List[Dict]:
-        """Genera historial resumido a partir de data.json"""
-        runs = self.load_all_runs()
+        runs = self._db.get_all_runs()
         history = []
         for run in runs:
             stats = run.get("scraper_stats", {})
@@ -139,8 +149,18 @@ class ResultsManager:
             })
         return history
 
+    def _migrate_if_needed(self):
+        if self._db.get_job_count() > 0:
+            return
+        if os.path.exists(self.data_path_legacy):
+            try:
+                result = self._db.migrate_from_json(self.data_path_legacy)
+                if result["jobs"] > 0:
+                    print(f"[Migracion] {result['jobs']} ofertas y {result['runs']} ejecuciones migradas de data.json a SQLite")
+            except Exception as e:
+                print(f"[Migracion] Error migrando data.json: {e}")
+
     def add_pending_notion_write(self, job: dict):
-        """Guarda un job que falló al escribir en Notion para reintentar después."""
         pending = self._load_pending()
         link = job.get("link", "")
         existing_links = {j.get("link") for j in pending}
@@ -150,11 +170,9 @@ class ResultsManager:
                 json.dump(pending, f, ensure_ascii=False, indent=2)
 
     def get_pending_notion_writes(self) -> List[dict]:
-        """Devuelve la lista de jobs pendientes de escribir en Notion."""
         return self._load_pending()
 
     def clear_pending_notion_write(self, link: str):
-        """Elimina un job de la cola de pendientes tras escribir con éxito."""
         pending = self._load_pending()
         pending = [j for j in pending if j.get("link") != link]
         with open(self.pending_path, "w", encoding="utf-8") as f:
