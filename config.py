@@ -80,7 +80,6 @@ GETONBRD_CATEGORY = os.getenv("GETONBRD_CATEGORY", "programming")
 
 # === HOSTING ===
 GITHUB_REPO = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 CV_BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/results/cvs"
 
 # === KEYWORDS DE CLASIFICACIÓN (FUENTE ÚNICA DE VERDAD) ===
