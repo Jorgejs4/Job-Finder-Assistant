@@ -350,6 +350,7 @@ def main():
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
     skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "experiencia": 0, "notion_error": 0, "cuota_gemini": False}
+    analyzed_by_gemini = 0  # Jobs that actually went through Gemini analysis
 
     # Pre-filter: remove duplicates and obviously non-matching jobs before Gemini
     pre_filtered = []
@@ -466,6 +467,7 @@ def main():
                 continue
 
             print(f"  - {job['title']} @ {job['company']}: match {match_result.match_score}%", flush=True)
+            analyzed_by_gemini += 1
 
             job["match_score"] = match_result.match_score
             job["tech_stack"] = match_result.tech_stack
@@ -635,6 +637,7 @@ def main():
 
     results.set_total_added(new_jobs_added)
     results.set_analyzed_count(analyzed_count)
+    results.set_analyzed_by_gemini(analyzed_by_gemini)
     results.run_data["profile_skills"] = profile.key_skills
     results.run_data["profile_roles"] = profile.recommended_roles
     results.run_data["profile_summary"] = profile.summary
@@ -644,7 +647,8 @@ def main():
     print("                 EJECUCIÓN FINALIZADA")
     print("-" * 60)
     print(f"  - Eliminadas de Notion: {deleted_count}")
-    print(f"  - Analizadas por IA: {analyzed_count}")
+    print(f"  - Analizadas por Gemini: {analyzed_by_gemini}")
+    print(f"  - Añadidas a Notion: {analyzed_count}")
     print(f"  - Nuevas añadidas: {new_jobs_added}")
     print(f"  - Duplicados fuzzy: {duplicates_fuzzy}")
     print(f"  - Skipped: {skipped}")
@@ -667,7 +671,7 @@ def main():
 
     notifier.send_summary(
         jobs_added=new_jobs_added,
-        jobs_analyzed=analyzed_count,
+        jobs_analyzed=analyzed_by_gemini,
         scraper_stats=scraper_stats,
         top_jobs=top_jobs,
         errors=email_errors,

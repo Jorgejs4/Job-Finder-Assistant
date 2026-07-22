@@ -26,6 +26,7 @@ class ResultsManager:
             "errors": [],
             "_total_added": 0,
             "_analyzed_count": 0,
+            "_analyzed_by_gemini": 0,
         }
 
     def record_scraper_result(self, name: str, jobs: List[Dict], failed: bool = False, error_msg: str = ""):
@@ -59,6 +60,9 @@ class ResultsManager:
 
     def set_analyzed_count(self, count: int):
         self.run_data["_analyzed_count"] = count
+
+    def set_analyzed_by_gemini(self, count: int):
+        self.run_data["_analyzed_by_gemini"] = count
 
     def record_enriched_job(self, job: dict):
         """Guarda un job enriquecido (con match_score, tech_stack, etc.) en run_data."""

@@ -36,6 +36,34 @@ st.set_page_config(
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
 
 
+def _push_data_to_github(data: dict) -> bool:
+    """Push data.json to GitHub repo so changes persist across Streamlit restarts."""
+    token = config.GITHUB_TOKEN
+    if not token:
+        return False
+    repo = config.GITHUB_REPO
+    path = "results/data.json"
+    api_url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    try:
+        with httpx.Client(timeout=15) as client:
+            resp = client.get(api_url, headers=headers)
+            if resp.status_code == 200:
+                sha = resp.json().get("sha")
+            else:
+                sha = None
+            import base64
+            content = json.dumps(data, ensure_ascii=False, indent=2)
+            encoded = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+            body = {"message": f"[dashboard] update data.json ({datetime.now().strftime('%Y-%m-%d %H:%M')})", "content": encoded, "branch": "main"}
+            if sha:
+                body["sha"] = sha
+            resp2 = client.put(api_url, headers=headers, json=body)
+            return resp2.status_code in (200, 201)
+    except Exception:
+        return False
+
+
 def _generate_ics_content(event_title: str, description: str, link: str,
                           start: datetime, end: datetime, alarms: list = None) -> str:
     alarms_str = ""
@@ -261,6 +289,7 @@ def sync_statuses_from_notion(data: dict) -> bool:
         data_path = os.path.join(RESULTS_DIR, "data.json")
         with open(data_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        _push_data_to_github(data)
         load_data.clear()
         aggregate_all_jobs.clear()
         print(f"[Sync] Estados y archivado sincronizados desde Notion")
@@ -329,6 +358,7 @@ def save_job_status(data: dict, link: str, new_status: str) -> bool:
         data_path = os.path.join(RESULTS_DIR, "data.json")
         with open(data_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        _push_data_to_github(data)
     return updated
 
 
@@ -348,6 +378,7 @@ def save_job_archived(data: dict, link: str, archived: bool, reason: str | None 
         data_path = os.path.join(RESULTS_DIR, "data.json")
         with open(data_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        _push_data_to_github(data)
     return updated
 
 
@@ -364,6 +395,7 @@ def save_job_analysis(data: dict, link: str, updates: dict) -> bool:
         data_path = os.path.join(RESULTS_DIR, "data.json")
         with open(data_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        _push_data_to_github(data)
     return updated
 
 
@@ -785,11 +817,15 @@ with tab_mis_ofertas:
             if not j.get("archived"):
                 if st.button("Archivar oferta", key=f"arch_{_job_key}", use_container_width=True):
                     if save_job_archived(data, link, True, reason=config.ArchiveReason.MANUAL):
+                        notion_ok = False
                         try:
-                            NotionSync().update_job_eliminar(link, True)
-                        except Exception:
-                            pass
-                        st.session_state["archived_msg"] = f"✅ Oferta archivada: {title} @ {company}"
+                            notion_ok = NotionSync().update_job_eliminar(link, True)
+                        except Exception as e:
+                            st.error(f"❌ Error sync Notion: {e}")
+                        if notion_ok:
+                            st.session_state["archived_msg"] = f"✅ Oferta archivada: {title} @ {company}"
+                        else:
+                            st.session_state["archived_msg"] = f"⚠️ Archivada localmente (Notion no sync): {title} @ {company}"
                         load_data.clear()
                         aggregate_all_jobs.clear()
                         st.rerun()
@@ -1172,11 +1208,15 @@ with tab_archivadas:
 
                 if st.button("Desarchivar oferta", key=f"unarch_{_job_key_arch}", use_container_width=True):
                     if save_job_archived(data, link, False):
+                        notion_ok = False
                         try:
-                            NotionSync().update_job_eliminar(link, False)
-                        except Exception:
-                            pass
-                        st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
+                            notion_ok = NotionSync().update_job_eliminar(link, False)
+                        except Exception as e:
+                            st.error(f"❌ Error sync Notion: {e}")
+                        if notion_ok:
+                            st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
+                        else:
+                            st.session_state["unarchived_msg"] = f"⚠️ Desarchivada localmente (Notion no sync): {title} @ {company}"
                         load_data.clear()
                         aggregate_all_jobs.clear()
                         st.rerun()
@@ -1574,13 +1614,14 @@ with tab_ejecuciones:
     scrapers_zero = sum(1 for s in stats.values() if s.get("failed") and not s.get("error"))
     scrapers_fail = sum(1 for s in stats.values() if s.get("failed") and s.get("error"))
     added = latest.get("_total_added", 0)
-    analyzed = latest.get("_analyzed_count", 0)
+    analyzed = latest.get("_analyzed_by_gemini", 0)
+    added_to_notion = latest.get("_analyzed_count", 0)
 
     st.markdown("#### Última ejecución")
     k1, k2, k3, k4, k5, k6 = st.columns(6)
     k1.metric("Ofertas encontradas", total_found)
-    k2.metric("Añadidas a Notion", added)
-    k3.metric("Analizadas por IA", analyzed)
+    k2.metric("Analizadas por Gemini", analyzed)
+    k3.metric("Añadidas a Notion", added_to_notion)
     k4.metric("Scrapers OK", scrapers_ok)
     k5.metric("Sin ofertas", scrapers_zero)
     k6.metric("Scrapers fallidos", scrapers_fail, delta=f"-{scrapers_fail}" if scrapers_fail else None, delta_color="inverse")
