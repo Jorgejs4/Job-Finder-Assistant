@@ -586,11 +586,12 @@ with tab_mis_ofertas:
                         has_pending = feedback_mgr.has_pending(title, company)
                         if has_pending:
                             st.warning("Feedback pendiente de procesar")
-                    with st.form(key=f"fb_{title}_{company}", clear_on_submit=True):
+                    link_slug = hashlib.md5((j.get("link") or title).encode()).hexdigest()[:8]
+                    with st.form(key=f"fb_{link_slug}", clear_on_submit=True):
                         st.markdown("**Quieres modificar algo del CV?**")
                         fb = st.text_area(
                             "Describe que cambiar",
-                            key=f"fbt_{title}_{company}",
+                            key=f"fbt_{link_slug}",
                             height=80,
                         )
                         submitted = st.form_submit_button("Enviar feedback")
