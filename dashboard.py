@@ -223,7 +223,7 @@ def extract_filter_options(all_jobs):
         s = parse_salary(j.get("salary"))
         if s:
             salaries.append(s)
-        for t in j.get("tech_stack", []):
+        for t in (j.get("tech_stack") or []):
             techs[t] += 1
         exp = j.get("required_experience")
         if exp:
