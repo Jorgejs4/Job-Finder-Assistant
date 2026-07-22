@@ -110,6 +110,11 @@ def _recalc_archive_reason(job):
     target_city = getattr(config, "USER_CITY", "")
     if match < config.MIN_MATCH_TO_ARCHIVE:
         return config.ArchiveReason.low_match(match)
+    if work_mode == "Remoto":
+        geo_text = f"{location} {job.get('description', '')}".lower()
+        for kw in config.GEO_RESTRICT_KEYWORDS:
+            if kw in geo_text:
+                return config.ArchiveReason.geo_restriction(kw)
     if target_city and work_mode in ("Presencial", "Híbrido"):
         if target_city.lower() not in location.lower():
             return config.ArchiveReason.location_mismatch(work_mode, location)
@@ -167,6 +172,13 @@ def aggregate_all_jobs(runs):
         if match < config.MIN_MATCH_TO_ARCHIVE:
             should_archive = True
             reason = config.ArchiveReason.low_match(match)
+        elif wm == "Remoto":
+            geo_text = f"{loc} {job.get('description', '')}".lower()
+            for kw in config.GEO_RESTRICT_KEYWORDS:
+                if kw in geo_text:
+                    should_archive = True
+                    reason = config.ArchiveReason.geo_restriction(kw)
+                    break
         elif tc and wm in ("Presencial", "Híbrido"):
             if tc.lower() not in loc.lower():
                 should_archive = True
@@ -425,7 +437,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                 salary = details.estimated_salary
                 exp = details.required_experience
 
-                _temp_job = {"match_score": match_pct, "work_mode": wm, "location": job.get("location", "")}
+                _temp_job = {"match_score": match_pct, "work_mode": wm, "location": job.get("location", ""), "description": job.get("description", "")}
                 _archive_reason = _recalc_archive_reason(_temp_job)
                 if _archive_reason:
                     disposition = f"📦 Archivada — {_archive_reason}"
@@ -560,6 +572,9 @@ if config.USER_PORTFOLIO_URL or config.USER_CERTIFICATIONS or config.USER_GITHUB
 # TAB 1: MIS OFERTAS — Panel principal
 # ═══════════════════════════════════════════════════════════════
 with tab_mis_ofertas:
+    if "archived_msg" in st.session_state:
+        st.success(st.session_state.pop("archived_msg"))
+
     if not all_jobs:
         st.info("No hay ofertas disponibles.")
         st.stop()
@@ -774,6 +789,7 @@ with tab_mis_ofertas:
                             NotionSync().update_job_eliminar(link, True)
                         except Exception:
                             pass
+                        st.session_state["archived_msg"] = f"✅ Oferta archivada: {title} @ {company}"
                         load_data.clear()
                         aggregate_all_jobs.clear()
                         st.rerun()
@@ -1060,6 +1076,9 @@ with tab_sin_analizar:
 # TAB 3: OFERTAS ARCHIVADAS
 # ═══════════════════════════════════════════════════════════════
 with tab_archivadas:
+    if "unarchived_msg" in st.session_state:
+        st.success(st.session_state.pop("unarchived_msg"))
+
     archived_jobs = [j for j in all_jobs if j.get("archived")]
 
     if not archived_jobs:
@@ -1157,6 +1176,7 @@ with tab_archivadas:
                             NotionSync().update_job_eliminar(link, False)
                         except Exception:
                             pass
+                        st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
                         load_data.clear()
                         aggregate_all_jobs.clear()
                         st.rerun()
