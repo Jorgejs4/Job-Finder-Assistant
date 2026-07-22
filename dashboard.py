@@ -328,7 +328,7 @@ with tab_mis_ofertas:
             if salary_only_from_offer and j.get("salary_is_estimate", True):
                 continue
             if tech_filter:
-                job_techs = j.get("tech_stack", [])
+                job_techs = j.get("tech_stack") or []
                 if not any(t in tech_filter for t in job_techs):
                     continue
             if location_filter:
@@ -363,7 +363,7 @@ with tab_mis_ofertas:
             source = j.get("source", "N/A")
             exp = j.get("required_experience", 0)
             link = j.get("link", "")
-            techs = j.get("tech_stack", [])
+            techs = j.get("tech_stack") or []
             advice = j.get("tailored_advice", "")
             cover_letter = j.get("cover_letter", "")
             cv_url = j.get("custom_cv_url", "")
@@ -530,7 +530,7 @@ with tab_mis_ofertas:
                         with c2:
                             remote = "Si" if cp.get('remote_friendly') else "No"
                             st.markdown(f"**Remoto:** {remote}")
-                            techs_cp = ", ".join(cp.get("tech_stack", [])[:8])
+                            techs_cp = ", ".join((cp.get("tech_stack") or [])[:8])
                             st.markdown(f"**Tech stack:** {techs_cp}")
                         if cp.get("culture"):
                             st.markdown(f"**Cultura:** {cp['culture']}")
@@ -754,7 +754,7 @@ with tab_archivadas:
             source = j.get("source", "N/A")
             exp = j.get("required_experience", 0)
             link = j.get("link", "")
-            techs = j.get("tech_stack", [])
+            techs = j.get("tech_stack") or []
             advice = j.get("tailored_advice", "")
             cover_letter = j.get("cover_letter", "")
             cv_url = j.get("custom_cv_url", "")
@@ -1062,7 +1062,7 @@ with tab_stats:
         mode_counts = defaultdict(int)
         source_counts = defaultdict(int)
         for j in all_jobs:
-            for tech in j.get("tech_stack", []):
+            for tech in (j.get("tech_stack") or []):
                 all_techs_stats[tech] += 1
             wm = config.normalize_work_mode(j.get("work_mode", "")) or "No especificado"
             mode_counts[wm] += 1
@@ -1133,7 +1133,7 @@ with tab_stats:
                             salaries.append(s)
                         if config.normalize_work_mode(job.get("work_mode", "")) == "Remoto":
                             remote_count += 1
-                        for t in job.get("tech_stack", []):
+                        for t in (job.get("tech_stack") or []):
                             tech_counts[t] += 1
 
                 avg_salary = sum(salaries) // len(salaries) if salaries else 0
