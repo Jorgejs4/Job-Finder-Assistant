@@ -2,6 +2,7 @@ import os
 import sys
 import hashlib
 import time
+import threading
 import unicodedata
 from pathlib import Path
 from collections import defaultdict
@@ -103,25 +104,23 @@ def _cached_get_history():
     return db.get_history()
 
 
-def _invalidate_cache(sync: bool = False):
+def _invalidate_cache(sync: bool = True):
     _cached_get_all_jobs.clear()
     _cached_get_runs.clear()
     _cached_get_history.clear()
     db.export_data_json()
-    if sync:
-        _sync_to_github()
-    else:
-        st.session_state.pending_changes = st.session_state.get("pending_changes", 0) + 1
+    _sync_to_github()
 
 
 def _sync_to_github():
-    json_path = os.path.join(RESULTS_DIR, "data.json")
-    ok = github_sync.commit_data_json(json_path)
-    if ok:
-        st.session_state.pending_changes = 0
-        st.toast("Datos sincronizados con GitHub", icon="✅")
-    else:
-        st.toast("No se pudo sincronizar (GITHUB_TOKEN no configurado?)", icon="⚠️")
+    def _bg():
+        json_path = os.path.join(RESULTS_DIR, "data.json")
+        ok = github_sync.commit_data_json(json_path)
+        if ok:
+            st.session_state.pending_changes = 0
+        else:
+            print("[Dashboard] No se pudo sincronizar con GitHub")
+    threading.Thread(target=_bg, daemon=True).start()
 
 
 def parse_salary(val):
@@ -165,8 +164,8 @@ all_jobs = _cached_get_all_jobs()
 runs = _cached_get_runs()
 feedback_mgr = FeedbackManager()
 
-st.title("Job Scraper Dashboard")
-st.caption(f"{len(all_jobs)} ofertas | Ultima carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+st.title("🔍 Job Scraper Dashboard")
+st.caption(f"💼 {len(all_jobs)} ofertas | Ultima carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
 if not runs:
     st.warning("No hay ejecuciones registradas. Ejecuta `python main.py` primero.")
@@ -175,7 +174,7 @@ if not runs:
 latest = runs[0]
 
 tab_mis_ofertas, tab_sin_analizar, tab_archivadas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
-    ["Mis Ofertas", "Sin analizar", "Ofertas archivadas", "Pipeline", "Estadisticas", "Ejecuciones"]
+    ["💼 Mis Ofertas", "📋 Sin analizar", "📦 Ofertas archivadas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
 )
 
 with st.sidebar:
@@ -190,15 +189,15 @@ with st.sidebar:
         st.caption("GITHUB_TOKEN no configurado - los cambios se pierden al reiniciar")
 
     if config.USER_PORTFOLIO_URL or config.USER_CERTIFICATIONS or config.USER_GITHUB:
-        st.subheader("Mi Perfil")
+        st.subheader("📋 Mi Perfil")
         if config.USER_GITHUB:
             st.markdown(f"**GitHub:** [{config.USER_GITHUB}](https://github.com/{config.USER_GITHUB})")
         if config.USER_PORTFOLIO_URL:
-            st.link_button("Portfolio", config.USER_PORTFOLIO_URL)
+            st.link_button("🌐 Portfolio", config.USER_PORTFOLIO_URL)
         if config.USER_CERTIFICATIONS:
             st.markdown("**Certificaciones:**")
             for cert in config.USER_CERTIFICATIONS.split(","):
-                st.markdown(f"  {cert.strip()}")
+                st.markdown(f"  📜 {cert.strip()}")
 
 
 def extract_filter_options(all_jobs):
@@ -252,9 +251,9 @@ with tab_mis_ofertas:
     if not mis_ofertas:
         st.info("No hay ofertas disponibles.")
     else:
-        st.subheader(f"{len(mis_ofertas)} ofertas disponibles")
+        st.subheader(f"💼 {len(mis_ofertas)} ofertas disponibles")
 
-        with st.expander("Filtros avanzados", expanded=True):
+        with st.expander("🔍 Filtros avanzados", expanded=True):
             filter_opts = extract_filter_options(mis_ofertas)
 
             f1, f2, f3, f4 = st.columns(4)
@@ -299,9 +298,9 @@ with tab_mis_ofertas:
                 "Recientes ↑": ("_last_seen", False),
             }
             sort_by = st.selectbox("Ordenar por", list(sort_options.keys()), index=0)
-            search_text = st.text_input("Buscar por titulo, empresa o ubicacion", placeholder="Ej: Python, Sevilla, Remote...")
+            search_text = st.text_input("🔎 Buscar por titulo, empresa o ubicacion", placeholder="Ej: Python, Sevilla, Remote...")
 
-            with st.expander("Filtros adicionales", expanded=False):
+            with st.expander("⚙️ Filtros adicionales", expanded=False):
                 salary_only_from_offer = st.checkbox("Solo ofertas con salario de la oferta", value=False)
 
         filtered = []
@@ -371,14 +370,14 @@ with tab_mis_ofertas:
             cl_pdf_url = j.get("cover_letter_pdf_url", "")
 
             header_parts = [f"**{title}** @ {company}"]
-            header_parts.append(f"{match}%")
+            header_parts.append(f"🎯 {match}%")
             if salary:
-                sal_label = f"{salary}E"
+                sal_label = f"💰 {salary}E"
                 if salary_is_est:
                     sal_label += " ~"
                 header_parts.append(f"{sal_label}")
-            header_parts.append(f"{mode}")
-            header_parts.append(f"{source}")
+            header_parts.append(f"📍 {mode}")
+            header_parts.append(f"🏢 {source}")
 
             days_applied = 0
             if status == "Aplicado" and j.get("_first_seen"):
@@ -389,7 +388,7 @@ with tab_mis_ofertas:
                     pass
 
             if days_applied >= config.FOLLOWUP_REMINDER_DAYS:
-                header_parts.append(f"[{status} - {days_applied}d]")
+                header_parts.append(f"[⏰ {status} - {days_applied}d]")
             else:
                 header_parts.append(f"[{status}]")
 
@@ -403,7 +402,7 @@ with tab_mis_ofertas:
                     if salary_is_est:
                         st.caption("~ Salario estimado por IA")
                     else:
-                        st.caption("Salario de la oferta")
+                        st.caption("✅ Salario de la oferta")
                 else:
                     m2.metric("Salario", "No especificado")
                 m3.metric("Modalidad", mode)
@@ -434,16 +433,16 @@ with tab_mis_ofertas:
                 if st.button("Archivar oferta", key=f"arch_{_job_key}", use_container_width=True):
                     db.update_job_archived(link, True, reason=config.ArchiveReason.MANUAL)
                     _invalidate_cache()
-                    st.session_state["archived_msg"] = f"Oferta archivada: {title} @ {company}"
+                    st.session_state["archived_msg"] = f"✅ Oferta archivada: {title} @ {company}"
                     st.rerun()
 
                 if techs:
                     st.markdown(f"**Stack:** {', '.join(techs)}")
 
                 if link:
-                    st.link_button("Ver oferta original", link)
+                    st.link_button("🔗 Ver oferta original", link)
 
-                    st.markdown("**Crear evento entrevista:**")
+                    st.markdown("**📅 Crear evento entrevista:**")
                     _ic1, _ic2 = st.columns([1, 1])
                     with _ic1:
                         interview_date = st.date_input(
@@ -464,20 +463,20 @@ with tab_mis_ofertas:
                     st.link_button("Abrir en Google Calendar", gcal_url, use_container_width=True)
 
                 if advice:
-                    with st.expander("Consejos personalizados"):
+                    with st.expander("💡 Consejos personalizados"):
                         st.write(advice)
 
                 if cover_letter:
                     st.divider()
-                    st.subheader("Carta de Presentacion")
+                    st.subheader("📝 Carta de Presentacion")
                     st.markdown(cover_letter)
                     if cl_pdf_url:
-                        st.link_button("Descargar Carta en PDF", cl_pdf_url)
+                        st.link_button("📥 Descargar Carta en PDF", cl_pdf_url)
 
                 interview_prep = j.get("interview_prep")
                 if interview_prep:
                     st.divider()
-                    with st.expander("Preparacion para Entrevista", expanded=False):
+                    with st.expander("🎯 Preparacion para Entrevista", expanded=False):
                         tech_qs = interview_prep.get("technical_questions", [])
                         beh_qs = interview_prep.get("behavioral_questions", [])
                         key_topics = interview_prep.get("key_topics", [])
@@ -520,7 +519,7 @@ with tab_mis_ofertas:
                 company_profile = j.get("company_profile")
                 if company_profile:
                     st.divider()
-                    with st.expander(f"Perfil de {company_profile.get('name', company)}", expanded=False):
+                    with st.expander(f"🏢 Perfil de {company_profile.get('name', company)}", expanded=False):
                         cp = company_profile
                         c1, c2 = st.columns(2)
                         with c1:
@@ -528,7 +527,7 @@ with tab_mis_ofertas:
                             st.markdown(f"**Tamano:** {cp.get('size', 'N/A')}")
                             st.markdown(f"**Salario:** {cp.get('salary_range', 'N/A')}")
                         with c2:
-                            remote = "Si" if cp.get('remote_friendly') else "No"
+                            remote = "✅ Si" if cp.get('remote_friendly') else "❌ No"
                             st.markdown(f"**Remoto:** {remote}")
                             techs_cp = ", ".join((cp.get("tech_stack") or [])[:8])
                             st.markdown(f"**Tech stack:** {techs_cp}")
@@ -536,41 +535,41 @@ with tab_mis_ofertas:
                             st.markdown(f"**Cultura:** {cp['culture']}")
                         pros = cp.get("pros", [])
                         if pros:
-                            st.markdown("**Pros:**")
+                            st.markdown("**✅ Pros:**")
                             for p in pros:
                                 st.markdown(f"  * {p}")
                         cons = cp.get("cons", [])
                         if cons:
-                            st.markdown("**A tener en cuenta:**")
+                            st.markdown("**⚠️ A tener en cuenta:**")
                             for c in cons:
                                 st.markdown(f"  * {c}")
                         rec = cp.get("recommendation", "")
                         if rec:
-                            st.info(rec)
+                            st.info(f"💡 {rec}")
 
                 project_match = j.get("project_match")
                 if project_match:
                     st.divider()
-                    with st.expander("Match de Proyectos Personales", expanded=False):
+                    with st.expander("📁 Match de Proyectos Personales", expanded=False):
                         pm = project_match
                         st.metric("Relevancia de proyectos", f"{pm.get('project_relevance', 0)}%")
                         matching = pm.get("matching_projects", [])
                         if matching:
                             st.markdown("**Proyectos relevantes:**")
                             for mp in matching:
-                                st.markdown(f"  {mp}")
+                                st.markdown(f"  ✅ {mp}")
                         missing = pm.get("missing_project_types", [])
                         if missing:
                             st.markdown("**Tipos de proyecto que te faltan:**")
                             for m in missing:
-                                st.markdown(f"  {m}")
+                                st.markdown(f"  📌 {m}")
                         advice_pm = pm.get("project_advice", "")
                         if advice_pm:
-                            st.info(advice_pm)
+                            st.info(f"💡 {advice_pm}")
 
                 if cv_url:
                     st.divider()
-                    st.subheader("CV Personalizado")
+                    st.subheader("📄 CV Personalizado")
                     if cv_html_file:
                         cv_html_path = os.path.join(RESULTS_DIR, "cvs", cv_html_file)
                         if os.path.exists(cv_html_path):
@@ -581,11 +580,11 @@ with tab_mis_ofertas:
                             st.info("Preview HTML no disponible")
                     c_dl, c_fb = st.columns([1, 1])
                     with c_dl:
-                        st.link_button("Descargar CV en PDF", cv_url)
+                        st.link_button("📥 Descargar CV en PDF", cv_url)
                     with c_fb:
                         has_pending = feedback_mgr.has_pending(title, company)
                         if has_pending:
-                            st.warning("Feedback pendiente de procesar")
+                            st.warning("⏳ Feedback pendiente de procesar")
                     link_slug = hashlib.md5((j.get("link") or title).encode()).hexdigest()[:8]
                     with st.form(key=f"fb_{link_slug}", clear_on_submit=True):
                         st.markdown("**Quieres modificar algo del CV?**")
@@ -603,7 +602,7 @@ with tab_mis_ofertas:
                             st.warning("Escribe algo antes de enviar.")
 
         if filtered:
-            if st.button("Exportar CSV"):
+            if st.button("📥 Exportar CSV"):
                 csv_data = pd.DataFrame(filtered)
                 display_cols = ["title", "company", "source", "match_score", "salary",
                                 "work_mode", "required_experience", "status", "link"]
@@ -620,17 +619,17 @@ with tab_sin_analizar:
         if res["analyzed"] > 0 or res["errors"] > 0:
             st.subheader("Resultado del ultimo reanalisis")
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Analizadas", res["analyzed"])
-            c2.metric("Errores", res["errors"])
-            c3.metric("Archivadas", res.get("archived", 0))
-            c4.metric("Mis ofertas", res.get("mis_ofertas", 0))
+            c1.metric("✅ Analizadas", res["analyzed"])
+            c2.metric("❌ Errores", res["errors"])
+            c3.metric("📦 Archivadas", res.get("archived", 0))
+            c4.metric("📋 Mis ofertas", res.get("mis_ofertas", 0))
             if res["key_info"]:
-                st.caption("" + " -> ".join(res["key_info"]))
+                st.caption("🔑 " + " -> ".join(res["key_info"]))
             if res["log_lines"]:
                 with st.expander("Ver detalle de resultados", expanded=True):
                     for line in res["log_lines"]:
                         st.markdown(line)
-            if st.button("Limpiar resultados", key="clear_reanalyze"):
+            if st.button("✖ Limpiar resultados", key="clear_reanalyze"):
                 del st.session_state["reanalyze_result"]
                 st.rerun()
             st.divider()
@@ -640,7 +639,7 @@ with tab_sin_analizar:
     if not unanalyzed_jobs:
         st.info("No hay ofertas sin analizar.")
     else:
-        st.subheader(f"{len(unanalyzed_jobs)} ofertas sin analizar")
+        st.subheader(f"📋 {len(unanalyzed_jobs)} ofertas sin analizar")
         st.caption("Estas ofertas no han sido clasificadas por Gemini.")
 
         has_gemini = bool(config.GEMINI_API_KEYS)
@@ -654,9 +653,9 @@ with tab_sin_analizar:
             num_keys = len(config.GEMINI_API_KEYS)
             first_key = config.GEMINI_API_KEYS[0]
             masked_first = f"{first_key[:6]}...{first_key[-4:]}" if len(first_key) > 8 else "****"
-            st.caption(f"{num_keys} API key(s) configurada(s) - activa: {masked_first}")
+            st.caption(f"🔑 {num_keys} API key(s) configurada(s) - activa: {masked_first}")
 
-            if st.button("Reanalizar todas las ofertas", type="primary", use_container_width=True):
+            if st.button("🔍 Reanalizar todas las ofertas", type="primary", use_container_width=True):
                 try:
                     result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
                     if result["analyzed"] > 0:
@@ -668,9 +667,9 @@ with tab_sin_analizar:
 
         st.divider()
 
-        with st.expander("Buscar y filtrar", expanded=False):
+        with st.expander("🔍 Buscar y filtrar", expanded=False):
             search_unanalyzed = st.text_input(
-                "Buscar por titulo, empresa o ubicacion",
+                "🔎 Buscar por titulo, empresa o ubicacion",
                 placeholder="Ej: Python, Sevilla...",
                 key="search_unanalyzed",
             )
@@ -690,7 +689,7 @@ with tab_sin_analizar:
             link = j.get("link", "")
 
             header_parts = [f"**{title}** @ {company}"]
-            header_parts.append(f"{source}")
+            header_parts.append(f"🏢 {source}")
 
             with st.expander(" | ".join(header_parts)):
                 if j.get("location"):
@@ -699,7 +698,7 @@ with tab_sin_analizar:
                     with st.expander("Ver descripcion", expanded=False):
                         st.text(j["description"][:2000])
                 if link:
-                    st.link_button("Ver oferta original", link)
+                    st.link_button("🔗 Ver oferta original", link)
 
 
 with tab_archivadas:
@@ -711,11 +710,11 @@ with tab_archivadas:
     if not archived_jobs:
         st.info("No hay ofertas archivadas.")
     else:
-        st.subheader(f"{len(archived_jobs)} ofertas archivadas")
+        st.subheader(f"📦 {len(archived_jobs)} ofertas archivadas")
 
-        with st.expander("Buscar y filtrar", expanded=False):
+        with st.expander("🔍 Buscar y filtrar", expanded=False):
             search_archived = st.text_input(
-                "Buscar por titulo, empresa o ubicacion",
+                "🔎 Buscar por titulo, empresa o ubicacion",
                 placeholder="Ej: Python, Sevilla...",
                 key="search_archived",
             )
@@ -762,14 +761,14 @@ with tab_archivadas:
             cl_pdf_url = j.get("cover_letter_pdf_url", "")
 
             header_parts = [f"**{title}** @ {company}"]
-            header_parts.append(f"{match}%")
+            header_parts.append(f"🎯 {match}%")
             if salary:
-                sal_label = f"{salary}E"
+                sal_label = f"💰 {salary}E"
                 if salary_is_est:
                     sal_label += " ~"
                 header_parts.append(f"{sal_label}")
-            header_parts.append(f"{mode}")
-            header_parts.append(f"{source}")
+            header_parts.append(f"📍 {mode}")
+            header_parts.append(f"🏢 {source}")
             header_parts.append(f"[{status}]")
 
             with st.expander(" | ".join(header_parts)):
@@ -782,7 +781,7 @@ with tab_archivadas:
                     if salary_is_est:
                         st.caption("~ Salario estimado por IA")
                     else:
-                        st.caption("Salario de la oferta")
+                        st.caption("✅ Salario de la oferta")
                 else:
                     m2.metric("Salario", "No especificado")
                 m3.metric("Modalidad", mode)
@@ -800,30 +799,30 @@ with tab_archivadas:
                 if st.button("Desarchivar oferta", key=f"unarch_{_job_key_arch}", use_container_width=True):
                     db.update_job_archived(link, False)
                     _invalidate_cache()
-                    st.session_state["unarchived_msg"] = f"Oferta desarchivada: {title} @ {company}"
+                    st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
                     st.rerun()
 
                 if techs:
                     st.markdown(f"**Stack:** {', '.join(techs)}")
 
                 if link:
-                    st.link_button("Ver oferta original", link)
+                    st.link_button("🔗 Ver oferta original", link)
 
                 if advice:
-                    with st.expander("Consejos personalizados"):
+                    with st.expander("💡 Consejos personalizados"):
                         st.write(advice)
 
                 if cover_letter:
                     st.divider()
-                    st.subheader("Carta de Presentacion")
+                    st.subheader("📝 Carta de Presentacion")
                     st.markdown(cover_letter)
                     if cl_pdf_url:
-                        st.link_button("Descargar Carta en PDF", cl_pdf_url)
+                        st.link_button("📥 Descargar Carta en PDF", cl_pdf_url)
 
                 interview_prep = j.get("interview_prep")
                 if interview_prep:
                     st.divider()
-                    with st.expander("Preparacion para Entrevista", expanded=False):
+                    with st.expander("🎯 Preparacion para Entrevista", expanded=False):
                         tech_qs = interview_prep.get("technical_questions", [])
                         beh_qs = interview_prep.get("behavioral_questions", [])
                         key_topics = interview_prep.get("key_topics", [])
@@ -925,7 +924,7 @@ with tab_archivadas:
 
 
 with tab_pipeline:
-    st.subheader("Pipeline de Aplicaciones")
+    st.subheader("🔄 Pipeline de Aplicaciones")
 
     status_counts = {}
     for status in config.APPLICATION_STATUSES:
@@ -961,8 +960,8 @@ with tab_pipeline:
                 pass
 
     if follow_up_needed:
-        st.warning(f"{len(follow_up_needed)} ofertas aplicadas hace {config.FOLLOWUP_REMINDER_DAYS}+ dias sin respuesta")
-        with st.expander(f"Recordatorios pendientes ({len(follow_up_needed)})", expanded=False):
+        st.warning(f"⏰ {len(follow_up_needed)} ofertas aplicadas hace {config.FOLLOWUP_REMINDER_DAYS}+ dias sin respuesta")
+        with st.expander(f"🔔 Recordatorios pendientes ({len(follow_up_needed)})", expanded=False):
             for j in follow_up_needed:
                 title_fu = j.get('title', '')
                 company_fu = j.get('company', '')
@@ -970,11 +969,11 @@ with tab_pipeline:
                 fc1, fc2 = st.columns([1, 1])
                 _fu_key = hashlib.md5(f"{title_fu}{company_fu}".encode()).hexdigest()[:10]
                 with fc1:
-                    st.link_button("Ver oferta", j.get("link", ""), key=f"fu_{_fu_key}")
+                    st.link_button("🔗 Ver oferta", j.get("link", ""), key=f"fu_{_fu_key}")
                 with fc2:
                     ics_data_fu, ics_name_fu = ics_followup_content(title_fu, company_fu, j.get("link", ""), j["_days_applied"])
                     st.download_button(
-                        "Recordatorio",
+                        "📅 Recordatorio",
                         ics_data_fu,
                         file_name=ics_name_fu,
                         mime="text/calendar",
@@ -992,12 +991,12 @@ with tab_pipeline:
 
 
 with tab_stats:
-    st.subheader("Estadisticas del mercado laboral")
+    st.subheader("📊 Estadisticas del mercado laboral")
 
     if not all_jobs:
         st.info("No hay datos suficientes.")
     else:
-        st.markdown("### Inteligencia Salarial")
+        st.markdown("### 💰 Inteligencia Salarial")
         all_sal_data = []
         mode_salaries = defaultdict(list)
         source_salaries = defaultdict(list)
@@ -1056,7 +1055,7 @@ with tab_stats:
         else:
             st.info("No hay datos de salario disponibles")
 
-        st.markdown("### Skills Gap")
+        st.markdown("### 🎯 Skills Gap")
         all_techs_stats = defaultdict(int)
         remote_count = 0
         mode_counts = defaultdict(int)
@@ -1085,9 +1084,9 @@ with tab_stats:
                 for tech, count in demanded:
                     pct = round(count / len(all_jobs) * 100, 1)
                     if tech.lower().strip() in cv_skills_lower:
-                        have.append({"Skill": tech, "Ofertas": count, "% mercado": f"{pct}%", "Estado": ""})
+                        have.append({"Skill": tech, "Ofertas": count, "% mercado": f"{pct}%", "Estado": "✅"})
                     else:
-                        gap.append({"Skill": tech, "Ofertas": count, "% mercado": f"{pct}%", "Estado": ""})
+                        gap.append({"Skill": tech, "Ofertas": count, "% mercado": f"{pct}%", "Estado": "❌"})
                 if gap:
                     st.subheader("Skills que te faltan")
                     st.dataframe(pd.DataFrame(gap), use_container_width=True, hide_index=True)
@@ -1100,7 +1099,7 @@ with tab_stats:
                 st.dataframe(pd.DataFrame(tech_data), use_container_width=True, hide_index=True)
                 st.bar_chart(pd.DataFrame(tech_data).set_index("Skill")["Ofertas"])
 
-        st.markdown("### Resumen del mercado")
+        st.markdown("### 📈 Resumen del mercado")
         mc1, mc2, mc3, mc4 = st.columns(4)
         mc1.metric("Total ofertas", len(all_jobs))
         mc2.metric("% Remoto", f"{remote_count/len(all_jobs)*100:.0f}%")
@@ -1116,7 +1115,7 @@ with tab_stats:
             st.bar_chart(pd.DataFrame(list(source_counts.items()), columns=["Plataforma", "Ofertas"]).set_index("Plataforma"))
 
         if len(runs) > 1:
-            st.markdown("### Tendencias Temporales")
+            st.markdown("### 📈 Tendencias Temporales")
             trend_data = []
             for run in reversed(runs):
                 run_ts = run.get("timestamp", "")[:10]
@@ -1167,7 +1166,7 @@ with tab_stats:
 
 
 with tab_ejecuciones:
-    st.subheader("Ejecuciones")
+    st.subheader("📈 Ejecuciones")
 
     latest = runs[0] if runs else {}
     stats = latest.get("scraper_stats", {})
@@ -1201,11 +1200,11 @@ with tab_ejecuciones:
         failed = s.get("failed", False)
         error = s.get("error", "")
         if failed and error:
-            estado = "Fallido"
+            estado = "❌ Fallido"
         elif failed:
-            estado = "Sin ofertas"
+            estado = "⚠️ Sin ofertas"
         else:
-            estado = "OK"
+            estado = "✅ OK"
         scraper_data.append({
             "Plataforma": name,
             "Ofertas": found,
@@ -1306,7 +1305,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                 salary = details.estimated_salary
                 exp = details.required_experience
 
-                log_lines.append(f"{title} @ {company} - {match_pct}% | {wm} | {salary}E | {exp} anios")
+                log_lines.append(f"✅ {title} @ {company} - 🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} anios")
 
                 db.update_job_analysis(job["link"], {
                     "match_score": match_result.match_score,
@@ -1331,7 +1330,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                 analyzed += 1
             except Exception as e:
                 errors += 1
-                log_lines.append(f"{title} @ {company} - Error: {e}")
+                log_lines.append(f"❌ {title} @ {company} - Error: {e}")
 
             new_idx = gemini.key_pool.active_index
             new_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
@@ -1348,8 +1347,8 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
             st.markdown(line)
 
     if analyzed > 0:
-        st.success(f"{analyzed} ofertas analizadas y guardadas correctamente.")
+        st.success(f"✅ {analyzed} ofertas analizadas y guardadas correctamente.")
     if errors > 0:
-        st.warning(f"{errors} ofertas tuvieron errores.")
+        st.warning(f"⚠ {errors} ofertas tuvieron errores.")
 
     return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
