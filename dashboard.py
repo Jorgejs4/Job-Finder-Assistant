@@ -190,7 +190,8 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     language=language,
                 )
 
-                wm = config.normalize_work_mode(match_result.work_mode)
+                job["work_mode"] = match_result.work_mode
+                wm = config.reclassify_work_mode(job)
                 match_pct = match_result.match_score
                 salary = details.estimated_salary
                 exp = details.required_experience

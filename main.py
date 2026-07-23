@@ -500,6 +500,8 @@ def main():
             if work_mode != "Remoto" and config.USER_CITY:
                 job_loc = job.get("location", "").lower()
                 if config.USER_CITY not in job_loc:
+                    job["archived"] = True
+                    job["archive_reason"] = config.ArchiveReason.location_mismatch(work_mode, job.get("location", "?"))
                     skipped["ubicacion"] += 1
                     continue
 
