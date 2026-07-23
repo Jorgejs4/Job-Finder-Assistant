@@ -162,8 +162,8 @@ def apply_archive_rules_to_all() -> dict:
 
 
 def _sync_to_github():
+    json_path = os.path.join(RESULTS_DIR, "data.json")
     def _bg():
-        json_path = os.path.join(RESULTS_DIR, "data.json")
         ok = github_sync.commit_data_json(json_path)
         if ok:
             st.session_state.pending_changes = 0

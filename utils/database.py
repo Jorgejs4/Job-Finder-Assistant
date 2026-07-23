@@ -4,6 +4,7 @@ import os
 import hashlib
 import unicodedata
 import re
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -76,6 +77,7 @@ class Database:
         path = db_path or DB_PATH
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self.db_path = path
+        self._lock = threading.RLock()
         self._connection = sqlite3.connect(str(path), check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
         self._connection.execute("PRAGMA journal_mode=WAL")
@@ -411,73 +413,80 @@ class Database:
         self._connection.commit()
 
     def get_job_by_id(self, jid: str) -> Optional[dict]:
-        row = self._connection.execute(
-            "SELECT * FROM jobs WHERE id = ?", (jid,)
-        ).fetchone()
-        if row is None:
-            return None
-        return _row_to_dict(row, row.keys())
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM jobs WHERE id = ?", (jid,)
+            ).fetchone()
+            if row is None:
+                return None
+            return _row_to_dict(row, row.keys())
 
     def get_all_jobs(self) -> list:
-        rows = self._connection.execute(
-            "SELECT * FROM jobs ORDER BY _last_seen DESC"
-        ).fetchall()
-        return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM jobs ORDER BY _last_seen DESC"
+            ).fetchall()
+            return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
 
     def get_jobs_needing_analysis(self) -> list:
-        rows = self._connection.execute(
-            "SELECT * FROM jobs WHERE needs_analysis = 1 ORDER BY _last_seen DESC"
-        ).fetchall()
-        return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM jobs WHERE needs_analysis = 1 ORDER BY _last_seen DESC"
+            ).fetchall()
+            return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
 
     def get_archived_jobs(self) -> list:
-        rows = self._connection.execute(
-            "SELECT * FROM jobs WHERE archived = 1 ORDER BY _last_seen DESC"
-        ).fetchall()
-        return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM jobs WHERE archived = 1 ORDER BY _last_seen DESC"
+            ).fetchall()
+            return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
 
     def update_job(self, jid: str, updates: dict):
         if not updates:
             return
-        sets = []
-        vals = []
-        for key, val in updates.items():
-            if key in ("id", "link", "all_links"):
-                continue
-            if key in JSON_FIELDS:
-                sets.append(f"{key} = ?")
-                vals.append(_serialize(val))
-            elif key in ("salary_is_estimate", "archived", "needs_analysis"):
-                sets.append(f"{key} = ?")
-                vals.append(1 if val else 0)
-            elif key == "match_score":
-                sets.append(f"{key} = ?")
-                vals.append(int(val) if val is not None else None)
-            else:
-                sets.append(f"{key} = ?")
-                vals.append(val)
-        sets.append("_last_seen = ?")
-        vals.append(datetime.now().isoformat())
-        vals.append(jid)
-        sql = f"UPDATE jobs SET {', '.join(sets)} WHERE id = ?"
-        self._connection.execute(sql, vals)
-        self._connection.commit()
+        with self._lock:
+            sets = []
+            vals = []
+            for key, val in updates.items():
+                if key in ("id", "link", "all_links"):
+                    continue
+                if key in JSON_FIELDS:
+                    sets.append(f"{key} = ?")
+                    vals.append(_serialize(val))
+                elif key in ("salary_is_estimate", "archived", "needs_analysis"):
+                    sets.append(f"{key} = ?")
+                    vals.append(1 if val else 0)
+                elif key == "match_score":
+                    sets.append(f"{key} = ?")
+                    vals.append(int(val) if val is not None else None)
+                else:
+                    sets.append(f"{key} = ?")
+                    vals.append(val)
+            sets.append("_last_seen = ?")
+            vals.append(datetime.now().isoformat())
+            vals.append(jid)
+            sql = f"UPDATE jobs SET {', '.join(sets)} WHERE id = ?"
+            self._connection.execute(sql, vals)
+            self._connection.commit()
 
     def update_job_status(self, jid: str, status: str) -> bool:
-        self._connection.execute(
-            "UPDATE jobs SET status = ?, _last_seen = ? WHERE id = ?",
-            (status, datetime.now().isoformat(), jid),
-        )
-        self._connection.commit()
-        return self._connection.total_changes > 0
+        with self._lock:
+            self._connection.execute(
+                "UPDATE jobs SET status = ?, _last_seen = ? WHERE id = ?",
+                (status, datetime.now().isoformat(), jid),
+            )
+            self._connection.commit()
+            return self._connection.total_changes > 0
 
     def update_job_archived(self, jid: str, archived: bool, reason: str = None) -> bool:
-        self._connection.execute(
-            "UPDATE jobs SET archived = ?, archive_reason = ?, _last_seen = ? WHERE id = ?",
-            (1 if archived else 0, reason, datetime.now().isoformat(), jid),
-        )
-        self._connection.commit()
-        return self._connection.total_changes > 0
+        with self._lock:
+            self._connection.execute(
+                "UPDATE jobs SET archived = ?, archive_reason = ?, _last_seen = ? WHERE id = ?",
+                (1 if archived else 0, reason, datetime.now().isoformat(), jid),
+            )
+            self._connection.commit()
+            return self._connection.total_changes > 0
 
     def update_job_analysis(self, jid: str, updates: dict) -> bool:
         updates["needs_analysis"] = False
@@ -509,116 +518,127 @@ class Database:
         return run_id
 
     def get_all_runs(self) -> list:
-        rows = self._connection.execute(
-            "SELECT * FROM runs ORDER BY timestamp DESC"
-        ).fetchall()
-        result = []
-        for r in rows:
-            d = dict(r)
-            for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
-                d[field] = _deserialize(d[field], field)
-            result.append(d)
-        return result
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM runs ORDER BY timestamp DESC"
+            ).fetchall()
+            result = []
+            for r in rows:
+                d = dict(r)
+                for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
+                    d[field] = _deserialize(d[field], field)
+                result.append(d)
+            return result
 
     def get_run(self, run_id: str) -> Optional[dict]:
-        row = self._connection.execute(
-            "SELECT * FROM runs WHERE run_id = ?", (run_id,)
-        ).fetchone()
-        if row is None:
-            return None
-        d = dict(row)
-        for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
-            d[field] = _deserialize(d[field], field)
-        return d
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            if row is None:
+                return None
+            d = dict(row)
+            for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
+                d[field] = _deserialize(d[field], field)
+            return d
 
     def get_latest_run(self) -> Optional[dict]:
-        row = self._connection.execute(
-            "SELECT * FROM runs ORDER BY timestamp DESC LIMIT 1"
-        ).fetchone()
-        if row is None:
-            return None
-        d = dict(row)
-        for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
-            d[field] = _deserialize(d[field], field)
-        return d
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM runs ORDER BY timestamp DESC LIMIT 1"
+            ).fetchone()
+            if row is None:
+                return None
+            d = dict(row)
+            for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
+                d[field] = _deserialize(d[field], field)
+            return d
 
     def add_run_jobs(self, run_id: str, job_ids: list):
-        for jid in job_ids:
-            self._connection.execute(
-                "INSERT OR IGNORE INTO run_jobs (run_id, job_id) VALUES (?, ?)",
-                (run_id, jid),
-            )
-        self._connection.commit()
+        with self._lock:
+            for jid in job_ids:
+                self._connection.execute(
+                    "INSERT OR IGNORE INTO run_jobs (run_id, job_id) VALUES (?, ?)",
+                    (run_id, jid),
+                )
+            self._connection.commit()
 
     def get_run_job_ids(self, run_id: str) -> list:
-        rows = self._connection.execute(
-            "SELECT job_id FROM run_jobs WHERE run_id = ?", (run_id,)
-        ).fetchall()
-        return [r["job_id"] for r in rows] if rows else []
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT job_id FROM run_jobs WHERE run_id = ?", (run_id,)
+            ).fetchall()
+            return [r["job_id"] for r in rows] if rows else []
 
     # ── Stats helpers ──
 
     def get_job_count(self) -> int:
-        row = self._connection.execute("SELECT COUNT(*) as c FROM jobs").fetchone()
-        return row["c"] if row else 0
+        with self._lock:
+            row = self._connection.execute("SELECT COUNT(*) as c FROM jobs").fetchone()
+            return row["c"] if row else 0
 
     def get_analyzed_count(self) -> int:
-        row = self._connection.execute(
-            "SELECT COUNT(*) as c FROM jobs WHERE needs_analysis = 0"
-        ).fetchone()
-        return row["c"] if row else 0
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT COUNT(*) as c FROM jobs WHERE needs_analysis = 0"
+            ).fetchone()
+            return row["c"] if row else 0
 
     def get_unanalyzed_count(self) -> int:
-        row = self._connection.execute(
-            "SELECT COUNT(*) as c FROM jobs WHERE needs_analysis = 1"
-        ).fetchone()
-        return row["c"] if row else 0
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT COUNT(*) as c FROM jobs WHERE needs_analysis = 1"
+            ).fetchone()
+            return row["c"] if row else 0
 
     def get_archived_count(self) -> int:
-        row = self._connection.execute(
-            "SELECT COUNT(*) as c FROM jobs WHERE archived = 1"
-        ).fetchone()
-        return row["c"] if row else 0
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT COUNT(*) as c FROM jobs WHERE archived = 1"
+            ).fetchone()
+            return row["c"] if row else 0
 
     def get_history(self) -> list:
-        rows = self._connection.execute(
-            "SELECT * FROM runs ORDER BY timestamp ASC"
-        ).fetchall()
-        result = []
-        for r in rows:
-            d = dict(r)
-            for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
-                d[field] = _deserialize(d[field], field)
-            stats = d.get("scraper_stats", {}) or {}
-            scrapers_ok = sum(1 for s in stats.values() if not s.get("failed") and s.get("found", 0) > 0)
-            scrapers_fail = sum(1 for s in stats.values() if s.get("failed") or s.get("error"))
-            result.append({
-                "Fecha": d.get("timestamp", "")[:10],
-                "Encontradas": sum(s.get("found", 0) for s in stats.values()),
-                "Anadidas": d.get("_total_added", 0),
-                "Analizadas": d.get("_analyzed_by_gemini", 0),
-                "Scrapers OK": scrapers_ok,
-                "Scrapers FAIL": scrapers_fail,
-            })
-        return result
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM runs ORDER BY timestamp ASC"
+            ).fetchall()
+            result = []
+            for r in rows:
+                d = dict(r)
+                for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
+                    d[field] = _deserialize(d[field], field)
+                stats = d.get("scraper_stats", {}) or {}
+                scrapers_ok = sum(1 for s in stats.values() if not s.get("failed") and s.get("found", 0) > 0)
+                scrapers_fail = sum(1 for s in stats.values() if s.get("failed") or s.get("error"))
+                result.append({
+                    "Fecha": d.get("timestamp", "")[:10],
+                    "Encontradas": sum(s.get("found", 0) for s in stats.values()),
+                    "Anadidas": d.get("_total_added", 0),
+                    "Analizadas": d.get("_analyzed_by_gemini", 0),
+                    "Scrapers OK": scrapers_ok,
+                    "Scrapers FAIL": scrapers_fail,
+                })
+            return result
 
     # ── Export ──
 
     def export_data_json(self, output_path: str = None):
-        runs = self.get_all_runs()
-        output = {"runs": []}
-        for run in runs:
-            run_id = run["run_id"]
-            job_ids = self.get_run_job_ids(run_id)
-            jobs = []
-            for jid in job_ids:
-                job = self.get_job_by_id(jid)
-                if job:
-                    jobs.append(job)
-            run["jobs"] = jobs
-            output["runs"].append(run)
-        if output_path is None:
-            output_path = os.path.join(os.path.dirname(self.db_path), "data.json")
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(output, f, ensure_ascii=False, indent=2)
-        print(f"[DB] Exportado data.json ({sum(len(r.get('jobs', [])) for r in output['runs'])} jobs en {len(output['runs'])} runs)")
+        with self._lock:
+            runs = self.get_all_runs()
+            output = {"runs": []}
+            for run in runs:
+                run_id = run["run_id"]
+                job_ids = self.get_run_job_ids(run_id)
+                jobs = []
+                for jid in job_ids:
+                    job = self.get_job_by_id(jid)
+                    if job:
+                        jobs.append(job)
+                run["jobs"] = jobs
+                output["runs"].append(run)
+            if output_path is None:
+                output_path = os.path.join(os.path.dirname(self.db_path), "data.json")
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(output, f, ensure_ascii=False, indent=2)
+            print(f"[DB] Exportado data.json ({sum(len(r.get('jobs', [])) for r in output['runs'])} jobs en {len(output['runs'])} runs)")
