@@ -626,6 +626,7 @@ class Database:
     def export_data_json(self, output_path: str = None):
         with self._lock:
             runs = self.get_all_runs()
+            exported_job_ids = set()
             output = {"runs": []}
             for run in runs:
                 run_id = run["run_id"]
@@ -635,10 +636,32 @@ class Database:
                     job = self.get_job_by_id(jid)
                     if job:
                         jobs.append(job)
+                        exported_job_ids.add(jid)
                 run["jobs"] = jobs
                 output["runs"].append(run)
+
+            orphans = self._connection.execute(
+                "SELECT id FROM jobs WHERE id NOT IN ({})".format(
+                    ",".join("?" for _ in exported_job_ids) if exported_job_ids else "''"
+                ),
+                list(exported_job_ids) if exported_job_ids else ()
+            ).fetchall()
+            if orphans:
+                orphan_run = {
+                    "run_id": "_orphan",
+                    "timestamp": "",
+                    "jobs": []
+                }
+                for row in orphans:
+                    job = self.get_job_by_id(row[0])
+                    if job:
+                        orphan_run["jobs"].append(job)
+                if orphan_run["jobs"]:
+                    output["runs"].append(orphan_run)
+
             if output_path is None:
                 output_path = os.path.join(os.path.dirname(self.db_path), "data.json")
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(output, f, ensure_ascii=False, indent=2)
-            print(f"[DB] Exportado data.json ({sum(len(r.get('jobs', [])) for r in output['runs'])} jobs en {len(output['runs'])} runs)")
+            total = sum(len(r.get('jobs', [])) for r in output['runs'])
+            print(f"[DB] Exportado data.json ({total} jobs en {len(output['runs'])} runs)")
