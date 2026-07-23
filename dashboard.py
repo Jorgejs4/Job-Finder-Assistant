@@ -247,6 +247,10 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
             except Exception as e:
                 errors += 1
                 log_lines.append(f"❌ {title} @ {company} - Error: {e}")
+                if gemini.key_pool.exhausted:
+                    remaining = total - (i + 1)
+                    log_lines.append(f"⛔ API keys agotadas. Quedan {remaining} ofertas sin procesar.")
+                    break
 
             new_idx = gemini.key_pool.active_index
             new_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
@@ -833,14 +837,20 @@ with tab_sin_analizar:
                 st.info("No hay ofertas sin analizar.")
 
         with c_force:
+            jobs_needing_reanalysis = [
+                j for j in all_jobs
+                if j.get("needs_analysis") or j.get("archive_reason")
+            ]
             st.warning(
-                f"⚠ Re-analiza TODAS las {len(all_jobs)} ofertas "
-                f"(~{len(all_jobs) * 2} llamadas API, ~{len(all_jobs) * 6 // 60} min). "
+                f"⚠ Re-analiza {len(jobs_needing_reanalysis)} ofertas "
+                f"(sin analizar + archivadas con razon) "
+                f"(~{len(jobs_needing_reanalysis) * 2} llamadas API, "
+                f"~{len(jobs_needing_reanalysis) * 6 // 60} min). "
                 "Recalcula match, salario, modalidad y re-aplica filtros."
             )
-            if st.button("🔄 Forzar reanalisis de TODAS las ofertas", type="secondary", use_container_width=True):
+            if st.button("🔄 Forzar reanalisis", type="secondary", use_container_width=True):
                 try:
-                    result = reanalyze_jobs_with_gemini(all_jobs)
+                    result = reanalyze_jobs_with_gemini(jobs_needing_reanalysis)
                     if result["analyzed"] > 0:
                         st.session_state["reanalyze_result"] = result
                         _invalidate_cache(sync=True)
