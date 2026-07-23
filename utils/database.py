@@ -343,7 +343,7 @@ class Database:
                 ?, ?, ?,
                 ?, ?, ?,
                 ?, ?, ?, ?,
-                ?, ?, ?, ?, ?
+                ?, ?, ?, ?
             ) ON CONFLICT(id) DO UPDATE SET
                 title = COALESCE(EXCLUDED.title, jobs.title),
                 company = COALESCE(EXCLUDED.company, jobs.company),
