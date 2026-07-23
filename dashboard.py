@@ -238,6 +238,9 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     archive_reasons.append(reason)
                     log_lines.append(f"  📦 Archivada: {reason}")
                 else:
+                    if job.get("archived"):
+                        db.update_job_archived(job_id, False)
+                        log_lines.append(f"  📋 Desarchivada (ya no cumple criterios)")
                     kept += 1
 
                 analyzed += 1

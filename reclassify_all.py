@@ -124,6 +124,8 @@ def main():
             if len(archive_examples) < 15:
                 archive_examples.append(job)
         else:
+            job["archived"] = False
+            job["archive_reason"] = None
             kept += 1
 
     print(f"\n[Filtro] {kept} ofertas se quedan, {archived_count} se archivan")
