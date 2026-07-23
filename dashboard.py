@@ -148,6 +148,9 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
     total = len(jobs_list)
     analyzed = 0
     errors = 0
+    archived = 0
+    kept = 0
+    archive_reasons = []
     key_info = []
 
     num_keys = gemini.key_pool.total_keys
@@ -215,6 +218,28 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     "required_experience": details.required_experience,
                     "tailored_advice": details.tailored_advice,
                 })
+
+                reason = None
+                for kw in config.GEO_RESTRICT_KEYWORDS:
+                    loc_title_desc = f"{(job.get('location','') or '')} {(job.get('title','') or '')} {(job.get('description','') or '')}".lower()
+                    if kw in loc_title_desc:
+                        reason = config.ArchiveReason.geo_restriction(kw)
+                        break
+                if not reason and match_pct < config.MIN_MATCH_TO_ARCHIVE:
+                    reason = config.ArchiveReason.low_match(match_pct)
+                if not reason and wm != "Remoto":
+                    loc = (job.get("location", "") or "").lower()
+                    if config.USER_CITY not in loc:
+                        reason = config.ArchiveReason.location_mismatch(wm, job.get("location", "?"))
+
+                if reason:
+                    db.update_job_archived(job_id, True, reason=reason)
+                    archived += 1
+                    archive_reasons.append(reason)
+                    log_lines.append(f"  📦 Archivada: {reason}")
+                else:
+                    kept += 1
+
                 analyzed += 1
             except Exception as e:
                 errors += 1
@@ -227,7 +252,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
 
             progress_bar.progress((i + 1) / total)
 
-        status.update(label=f"Completado: {analyzed} analizadas, {errors} errores", state="complete")
+        status.update(label=f"Completado: {analyzed} analizadas, {archived} archivadas, {kept} en mis ofertas, {errors} errores", state="complete")
 
     if log_lines:
         st.subheader("Resultados del analisis")
@@ -235,11 +260,21 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
             st.markdown(line)
 
     if analyzed > 0:
-        st.success(f"✅ {analyzed} ofertas analizadas y guardadas correctamente.")
+        st.success(f"✅ {analyzed} ofertas analizadas: {kept} en mis ofertas, {archived} archivadas.")
     if errors > 0:
         st.warning(f"⚠ {errors} ofertas tuvieron errores.")
 
-    return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
+    from collections import Counter
+    reason_counts = Counter(archive_reasons)
+    return {
+        "analyzed": analyzed,
+        "errors": errors,
+        "archived": archived,
+        "kept": kept,
+        "archive_reasons": dict(reason_counts),
+        "log_lines": log_lines,
+        "key_info": key_info,
+    }
 
 
 def parse_salary(val):
@@ -746,7 +781,12 @@ with tab_sin_analizar:
             c1.metric("✅ Analizadas", res["analyzed"])
             c2.metric("❌ Errores", res["errors"])
             c3.metric("📦 Archivadas", res.get("archived", 0))
-            c4.metric("📋 Mis ofertas", res.get("mis_ofertas", 0))
+            c4.metric("📋 Mis ofertas", res.get("kept", 0))
+            archive_reasons = res.get("archive_reasons", {})
+            if archive_reasons:
+                with st.expander("📦 Detalle de archivadas por razon", expanded=False):
+                    for reason, count in sorted(archive_reasons.items(), key=lambda x: -x[1]):
+                        st.markdown(f"- **{reason}**: {count} oferta{'s' if count != 1 else ''}")
             if res["key_info"]:
                 st.caption("🔑 " + " -> ".join(res["key_info"]))
             if res["log_lines"]:
@@ -1246,12 +1286,12 @@ with tab_stats:
             for run in reversed(runs):
                 run_ts = run.get("timestamp", "")[:10]
                 salary_info = run.get("scraper_stats", {})
-                trends_jobs = db.get_run_job_links(run.get("run_id", ""))
+                trends_job_ids = db.get_run_job_ids(run.get("run_id", ""))
                 salaries = []
                 remote_count = 0
                 tech_counts = defaultdict(int)
-                for link in trends_jobs:
-                    job = db.get_job_by_link(link)
+                for jid in trends_job_ids:
+                    job = db.get_job_by_id(jid)
                     if job:
                         s = parse_salary(job.get("salary"))
                         if s:
@@ -1262,12 +1302,12 @@ with tab_stats:
                             tech_counts[t] += 1
 
                 avg_salary = sum(salaries) // len(salaries) if salaries else 0
-                remote_pct = (remote_count / len(trends_jobs) * 100) if trends_jobs else 0
+                remote_pct = (remote_count / len(trends_job_ids) * 100) if trends_job_ids else 0
                 top3 = [t for t, _ in sorted(tech_counts.items(), key=lambda x: x[1], reverse=True)[:3]]
 
                 trend_data.append({
                     "Fecha": run_ts,
-                    "Ofertas": len(trends_jobs),
+                    "Ofertas": len(trends_job_ids),
                     "Salario Promedio (E)": avg_salary,
                     "% Remoto": round(remote_pct, 1),
                     "Top Techs": ", ".join(top3) if top3 else "N/A",
