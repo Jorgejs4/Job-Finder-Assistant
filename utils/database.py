@@ -481,8 +481,6 @@ class Database:
 
     def update_job_analysis(self, jid: str, updates: dict) -> bool:
         updates["needs_analysis"] = False
-        updates["archive_reason"] = None
-        updates["archived"] = 0
         self.update_job(jid, updates)
         return True
 
