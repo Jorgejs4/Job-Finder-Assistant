@@ -832,6 +832,22 @@ with tab_sin_analizar:
                 except Exception as e:
                     st.error(f"Error inesperado durante el reanalisis: {e}")
 
+            st.divider()
+            st.warning(
+                f"⚠ Esto re-analizara TODAS las {len(all_jobs)} ofertas con Gemini "
+                f"(~{len(all_jobs) * 2} llamadas API, ~{len(all_jobs) * 6 // 60} min). "
+                "Se recalcularan match, salario, modalidad y se re-aplicaran filtros de archivado."
+            )
+            if st.button("🔄 Forzar reanalisis de TODAS las ofertas", type="secondary", use_container_width=True):
+                try:
+                    result = reanalyze_jobs_with_gemini(all_jobs)
+                    if result["analyzed"] > 0:
+                        st.session_state["reanalyze_result"] = result
+                        _invalidate_cache(sync=True)
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error inesperado durante el reanalisis: {e}")
+
         st.divider()
 
         with st.expander("🔍 Buscar y filtrar", expanded=False):
