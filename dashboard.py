@@ -112,6 +112,55 @@ def _invalidate_cache(sync: bool = True):
     _sync_to_github()
 
 
+def apply_archive_rules_to_all() -> dict:
+    all_jobs = db.get_all_jobs()
+    archived = 0
+    kept = 0
+    unarchived = 0
+    reasons = []
+
+    for job in all_jobs:
+        if job.get("archived"):
+            continue
+
+        title = job.get("title", "")
+        company = job.get("company", "")
+        location = job.get("location", "") or ""
+        description = job.get("description", "") or ""
+        match_score = job.get("match_score")
+        job_id = job.get("id", "")
+
+        wm = config.reclassify_work_mode(job)
+        reason = None
+
+        loc_title_desc = f"{location} {title} {description}".lower()
+        for kw in config.GEO_RESTRICT_KEYWORDS:
+            if kw in loc_title_desc:
+                reason = config.ArchiveReason.geo_restriction(kw)
+                break
+
+        if not reason and match_score is not None and match_score < config.MIN_MATCH_TO_ARCHIVE:
+            reason = config.ArchiveReason.low_match(match_score)
+
+        if not reason and wm != "Remoto":
+            if config.USER_CITY not in location.lower():
+                reason = config.ArchiveReason.location_mismatch(wm, location)
+
+        if reason:
+            db.update_job_archived(job_id, True, reason=reason)
+            if wm != (job.get("work_mode") or ""):
+                db.update_job(job_id, {"work_mode": wm})
+            archived += 1
+            reasons.append(reason)
+        elif job.get("archived"):
+            db.update_job_archived(job_id, False)
+            unarchived += 1
+        else:
+            kept += 1
+
+    return {"archived": archived, "kept": kept, "unarchived": unarchived, "reasons": reasons}
+
+
 def _sync_to_github():
     def _bg():
         json_path = os.path.join(RESULTS_DIR, "data.json")
@@ -854,6 +903,24 @@ with tab_sin_analizar:
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error inesperado durante el reanalisis: {e}")
+
+    st.divider()
+
+    st.subheader("🛠 Reglas de archivado (sin Gemini)")
+    st.caption(
+        "Aplica las reglas de modalidad+ubicacion, match minimo y restriccion geografica "
+        "a TODAS las ofertas sin necesitar API. Corrige ofertas que se colaron."
+    )
+    if st.button("📦 Aplicar reglas de archivado a todas las ofertas", type="secondary", use_container_width=True):
+        result = apply_archive_rules_to_all()
+        st.success(
+            f"Archivadas: {result['archived']} | "
+            f"Mantenidas: {result['kept']} | "
+            f"Desarchivadas: {result['unarchived']}"
+        )
+        if result["archived"] > 0:
+            _invalidate_cache(sync=True)
+            st.rerun()
 
     st.divider()
 
