@@ -837,20 +837,16 @@ with tab_sin_analizar:
                 st.info("No hay ofertas sin analizar.")
 
         with c_force:
-            jobs_needing_reanalysis = [
-                j for j in all_jobs
-                if j.get("needs_analysis") or j.get("archive_reason")
-            ]
+            unanalyzed_only = [j for j in all_jobs if j.get("needs_analysis")]
             st.warning(
-                f"⚠ Re-analiza {len(jobs_needing_reanalysis)} ofertas "
-                f"(sin analizar + archivadas con razon) "
-                f"(~{len(jobs_needing_reanalysis) * 2} llamadas API, "
-                f"~{len(jobs_needing_reanalysis) * 6 // 60} min). "
+                f"⚠ Re-analiza {len(unanalyzed_only)} ofertas sin analizar "
+                f"(~{len(unanalyzed_only) * 2} llamadas API, "
+                f"~{len(unanalyzed_only) * 6 // 60} min). "
                 "Recalcula match, salario, modalidad y re-aplica filtros."
             )
             if st.button("🔄 Forzar reanalisis", type="secondary", use_container_width=True):
                 try:
-                    result = reanalyze_jobs_with_gemini(jobs_needing_reanalysis)
+                    result = reanalyze_jobs_with_gemini(unanalyzed_only)
                     if result["analyzed"] > 0:
                         st.session_state["reanalyze_result"] = result
                         _invalidate_cache(sync=True)
