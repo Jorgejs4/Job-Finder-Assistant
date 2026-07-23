@@ -1,6 +1,9 @@
 import sqlite3
 import json
 import os
+import hashlib
+import unicodedata
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -12,7 +15,23 @@ JSON_FIELDS = {
     "tech_stack", "cv_experience_adapted", "cv_skills", "cv_projects",
     "interview_prep", "company_profile", "project_match",
     "scraper_stats", "errors", "profile_skills", "profile_roles",
+    "all_links",
 }
+
+
+def _normalize_text(text: str) -> str:
+    if not text:
+        return ""
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.lower().strip()
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def generate_job_id(title: str, company: str) -> str:
+    raw = f"{_normalize_text(title)}|{_normalize_text(company)}"
+    return hashlib.md5(raw.encode("utf-8")).hexdigest()[:12]
 
 
 def _serialize(val):
@@ -62,13 +81,16 @@ class Database:
         self._connection.execute("PRAGMA journal_mode=WAL")
         self._connection.execute("PRAGMA busy_timeout=5000")
         self._init_tables()
+        self._migrate_schema()
 
     def _init_tables(self):
         self._connection.executescript("""
             CREATE TABLE IF NOT EXISTS jobs (
-                link TEXT PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 title TEXT,
                 company TEXT,
+                link TEXT,
+                all_links TEXT,
                 location TEXT,
                 description TEXT,
                 date_posted TEXT,
@@ -99,8 +121,7 @@ class Database:
                 needs_analysis INTEGER DEFAULT 1,
                 _first_seen TEXT,
                 _last_seen TEXT,
-                _last_run_id TEXT,
-                _also_on TEXT
+                _last_run_id TEXT
             );
 
             CREATE TABLE IF NOT EXISTS runs (
@@ -118,10 +139,10 @@ class Database:
 
             CREATE TABLE IF NOT EXISTS run_jobs (
                 run_id TEXT NOT NULL,
-                job_link TEXT NOT NULL,
-                PRIMARY KEY (run_id, job_link),
+                job_id TEXT NOT NULL,
+                PRIMARY KEY (run_id, job_id),
                 FOREIGN KEY (run_id) REFERENCES runs(run_id),
-                FOREIGN KEY (job_link) REFERENCES jobs(link)
+                FOREIGN KEY (job_id) REFERENCES jobs(id)
             );
 
             CREATE INDEX IF NOT EXISTS idx_jobs_archived ON jobs(archived);
@@ -132,13 +153,81 @@ class Database:
         """)
         self._connection.commit()
 
+    def _migrate_schema(self):
+        cursor = self._connection.execute("PRAGMA table_info(jobs)")
+        cols = {row[1] for row in cursor.fetchall()}
+        if "id" in cols:
+            return
+        old_data = []
+        cursor = self._connection.execute("SELECT * FROM jobs")
+        col_names = [d[0] for d in cursor.description]
+        for row in cursor.fetchall():
+            old_data.append(dict(zip(col_names, row)))
+        old_rj = []
+        cursor = self._connection.execute("SELECT * FROM run_jobs")
+        rj_cols = [d[0] for d in cursor.description]
+        for row in cursor.fetchall():
+            old_rj.append(dict(zip(rj_cols, row)))
+        self._connection.executescript("DROP TABLE IF EXISTS run_jobs; DROP TABLE IF EXISTS jobs;")
+        self._connection.commit()
+        self._init_tables()
+        merged = {}
+        for job in old_data:
+            title = job.get("title", "")
+            company = job.get("company", "")
+            jid = generate_job_id(title, company)
+            link = job.get("link", "")
+            if jid in merged:
+                existing = merged[jid]
+                all_links = json.loads(existing.get("all_links") or "[]")
+                if link and link not in all_links:
+                    all_links.append(link)
+                if len(all_links) > 1:
+                    existing["all_links"] = _serialize(all_links)
+                if not existing.get("link") and link:
+                    existing["link"] = link
+                if job.get("match_score") is not None and (existing.get("match_score") is None or job["_last_seen"] > existing.get("_last_seen", "")):
+                    for k, v in job.items():
+                        if k in ("link", "title", "company", "id"):
+                            continue
+                        if v is not None:
+                            existing[k] = v
+            else:
+                all_links = [link] if link else []
+                job["id"] = jid
+                job["all_links"] = _serialize(all_links) if len(all_links) > 1 else None
+                if "link" in job:
+                    del job["link"]
+                job.pop("_also_on", None)
+                merged[jid] = job
+        for jid, job in merged.items():
+            self._upsert_job_tx(job)
+        link_to_id = {}
+        for jid, job in merged.items():
+            orig_link = job.get("link", "")
+            if orig_link:
+                link_to_id[orig_link] = jid
+            all_l = json.loads(job.get("all_links") or "[]")
+            for l in all_l:
+                link_to_id[l] = jid
+        for rj in old_rj:
+            old_link = rj.get("job_link", "")
+            new_id = link_to_id.get(old_link)
+            if new_id:
+                self._connection.execute(
+                    "INSERT OR IGNORE INTO run_jobs (run_id, job_id) VALUES (?, ?)",
+                    (rj["run_id"], new_id),
+                )
+        self._connection.commit()
+        print(f"[DB] Migrated schema: {len(merged)} jobs, {len(link_to_id)} link mappings")
+
     def close(self):
         if self._connection:
             self._connection.close()
             Database._connection = None
             Database._instance = None
 
-    # ── Migración ──
+    # ── Migración desde JSON ──
 
     def migrate_from_json(self, json_path: str) -> dict:
         with open(json_path, "r", encoding="utf-8") as f:
@@ -177,17 +266,18 @@ class Database:
 
             for job in run.get("jobs", []):
                 self._upsert_job_tx(job)
-                link = job.get("link", "")
-                if link:
+                jid = job.get("id") or generate_job_id(
+                    job.get("title", ""), job.get("company", "")
+                )
+                if jid:
                     self._connection.execute(
-                        "INSERT OR IGNORE INTO run_jobs (run_id, job_link) VALUES (?, ?)",
-                        (run_id, link),
+                        "INSERT OR IGNORE INTO run_jobs (run_id, job_id) VALUES (?, ?)",
+                        (run_id, jid),
                     )
                     total_jobs += 1
 
         self._connection.commit()
 
-        # Mark migrated jobs without match_score as needs_analysis=1
         self._connection.execute(
             "UPDATE jobs SET needs_analysis = 1 WHERE match_score IS NULL"
         )
@@ -201,15 +291,17 @@ class Database:
     # ── Job CRUD ──
 
     def _upsert_job_tx(self, job: dict):
-        link = job.get("link", "")
-        if not link:
+        title = job.get("title", "")
+        company = job.get("company", "")
+        jid = job.get("id") or generate_job_id(title, company)
+        if not jid:
             return
 
         now = datetime.now().isoformat()
-
+        link = job.get("link", "")
         existing = self._connection.execute(
-            "SELECT _first_seen, _last_seen, match_score, needs_analysis FROM jobs WHERE link = ?",
-            (link,),
+            "SELECT _first_seen, _last_seen, match_score, needs_analysis, all_links FROM jobs WHERE id = ?",
+            (jid,),
         ).fetchone()
 
         if existing:
@@ -217,14 +309,21 @@ class Database:
             last_seen = now
             existing_needs = existing["needs_analysis"]
             needs_analysis = 0 if job.get("match_score") is not None else existing_needs
+            old_links = json.loads(existing["all_links"] or "[]") if existing["all_links"] else []
         else:
             first_seen = now
             last_seen = now
             needs_analysis = 1 if job.get("match_score") is None else 0
+            old_links = []
+
+        all_links = list(old_links)
+        if link and link not in all_links:
+            all_links.append(link)
+        all_links_ser = _serialize(all_links) if len(all_links) > 1 else None
 
         self._connection.execute("""
             INSERT INTO jobs (
-                link, title, company, location, description,
+                id, title, company, link, all_links, location, description,
                 date_posted, source, _scraper,
                 match_score, tech_stack, work_mode,
                 salary, salary_is_estimate, required_experience,
@@ -233,9 +332,9 @@ class Database:
                 custom_cv_url, custom_cv_html, cover_letter_pdf_url,
                 interview_prep, company_profile, project_match,
                 language, status, archived, archive_reason,
-                needs_analysis, _first_seen, _last_seen, _last_run_id, _also_on
+                needs_analysis, _first_seen, _last_seen, _last_run_id
             ) VALUES (
-                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?,
                 ?, ?, ?,
                 ?, ?, ?,
@@ -245,9 +344,14 @@ class Database:
                 ?, ?, ?,
                 ?, ?, ?, ?,
                 ?, ?, ?, ?, ?
-            ) ON CONFLICT(link) DO UPDATE SET
+            ) ON CONFLICT(id) DO UPDATE SET
                 title = COALESCE(EXCLUDED.title, jobs.title),
                 company = COALESCE(EXCLUDED.company, jobs.company),
+                link = CASE
+                    WHEN EXCLUDED.link IS NOT NULL AND EXCLUDED.link != '' THEN EXCLUDED.link
+                    ELSE jobs.link
+                END,
+                all_links = COALESCE(EXCLUDED.all_links, jobs.all_links),
                 location = COALESCE(EXCLUDED.location, jobs.location),
                 description = COALESCE(EXCLUDED.description, jobs.description),
                 date_posted = COALESCE(EXCLUDED.date_posted, jobs.date_posted),
@@ -278,10 +382,10 @@ class Database:
                 needs_analysis = COALESCE(EXCLUDED.needs_analysis, jobs.needs_analysis),
                 _first_seen = COALESCE(EXCLUDED._first_seen, jobs._first_seen),
                 _last_seen = EXCLUDED._last_seen,
-                _last_run_id = COALESCE(EXCLUDED._last_run_id, jobs._last_run_id),
-                _also_on = COALESCE(EXCLUDED._also_on, jobs._also_on)
+                _last_run_id = COALESCE(EXCLUDED._last_run_id, jobs._last_run_id)
         """, (
-            link, job.get("title"), job.get("company"), job.get("location"), job.get("description"),
+            jid, title, company, link or (old_links[0] if old_links else None), all_links_ser,
+            job.get("location"), job.get("description"),
             job.get("date_posted"), job.get("source"), job.get("_scraper"),
             job.get("match_score"), _serialize(job.get("tech_stack")), job.get("work_mode"),
             str(job.get("salary", "")) if job.get("salary") is not None else None,
@@ -299,16 +403,16 @@ class Database:
             1 if job.get("archived") else 0,
             job.get("archive_reason"),
             needs_analysis, first_seen, last_seen,
-            job.get("_last_run_id"), job.get("_also_on"),
+            job.get("_last_run_id"),
         ))
 
     def upsert_job(self, job: dict):
         self._upsert_job_tx(job)
         self._connection.commit()
 
-    def get_job_by_link(self, link: str) -> Optional[dict]:
+    def get_job_by_id(self, jid: str) -> Optional[dict]:
         row = self._connection.execute(
-            "SELECT * FROM jobs WHERE link = ?", (link,)
+            "SELECT * FROM jobs WHERE id = ?", (jid,)
         ).fetchone()
         if row is None:
             return None
@@ -332,24 +436,18 @@ class Database:
         ).fetchall()
         return [_row_to_dict(r, r.keys()) for r in rows] if rows else []
 
-    def update_job(self, link: str, updates: dict):
+    def update_job(self, jid: str, updates: dict):
         if not updates:
             return
         sets = []
         vals = []
         for key, val in updates.items():
-            if key == "link":
+            if key in ("id", "link", "all_links"):
                 continue
             if key in JSON_FIELDS:
                 sets.append(f"{key} = ?")
                 vals.append(_serialize(val))
-            elif key == "salary_is_estimate":
-                sets.append(f"{key} = ?")
-                vals.append(1 if val else 0)
-            elif key == "archived":
-                sets.append(f"{key} = ?")
-                vals.append(1 if val else 0)
-            elif key == "needs_analysis":
+            elif key in ("salary_is_estimate", "archived", "needs_analysis"):
                 sets.append(f"{key} = ?")
                 vals.append(1 if val else 0)
             elif key == "match_score":
@@ -360,30 +458,30 @@ class Database:
                 vals.append(val)
         sets.append("_last_seen = ?")
         vals.append(datetime.now().isoformat())
-        vals.append(link)
-        sql = f"UPDATE jobs SET {', '.join(sets)} WHERE link = ?"
+        vals.append(jid)
+        sql = f"UPDATE jobs SET {', '.join(sets)} WHERE id = ?"
         self._connection.execute(sql, vals)
         self._connection.commit()
 
-    def update_job_status(self, link: str, status: str) -> bool:
+    def update_job_status(self, jid: str, status: str) -> bool:
         self._connection.execute(
-            "UPDATE jobs SET status = ?, _last_seen = ? WHERE link = ?",
-            (status, datetime.now().isoformat(), link),
+            "UPDATE jobs SET status = ?, _last_seen = ? WHERE id = ?",
+            (status, datetime.now().isoformat(), jid),
         )
         self._connection.commit()
         return self._connection.total_changes > 0
 
-    def update_job_archived(self, link: str, archived: bool, reason: str = None) -> bool:
+    def update_job_archived(self, jid: str, archived: bool, reason: str = None) -> bool:
         self._connection.execute(
-            "UPDATE jobs SET archived = ?, archive_reason = ?, _last_seen = ? WHERE link = ?",
-            (1 if archived else 0, reason, datetime.now().isoformat(), link),
+            "UPDATE jobs SET archived = ?, archive_reason = ?, _last_seen = ? WHERE id = ?",
+            (1 if archived else 0, reason, datetime.now().isoformat(), jid),
         )
         self._connection.commit()
         return self._connection.total_changes > 0
 
-    def update_job_analysis(self, link: str, updates: dict) -> bool:
+    def update_job_analysis(self, jid: str, updates: dict) -> bool:
         updates["needs_analysis"] = False
-        self.update_job(link, updates)
+        self.update_job(jid, updates)
         return True
 
     # ── Run CRUD ──
@@ -444,22 +542,19 @@ class Database:
             d[field] = _deserialize(d[field], field)
         return d
 
-    def add_run_jobs(self, run_id: str, links: list):
-        for link in links:
+    def add_run_jobs(self, run_id: str, job_ids: list):
+        for jid in job_ids:
             self._connection.execute(
-                "INSERT OR IGNORE INTO run_jobs (run_id, job_link) VALUES (?, ?)",
-                (run_id, link),
+                "INSERT OR IGNORE INTO run_jobs (run_id, job_id) VALUES (?, ?)",
+                (run_id, jid),
             )
         self._connection.commit()
 
-    def get_run_job_links(self, run_id: str) -> list:
+    def get_run_job_ids(self, run_id: str) -> list:
         rows = self._connection.execute(
-            "SELECT job_link FROM run_jobs WHERE run_id = ?", (run_id,)
+            "SELECT job_id FROM run_jobs WHERE run_id = ?", (run_id,)
         ).fetchall()
-        return [r["job_link"] for r in rows] if rows else []
-
-    # ── Feedback (simple JSON file, still simple enough) ──
-    # Feedback stays in JSON for now — no need to overcomplicate
+        return [r["job_id"] for r in rows] if rows else []
 
     # ── Stats helpers ──
 
@@ -485,18 +580,39 @@ class Database:
         ).fetchone()
         return row["c"] if row else 0
 
+    def get_history(self) -> list:
+        rows = self._connection.execute(
+            "SELECT * FROM runs ORDER BY timestamp ASC"
+        ).fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
+                d[field] = _deserialize(d[field], field)
+            stats = d.get("scraper_stats", {}) or {}
+            scrapers_ok = sum(1 for s in stats.values() if not s.get("failed") and s.get("found", 0) > 0)
+            scrapers_fail = sum(1 for s in stats.values() if s.get("failed") or s.get("error"))
+            result.append({
+                "Fecha": d.get("timestamp", "")[:10],
+                "Encontradas": sum(s.get("found", 0) for s in stats.values()),
+                "Anadidas": d.get("_total_added", 0),
+                "Analizadas": d.get("_analyzed_by_gemini", 0),
+                "Scrapers OK": scrapers_ok,
+                "Scrapers FAIL": scrapers_fail,
+            })
+        return result
+
     # ── Export ──
 
     def export_data_json(self, output_path: str = None):
-        """Exporta toda la DB al formato data.json compatible con CI/CD."""
         runs = self.get_all_runs()
         output = {"runs": []}
         for run in runs:
             run_id = run["run_id"]
-            job_links = self.get_run_job_links(run_id)
+            job_ids = self.get_run_job_ids(run_id)
             jobs = []
-            for link in job_links:
-                job = self.get_job_by_link(link)
+            for jid in job_ids:
+                job = self.get_job_by_id(jid)
                 if job:
                     jobs.append(job)
             run["jobs"] = jobs

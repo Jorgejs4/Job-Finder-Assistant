@@ -123,6 +123,125 @@ def _sync_to_github():
     threading.Thread(target=_bg, daemon=True).start()
 
 
+def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
+    from utils.gemini_client import GeminiClient
+    from utils.cv_parser import parse_cv
+
+    if not config.GEMINI_API_KEYS:
+        st.error("No hay API key de Gemini configurada.")
+        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [], "key_info": []}
+
+    st.info("Inicializando Gemini...")
+    try:
+        gemini = GeminiClient()
+    except Exception as e:
+        st.error(f"Error al crear GeminiClient: {e}")
+        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error: {e}"], "key_info": []}
+
+    st.info("Parseando CV...")
+    try:
+        cv_text = parse_cv(config.CV_PATH)
+    except Exception as e:
+        st.error(f"Error al parsear CV: {e}")
+        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error CV: {e}"], "key_info": []}
+
+    total = len(jobs_list)
+    analyzed = 0
+    errors = 0
+    key_info = []
+
+    num_keys = gemini.key_pool.total_keys
+    masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
+    key_info.append(f"API key activa: {masked} (1/{num_keys})")
+
+    with st.status(f"Analizando {total} ofertas...", expanded=True) as status:
+        progress_bar = st.progress(0)
+        log_lines = []
+
+        for i, job in enumerate(jobs_list):
+            title = job.get("title", "?")[:50]
+            company = job.get("company", "")[:30]
+            current_idx = gemini.key_pool.active_index
+            current_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
+            st.write(f"[{i+1}/{total}] **{title}** @ {company} - key {current_masked}")
+            try:
+                language = config.detect_language(
+                    job.get("source", ""), job.get("title", ""),
+                    job.get("description", "") or job.get("title", "")
+                )
+                desc = job.get("description", "") or job.get("title", "")
+
+                match_result = gemini.match_offer(
+                    cv_text=cv_text,
+                    offer_title=job["title"],
+                    offer_description=desc,
+                    experience_hint=0,
+                    language=language,
+                )
+
+                details = gemini.match_details(
+                    cv_text=cv_text,
+                    offer_title=job["title"],
+                    offer_description=desc,
+                    match_result=match_result,
+                    language=language,
+                )
+
+                wm = config.normalize_work_mode(match_result.work_mode)
+                match_pct = match_result.match_score
+                salary = details.estimated_salary
+                exp = details.required_experience
+
+                log_lines.append(f"✅ {title} @ {company} - 🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} anios")
+
+                job_id = job.get("id", job.get("link", ""))
+                db.update_job_analysis(job_id, {
+                    "match_score": match_result.match_score,
+                    "tech_stack": match_result.tech_stack,
+                    "work_mode": wm,
+                    "language": language,
+                    "salary": str(details.estimated_salary),
+                    "salary_is_estimate": details.salary_is_estimate,
+                    "required_experience": details.required_experience,
+                    "tailored_advice": details.tailored_advice,
+                })
+                job.update({
+                    "match_score": match_result.match_score,
+                    "tech_stack": match_result.tech_stack,
+                    "work_mode": wm,
+                    "language": language,
+                    "salary": str(details.estimated_salary),
+                    "salary_is_estimate": details.salary_is_estimate,
+                    "required_experience": details.required_experience,
+                    "tailored_advice": details.tailored_advice,
+                })
+                analyzed += 1
+            except Exception as e:
+                errors += 1
+                log_lines.append(f"❌ {title} @ {company} - Error: {e}")
+
+            new_idx = gemini.key_pool.active_index
+            new_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
+            if new_idx != current_idx:
+                key_info.append(f"Key rotada a: {new_masked} ({new_idx + 1}/{num_keys})")
+
+            progress_bar.progress((i + 1) / total)
+
+        status.update(label=f"Completado: {analyzed} analizadas, {errors} errores", state="complete")
+
+    if log_lines:
+        st.subheader("Resultados del analisis")
+        for line in log_lines:
+            st.markdown(line)
+
+    if analyzed > 0:
+        st.success(f"✅ {analyzed} ofertas analizadas y guardadas correctamente.")
+    if errors > 0:
+        st.warning(f"⚠ {errors} ofertas tuvieron errores.")
+
+    return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
+
+
 def parse_salary(val):
     if not val:
         return None
@@ -361,7 +480,9 @@ with tab_mis_ofertas:
             status = j.get("status", "Nuevo")
             source = j.get("source", "N/A")
             exp = j.get("required_experience", 0)
+            jid = j.get("id", "")
             link = j.get("link", "")
+            all_links = j.get("all_links") or []
             techs = j.get("tech_stack") or []
             advice = j.get("tailored_advice", "")
             cover_letter = j.get("cover_letter", "")
@@ -412,7 +533,7 @@ with tab_mis_ofertas:
                 if j.get("location"):
                     st.markdown(f"**Ubicacion:** {j['location']}")
 
-                _job_key = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
+                _job_key = jid
                 with st.form(key=f"status_{_job_key}", clear_on_submit=False):
                     _sc1, _sc2 = st.columns([3, 1])
                     with _sc1:
@@ -425,13 +546,13 @@ with tab_mis_ofertas:
                         )
                     with _sc2:
                         if st.form_submit_button("Guardar", use_container_width=True):
-                            db.update_job_status(link, new_status)
+                            db.update_job_status(jid, new_status)
                             _invalidate_cache()
                             st.success("Guardado")
                             st.rerun()
 
                 if st.button("Archivar oferta", key=f"arch_{_job_key}", use_container_width=True):
-                    db.update_job_archived(link, True, reason=config.ArchiveReason.MANUAL)
+                    db.update_job_archived(jid, True, reason=config.ArchiveReason.MANUAL)
                     _invalidate_cache()
                     st.session_state["archived_msg"] = f"✅ Oferta archivada: {title} @ {company}"
                     st.rerun()
@@ -441,6 +562,10 @@ with tab_mis_ofertas:
 
                 if link:
                     st.link_button("🔗 Ver oferta original", link)
+                if all_links:
+                    with st.expander(f"🔗 Todos los enlaces ({len(all_links)})", expanded=False):
+                        for al in all_links:
+                            st.markdown(f"- [{al[:80]}]({al})")
 
                     st.markdown("**📅 Crear evento entrevista:**")
                     _ic1, _ic2 = st.columns([1, 1])
@@ -585,12 +710,11 @@ with tab_mis_ofertas:
                         has_pending = feedback_mgr.has_pending(title, company)
                         if has_pending:
                             st.warning("⏳ Feedback pendiente de procesar")
-                    link_slug = hashlib.md5((j.get("link") or title).encode()).hexdigest()[:8]
-                    with st.form(key=f"fb_{link_slug}", clear_on_submit=True):
+                    with st.form(key=f"fb_{jid}", clear_on_submit=True):
                         st.markdown("**Quieres modificar algo del CV?**")
                         fb = st.text_area(
                             "Describe que cambiar",
-                            key=f"fbt_{link_slug}",
+                            key=f"fbt_{jid}",
                             height=80,
                         )
                         submitted = st.form_submit_button("Enviar feedback")
@@ -686,6 +810,7 @@ with tab_sin_analizar:
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             source = j.get("source", "N/A")
+            jid = j.get("id", "")
             link = j.get("link", "")
 
             header_parts = [f"**{title}** @ {company}"]
@@ -752,13 +877,10 @@ with tab_archivadas:
             status = j.get("status", "Nuevo")
             source = j.get("source", "N/A")
             exp = j.get("required_experience", 0)
+            jid = j.get("id", "")
             link = j.get("link", "")
+            all_links = j.get("all_links") or []
             techs = j.get("tech_stack") or []
-            advice = j.get("tailored_advice", "")
-            cover_letter = j.get("cover_letter", "")
-            cv_url = j.get("custom_cv_url", "")
-            cv_html_file = j.get("custom_cv_html", "")
-            cl_pdf_url = j.get("cover_letter_pdf_url", "")
 
             header_parts = [f"**{title}** @ {company}"]
             header_parts.append(f"🎯 {match}%")
@@ -794,10 +916,10 @@ with tab_archivadas:
                 if j.get("archive_reason"):
                     st.warning(f"**Razon de archivado:** {j['archive_reason']}")
 
-                _job_key_arch = hashlib.md5(f"{title}{company}{link}".encode()).hexdigest()[:10]
+                _job_key_arch = jid
 
                 if st.button("Desarchivar oferta", key=f"unarch_{_job_key_arch}", use_container_width=True):
-                    db.update_job_archived(link, False)
+                    db.update_job_archived(jid, False)
                     _invalidate_cache()
                     st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
                     st.rerun()
@@ -807,6 +929,10 @@ with tab_archivadas:
 
                 if link:
                     st.link_button("🔗 Ver oferta original", link)
+                if all_links:
+                    with st.expander(f"🔗 Todos los enlaces ({len(all_links)})", expanded=False):
+                        for al in all_links:
+                            st.markdown(f"- [{al[:80]}]({al})")
 
                 if advice:
                     with st.expander("💡 Consejos personalizados"):
@@ -967,7 +1093,7 @@ with tab_pipeline:
                 company_fu = j.get('company', '')
                 st.write(f"* **{title_fu}** @ {company_fu} - hace {j['_days_applied']} dias")
                 fc1, fc2 = st.columns([1, 1])
-                _fu_key = hashlib.md5(f"{title_fu}{company_fu}".encode()).hexdigest()[:10]
+                _fu_key = j.get("id", hashlib.md5(f"{title_fu}{company_fu}".encode()).hexdigest()[:10])
                 with fc1:
                     st.link_button("🔗 Ver oferta", j.get("link", ""), key=f"fu_{_fu_key}")
                 with fc2:
@@ -1234,121 +1360,3 @@ with tab_ejecuciones:
                         st.bar_chart(chart_data2)
     else:
         st.info("Solo hay una ejecucion registrada.")
-
-
-def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
-    from utils.gemini_client import GeminiClient
-    from utils.cv_parser import parse_cv
-
-    if not config.GEMINI_API_KEYS:
-        st.error("No hay API key de Gemini configurada.")
-        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [], "key_info": []}
-
-    st.info("Inicializando Gemini...")
-    try:
-        gemini = GeminiClient()
-    except Exception as e:
-        st.error(f"Error al crear GeminiClient: {e}")
-        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error: {e}"], "key_info": []}
-
-    st.info("Parseando CV...")
-    try:
-        cv_text = parse_cv(config.CV_PATH)
-    except Exception as e:
-        st.error(f"Error al parsear CV: {e}")
-        return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error CV: {e}"], "key_info": []}
-
-    total = len(jobs_list)
-    analyzed = 0
-    errors = 0
-    key_info = []
-
-    num_keys = gemini.key_pool.total_keys
-    masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
-    key_info.append(f"API key activa: {masked} (1/{num_keys})")
-
-    with st.status(f"Analizando {total} ofertas...", expanded=True) as status:
-        progress_bar = st.progress(0)
-        log_lines = []
-
-        for i, job in enumerate(jobs_list):
-            title = job.get("title", "?")[:50]
-            company = job.get("company", "")[:30]
-            current_idx = gemini.key_pool.active_index
-            current_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
-            st.write(f"[{i+1}/{total}] **{title}** @ {company} - key {current_masked}")
-            try:
-                language = config.detect_language(
-                    job.get("source", ""), job.get("title", ""),
-                    job.get("description", "") or job.get("title", "")
-                )
-                desc = job.get("description", "") or job.get("title", "")
-
-                match_result = gemini.match_offer(
-                    cv_text=cv_text,
-                    offer_title=job["title"],
-                    offer_description=desc,
-                    experience_hint=0,
-                    language=language,
-                )
-
-                details = gemini.match_details(
-                    cv_text=cv_text,
-                    offer_title=job["title"],
-                    offer_description=desc,
-                    match_result=match_result,
-                    language=language,
-                )
-
-                wm = config.normalize_work_mode(match_result.work_mode)
-                match_pct = match_result.match_score
-                salary = details.estimated_salary
-                exp = details.required_experience
-
-                log_lines.append(f"✅ {title} @ {company} - 🎯 {match_pct}% | 📍 {wm} | 💰 {salary}€ | 👔 {exp} anios")
-
-                db.update_job_analysis(job["link"], {
-                    "match_score": match_result.match_score,
-                    "tech_stack": match_result.tech_stack,
-                    "work_mode": wm,
-                    "language": language,
-                    "salary": str(details.estimated_salary),
-                    "salary_is_estimate": details.salary_is_estimate,
-                    "required_experience": details.required_experience,
-                    "tailored_advice": details.tailored_advice,
-                })
-                job.update({
-                    "match_score": match_result.match_score,
-                    "tech_stack": match_result.tech_stack,
-                    "work_mode": wm,
-                    "language": language,
-                    "salary": str(details.estimated_salary),
-                    "salary_is_estimate": details.salary_is_estimate,
-                    "required_experience": details.required_experience,
-                    "tailored_advice": details.tailored_advice,
-                })
-                analyzed += 1
-            except Exception as e:
-                errors += 1
-                log_lines.append(f"❌ {title} @ {company} - Error: {e}")
-
-            new_idx = gemini.key_pool.active_index
-            new_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
-            if new_idx != current_idx:
-                key_info.append(f"Key rotada a: {new_masked} ({new_idx + 1}/{num_keys})")
-
-            progress_bar.progress((i + 1) / total)
-
-        status.update(label=f"Completado: {analyzed} analizadas, {errors} errores", state="complete")
-
-    if log_lines:
-        st.subheader("Resultados del analisis")
-        for line in log_lines:
-            st.markdown(line)
-
-    if analyzed > 0:
-        st.success(f"✅ {analyzed} ofertas analizadas y guardadas correctamente.")
-    if errors > 0:
-        st.warning(f"⚠ {errors} ofertas tuvieron errores.")
-
-    return {"analyzed": analyzed, "errors": errors, "log_lines": log_lines, "key_info": key_info}
