@@ -625,43 +625,55 @@ class Database:
 
     def export_data_json(self, output_path: str = None):
         with self._lock:
-            runs = self.get_all_runs()
-            exported_job_ids = set()
-            output = {"runs": []}
-            for run in runs:
-                run_id = run["run_id"]
-                job_ids = self.get_run_job_ids(run_id)
-                jobs = []
-                for jid in job_ids:
-                    job = self.get_job_by_id(jid)
-                    if job:
-                        jobs.append(job)
-                        exported_job_ids.add(jid)
-                run["jobs"] = jobs
-                output["runs"].append(run)
-
-            orphans = self._connection.execute(
-                "SELECT id FROM jobs WHERE id NOT IN ({})".format(
-                    ",".join("?" for _ in exported_job_ids) if exported_job_ids else "''"
-                ),
-                list(exported_job_ids) if exported_job_ids else ()
+            runs_raw = self._connection.execute(
+                "SELECT * FROM runs ORDER BY timestamp DESC"
             ).fetchall()
-            if orphans:
-                orphan_run = {
-                    "run_id": "_orphan",
-                    "timestamp": "",
-                    "jobs": []
-                }
-                for row in orphans:
-                    job = self.get_job_by_id(row[0])
-                    if job:
-                        orphan_run["jobs"].append(job)
-                if orphan_run["jobs"]:
-                    output["runs"].append(orphan_run)
+            runs_data = []
+            for r in runs_raw:
+                d = dict(r)
+                for field in ("scraper_stats", "errors", "profile_skills", "profile_roles"):
+                    d[field] = _deserialize(d[field], field)
+                runs_data.append(d)
 
-            if output_path is None:
-                output_path = os.path.join(os.path.dirname(self.db_path), "data.json")
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(output, f, ensure_ascii=False, indent=2)
-            total = sum(len(r.get('jobs', [])) for r in output['runs'])
-            print(f"[DB] Exportado data.json ({total} jobs en {len(output['runs'])} runs)")
+            all_jobs_rows = self._connection.execute("SELECT * FROM jobs").fetchall()
+            all_jobs = {}
+            for r in all_jobs_rows:
+                d = _row_to_dict(r, r.keys())
+                all_jobs[d["id"]] = d
+
+            run_job_rows = self._connection.execute("SELECT * FROM run_jobs").fetchall()
+            run_job_map = {}
+            for r in run_job_rows:
+                rid = r["run_id"]
+                jid = r["job_id"]
+                if rid not in run_job_map:
+                    run_job_map[rid] = []
+                run_job_map[rid].append(jid)
+
+        output = {"runs": []}
+        exported_ids = set()
+        for run in runs_data:
+            rid = run["run_id"]
+            jids = run_job_map.get(rid, [])
+            jobs = []
+            for jid in jids:
+                if jid in all_jobs:
+                    jobs.append(all_jobs[jid])
+                    exported_ids.add(jid)
+            run["jobs"] = jobs
+            output["runs"].append(run)
+
+        orphans = [j for jid, j in all_jobs.items() if jid not in exported_ids]
+        if orphans:
+            output["runs"].append({
+                "run_id": "_orphan",
+                "timestamp": "",
+                "jobs": orphans,
+            })
+
+        if output_path is None:
+            output_path = os.path.join(os.path.dirname(self.db_path), "data.json")
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(output, f, ensure_ascii=False, indent=2)
+        total = sum(len(r.get('jobs', [])) for r in output['runs'])
+        print(f"[DB] Exportado data.json ({total} jobs en {len(output['runs'])} runs)")
