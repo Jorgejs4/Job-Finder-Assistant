@@ -803,40 +803,40 @@ with tab_sin_analizar:
 
     unanalyzed_jobs = [j for j in all_jobs if j.get("needs_analysis")]
 
-    if not unanalyzed_jobs:
-        st.info("No hay ofertas sin analizar.")
+    has_gemini = bool(config.GEMINI_API_KEYS)
+
+    if not has_gemini:
+        st.warning(
+            "No hay API key de Gemini configurada. "
+            "Anade GEMINI_API_KEY o GEMINI_API_KEYS en los secrets de Streamlit "
+            "para usar el reanalisis."
+        )
     else:
-        st.subheader(f"📋 {len(unanalyzed_jobs)} ofertas sin analizar")
-        st.caption("Estas ofertas no han sido clasificadas por Gemini.")
+        num_keys = len(config.GEMINI_API_KEYS)
+        first_key = config.GEMINI_API_KEYS[0]
+        masked_first = f"{first_key[:6]}...{first_key[-4:]}" if len(first_key) > 8 else "****"
+        st.caption(f"🔑 {num_keys} API key(s) configurada(s) - activa: {masked_first}")
 
-        has_gemini = bool(config.GEMINI_API_KEYS)
-        if not has_gemini:
+        c_norm, c_force = st.columns(2)
+        with c_norm:
+            if unanalyzed_jobs:
+                if st.button(f"🔍 Reanalizar {len(unanalyzed_jobs)} sin analizar", type="primary", use_container_width=True):
+                    try:
+                        result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
+                        if result["analyzed"] > 0:
+                            st.session_state["reanalyze_result"] = result
+                            _invalidate_cache(sync=True)
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Error inesperado durante el reanalisis: {e}")
+            else:
+                st.info("No hay ofertas sin analizar.")
+
+        with c_force:
             st.warning(
-                "No hay API key de Gemini configurada. "
-                "Anade GEMINI_API_KEY o GEMINI_API_KEYS en los secrets de Streamlit "
-                "para usar el reanalisis."
-            )
-        else:
-            num_keys = len(config.GEMINI_API_KEYS)
-            first_key = config.GEMINI_API_KEYS[0]
-            masked_first = f"{first_key[:6]}...{first_key[-4:]}" if len(first_key) > 8 else "****"
-            st.caption(f"🔑 {num_keys} API key(s) configurada(s) - activa: {masked_first}")
-
-            if st.button("🔍 Reanalizar todas las ofertas", type="primary", use_container_width=True):
-                try:
-                    result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
-                    if result["analyzed"] > 0:
-                        st.session_state["reanalyze_result"] = result
-                        _invalidate_cache(sync=True)
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Error inesperado durante el reanalisis: {e}")
-
-            st.divider()
-            st.warning(
-                f"⚠ Esto re-analizara TODAS las {len(all_jobs)} ofertas con Gemini "
+                f"⚠ Re-analiza TODAS las {len(all_jobs)} ofertas "
                 f"(~{len(all_jobs) * 2} llamadas API, ~{len(all_jobs) * 6 // 60} min). "
-                "Se recalcularan match, salario, modalidad y se re-aplicaran filtros de archivado."
+                "Recalcula match, salario, modalidad y re-aplica filtros."
             )
             if st.button("🔄 Forzar reanalisis de TODAS las ofertas", type="secondary", use_container_width=True):
                 try:
@@ -848,24 +848,24 @@ with tab_sin_analizar:
                 except Exception as e:
                     st.error(f"Error inesperado durante el reanalisis: {e}")
 
-        st.divider()
+    st.divider()
 
-        with st.expander("🔍 Buscar y filtrar", expanded=False):
-            search_unanalyzed = st.text_input(
-                "🔎 Buscar por titulo, empresa o ubicacion",
-                placeholder="Ej: Python, Sevilla...",
-                key="search_unanalyzed",
-            )
+    with st.expander("🔍 Buscar y filtrar", expanded=False):
+        search_unanalyzed = st.text_input(
+            "🔎 Buscar por titulo, empresa o ubicacion",
+            placeholder="Ej: Python, Sevilla...",
+            key="search_unanalyzed",
+        )
 
-        filtered_unanalyzed = unanalyzed_jobs
-        if search_unanalyzed.strip():
-            q = search_unanalyzed.lower()
-            filtered_unanalyzed = [
-                j for j in filtered_unanalyzed
-                if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
-            ]
+    filtered_unanalyzed = unanalyzed_jobs
+    if search_unanalyzed.strip():
+        q = search_unanalyzed.lower()
+        filtered_unanalyzed = [
+            j for j in filtered_unanalyzed
+            if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
+        ]
 
-        for j in paginate(filtered_unanalyzed, "sin_analizar"):
+    for j in paginate(filtered_unanalyzed, "sin_analizar"):
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             source = j.get("source", "N/A")
