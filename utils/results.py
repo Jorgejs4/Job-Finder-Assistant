@@ -105,7 +105,7 @@ class ResultsManager:
         runs = []
         for run in runs_data:
             run_id = run["run_id"]
-            job_links = self._db.get_run_job_links(run_id)
+            job_links = self._db.get_run_job_ids(run_id)
             jobs = []
             for link in job_links:
                 job = self._db.get_job_by_link(link)
@@ -123,7 +123,7 @@ class ResultsManager:
         latest = self._db.get_latest_run()
         if not latest:
             return {}
-        job_links = self._db.get_run_job_links(latest["run_id"])
+        job_links = self._db.get_run_job_ids(latest["run_id"])
         jobs = []
         for link in job_links:
             job = self._db.get_job_by_link(link)
