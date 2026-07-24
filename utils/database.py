@@ -294,7 +294,8 @@ class Database:
         return {"runs": total_runs, "jobs": total_jobs}
 
     def _apply_archive_rules_post_migration(self):
-        """Aplica reglas de archivado a todos los jobs sin analizar (post-migracion)."""
+        """Aplica reglas de archivado a todos los jobs analizados (post-migracion).
+        Jobs sin match_score (sin analizar) NO se archivan."""
         from config import classify_archive_reason, reclassify_work_mode
 
         rows = self._connection.execute(
@@ -304,16 +305,27 @@ class Database:
 
         for row in rows:
             jid = row[0]
+            match_score = row[5]
             was_archived = bool(row[7])
             manual = was_archived and row[8] == "Archivado manualmente"
 
             if manual:
                 continue
 
+            # Jobs sin analizar no se archivan
+            if match_score is None:
+                # Si estaban archivados por error (match < 10%), desarchivarlos
+                if was_archived and row[8] and "match <" in row[8]:
+                    self._connection.execute(
+                        "UPDATE jobs SET archived = 0, archive_reason = NULL WHERE id = ?",
+                        (jid,)
+                    )
+                continue
+
             job = {
                 "id": jid, "title": row[1], "company": row[2],
                 "location": row[3] or "", "description": row[4] or "",
-                "match_score": row[5], "work_mode": row[6] or "",
+                "match_score": match_score, "work_mode": row[6] or "",
             }
 
             reason = classify_archive_reason(job)

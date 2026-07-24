@@ -129,6 +129,15 @@ def apply_archive_rules_to_all() -> dict:
             kept += 1
             continue
 
+        # Jobs sin analizar no se archivan — van a "Sin analizar"
+        if job.get("match_score") is None:
+            if was_archived and job.get("archive_reason", "").startswith("match <"):
+                db.update_job_archived(job_id, False)
+                unarchived += 1
+            else:
+                kept += 1
+            continue
+
         reason = config.classify_archive_reason(job)
 
         if reason:

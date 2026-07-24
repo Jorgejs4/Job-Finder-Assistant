@@ -142,11 +142,17 @@ class ArchiveReason:
 
 def classify_archive_reason(job: dict) -> str | None:
     """Funcion unica de verdad para determinar si un job debe archivarse.
-    Retorna la razon de archivado o None si el job debe mantenerse."""
+    Retorna la razon de archivado o None si el job debe mantenerse.
+    NOTA: jobs sin match_score (sin analizar) NUNCA se archivan por esta razon."""
     loc = (job.get("location", "") or "").lower()
     title = (job.get("title", "") or "").lower()
     desc = (job.get("description", "") or "").lower()
     combined = f"{loc} {title} {desc}"
+
+    # 0. Jobs sin analizar (match_score=None) no se archivan — van a "Sin analizar"
+    match = job.get("match_score")
+    if match is None:
+        return None
 
     # 1. Restriccion geografica
     for kw in GEO_RESTRICT_KEYWORDS:
@@ -154,7 +160,6 @@ def classify_archive_reason(job: dict) -> str | None:
             return ArchiveReason.geo_restriction(kw)
 
     # 2. Match score demasiado bajo
-    match = job.get("match_score", 0) or 0
     if match < MIN_MATCH_TO_ARCHIVE:
         return ArchiveReason.low_match(match)
 
