@@ -139,6 +139,7 @@ jobs:
             echo "No changes to data.json"
           else
             git commit -m "Update data.json [skip ci]" || true
+            git pull --rebase origin main || true
             git push --force-with-lease origin main
           fi
         else

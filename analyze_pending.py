@@ -280,12 +280,22 @@ def main():
                     try:
                         updates = future.result()
                         job.update(updates)
-                        write_job_back(data, url, updates)
+                        # Reclasificar work_mode con reglas de texto (override de Gemini)
+                        job["work_mode"] = config.reclassify_work_mode(job)
+                        # Aplicar reglas de archivado ANTES de sync a Notion
+                        archive_reason = config.classify_archive_reason(job)
+                        if archive_reason:
+                            job["archived"] = True
+                            job["archive_reason"] = archive_reason
+                        write_job_back(data, url, job)
                         analyzed += 1
-                        sync_to_notion(notion, job)
+                        if not archive_reason:
+                            sync_to_notion(notion, job)
 
                         match = updates.get("match_score", 0)
-                        print(f"  [{analyzed}/{len(to_analyze)}] {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%", flush=True)
+                        tag = "📦" if archive_reason else "✓"
+                        reason_str = f" → {archive_reason}" if archive_reason else ""
+                        print(f"  [{analyzed}/{len(to_analyze)}] {tag} {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%{reason_str}", flush=True)
 
                         if match >= 50:
                             try:
@@ -401,12 +411,22 @@ def main():
             try:
                 updates = analyze_single(gemini, cv_text, job, rate_limiter)
                 job.update(updates)
-                write_job_back(data, url, updates)
+                # Reclasificar work_mode con reglas de texto (override de Gemini)
+                job["work_mode"] = config.reclassify_work_mode(job)
+                # Aplicar reglas de archivado ANTES de sync a Notion
+                archive_reason = config.classify_archive_reason(job)
+                if archive_reason:
+                    job["archived"] = True
+                    job["archive_reason"] = archive_reason
+                write_job_back(data, url, job)
                 analyzed += 1
-                sync_to_notion(notion, job)
+                if not archive_reason:
+                    sync_to_notion(notion, job)
 
                 match = updates.get("match_score", 0)
-                print(f"  [{analyzed}/{len(to_analyze)}] {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%", flush=True)
+                tag = "📦" if archive_reason else "✓"
+                reason_str = f" → {archive_reason}" if archive_reason else ""
+                print(f"  [{analyzed}/{len(to_analyze)}] {tag} {job['title'][:40]} @ {job.get('company', '')[:20]} — match {match}%{reason_str}", flush=True)
 
                 if match >= 50:
                     try:
