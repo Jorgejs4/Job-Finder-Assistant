@@ -349,7 +349,7 @@ def main():
 
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
-    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "experiencia": 0, "notion_error": 0, "cuota_gemini": False}
+    skipped = {"duplicado": 0, "bajo_match": 0, "ubicacion": 0, "experiencia": 0, "geo": 0, "salario": 0, "notion_error": 0, "cuota_gemini": False}
     analyzed_by_gemini = 0  # Jobs that actually went through Gemini analysis
 
     # Pre-filter: remove duplicates and obviously non-matching jobs before Gemini
@@ -482,28 +482,37 @@ def main():
                 job["required_experience"] = details.required_experience
             results.record_enriched_job(job)
 
-            if match_result.match_score < config.MIN_MATCH_TO_DISCARD:
-                skipped["bajo_match"] += 1
+            # Regla unica de archivado: geo restriction, low match, location mismatch
+            archive_reason = config.classify_archive_reason(job)
+            if archive_reason:
+                job["archived"] = True
+                job["archive_reason"] = archive_reason
+                if "restriccion" in archive_reason.lower() or "residir" in archive_reason.lower():
+                    skipped["geo"] += 1
+                elif "fuera" in archive_reason.lower():
+                    skipped["ubicacion"] += 1
+                else:
+                    skipped["bajo_match"] += 1
                 continue
 
+            # Reglas adicionales de descarte (salario, experiencia)
             if config.MIN_SALARY and details and details.estimated_salary and not details.salary_is_estimate:
                 if details.estimated_salary < config.MIN_SALARY:
-                    skipped["bajo_match"] += 1
+                    job["archived"] = True
+                    job["archive_reason"] = config.ArchiveReason.salary_too_low(
+                        details.estimated_salary, config.MIN_SALARY
+                    )
+                    skipped["salario"] += 1
                     continue
 
             max_exp = config.YEARS_OF_EXPERIENCE + config.EXPERIENCE_TOLERANCE_YEARS
             if max_exp > 0 and details and details.required_experience > max_exp:
+                job["archived"] = True
+                job["archive_reason"] = config.ArchiveReason.experience_too_high(
+                    details.required_experience, max_exp
+                )
                 skipped["experiencia"] += 1
                 continue
-
-            work_mode = job.get("work_mode", "")
-            if work_mode != "Remoto" and config.USER_CITY:
-                job_loc = job.get("location", "").lower()
-                if config.USER_CITY not in job_loc:
-                    job["archived"] = True
-                    job["archive_reason"] = config.ArchiveReason.location_mismatch(work_mode, job.get("location", "?"))
-                    skipped["ubicacion"] += 1
-                    continue
 
             # Llamada 3a: CV + cover letter (text)
             _desc = job.get("description") or job["title"]

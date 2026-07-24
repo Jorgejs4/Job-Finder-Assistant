@@ -38,25 +38,8 @@ def matches_location(job: dict, desired_cities: list) -> bool:
 
 
 def classify_archive_reason(job: dict, desired_cities: list) -> str | None:
-    loc = (job.get("location", "") or "").lower()
-    title = (job.get("title", "") or "").lower()
-    desc = (job.get("description", "") or "").lower()
-    combined = f"{loc} {title} {desc}"
-
-    for kw in config.GEO_RESTRICT_KEYWORDS:
-        if kw in combined:
-            return config.ArchiveReason.geo_restriction(kw)
-
-    match = job.get("match_score", 0) or 0
-    if match < config.MIN_MATCH_TO_ARCHIVE:
-        return config.ArchiveReason.low_match(match)
-
-    wm = config.normalize_work_mode(job.get("work_mode", "") or "")
-    if wm in ("Presencial", "Híbrido"):
-        city_match = any(c in loc for c in desired_cities)
-        if not city_match:
-            return config.ArchiveReason.location_mismatch(wm, job.get("location", "?"))
-    return None
+    from config import classify_archive_reason as _classify
+    return _classify(job)
 
 
 def should_keep(job: dict, desired_cities: list) -> bool:

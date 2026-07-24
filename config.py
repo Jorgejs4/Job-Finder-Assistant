@@ -128,6 +128,44 @@ class ArchiveReason:
     def location_mismatch(cls, mode: str, location: str) -> str:
         return cls.LOCATION_MISMATCH.format(mode=mode, location=location)
 
+    SALARY_TOO_LOW = "Salario bajo el minimo ({salary} < {min_salary})"
+    EXPERIENCE_TOO_HIGH = "Experiencia requerida excede la maxima ({exp} > {max_exp})"
+
+    @classmethod
+    def salary_too_low(cls, salary, min_salary) -> str:
+        return cls.SALARY_TOO_LOW.format(salary=salary, min_salary=min_salary)
+
+    @classmethod
+    def experience_too_high(cls, exp, max_exp) -> str:
+        return cls.EXPERIENCE_TOO_HIGH.format(exp=exp, max_exp=max_exp)
+
+
+def classify_archive_reason(job: dict) -> str | None:
+    """Funcion unica de verdad para determinar si un job debe archivarse.
+    Retorna la razon de archivado o None si el job debe mantenerse."""
+    loc = (job.get("location", "") or "").lower()
+    title = (job.get("title", "") or "").lower()
+    desc = (job.get("description", "") or "").lower()
+    combined = f"{loc} {title} {desc}"
+
+    # 1. Restriccion geografica
+    for kw in GEO_RESTRICT_KEYWORDS:
+        if kw in combined:
+            return ArchiveReason.geo_restriction(kw)
+
+    # 2. Match score demasiado bajo
+    match = job.get("match_score", 0) or 0
+    if match < MIN_MATCH_TO_ARCHIVE:
+        return ArchiveReason.low_match(match)
+
+    # 3. Modalidad presencial/hibrida fuera de ciudad objetivo
+    wm = reclassify_work_mode(job)
+    if wm != "Remoto" and USER_CITY:
+        if USER_CITY not in loc:
+            return ArchiveReason.location_mismatch(wm, job.get("location", "?"))
+
+    return None
+
 
 # Traducción de roles ES → EN para scrapers internacionales
 ROLE_TRANSLATIONS = {

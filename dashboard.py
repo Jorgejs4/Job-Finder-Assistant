@@ -120,39 +120,29 @@ def apply_archive_rules_to_all() -> dict:
     reasons = []
 
     for job in all_jobs:
-        if job.get("archived"):
+        job_id = job.get("id", "")
+        was_archived = bool(job.get("archived"))
+        manual = was_archived and job.get("archive_reason") == config.ArchiveReason.MANUAL
+
+        # No tocar archives manuales
+        if manual:
+            kept += 1
             continue
 
-        title = job.get("title", "")
-        company = job.get("company", "")
-        location = job.get("location", "") or ""
-        description = job.get("description", "") or ""
-        match_score = job.get("match_score")
-        job_id = job.get("id", "")
-
-        wm = config.reclassify_work_mode(job)
-        reason = None
-
-        loc_title_desc = f"{location} {title} {description}".lower()
-        for kw in config.GEO_RESTRICT_KEYWORDS:
-            if kw in loc_title_desc:
-                reason = config.ArchiveReason.geo_restriction(kw)
-                break
-
-        if not reason and match_score is not None and match_score < config.MIN_MATCH_TO_ARCHIVE:
-            reason = config.ArchiveReason.low_match(match_score)
-
-        if not reason and wm != "Remoto":
-            if config.USER_CITY not in location.lower():
-                reason = config.ArchiveReason.location_mismatch(wm, location)
+        reason = config.classify_archive_reason(job)
 
         if reason:
-            db.update_job_archived(job_id, True, reason=reason)
-            if wm != (job.get("work_mode") or ""):
-                db.update_job(job_id, {"work_mode": wm})
-            archived += 1
-            reasons.append(reason)
-        elif job.get("archived"):
+            if not was_archived:
+                db.update_job_archived(job_id, True, reason=reason)
+                wm = config.reclassify_work_mode(job)
+                if wm != (job.get("work_mode") or ""):
+                    db.update_job(job_id, {"work_mode": wm})
+                archived += 1
+                reasons.append(reason)
+            # Ya archivado con regla automatica -> mantener
+            kept += 1
+        elif was_archived:
+            # Desarchivar solo si fue archivado por regla automatica (no manual)
             db.update_job_archived(job_id, False)
             unarchived += 1
         else:
@@ -269,18 +259,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     "tailored_advice": details.tailored_advice,
                 })
 
-                reason = None
-                for kw in config.GEO_RESTRICT_KEYWORDS:
-                    loc_title_desc = f"{(job.get('location','') or '')} {(job.get('title','') or '')} {(job.get('description','') or '')}".lower()
-                    if kw in loc_title_desc:
-                        reason = config.ArchiveReason.geo_restriction(kw)
-                        break
-                if not reason and match_pct < config.MIN_MATCH_TO_ARCHIVE:
-                    reason = config.ArchiveReason.low_match(match_pct)
-                if not reason and wm != "Remoto":
-                    loc = (job.get("location", "") or "").lower()
-                    if config.USER_CITY not in loc:
-                        reason = config.ArchiveReason.location_mismatch(wm, job.get("location", "?"))
+                reason = config.classify_archive_reason(job)
 
                 if reason:
                     db.update_job_archived(job_id, True, reason=reason)
@@ -1052,10 +1031,14 @@ with tab_archivadas:
                 _job_key_arch = jid
 
                 if st.button("Desarchivar oferta", key=f"unarch_{_job_key_arch}", use_container_width=True):
-                    db.update_job_archived(jid, False)
-                    _invalidate_cache()
-                    st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
-                    st.rerun()
+                    recheck = config.classify_archive_reason(j)
+                    if recheck:
+                        st.error(f"No se puede desarchivar: {recheck}")
+                    else:
+                        db.update_job_archived(jid, False)
+                        _invalidate_cache()
+                        st.session_state["unarchived_msg"] = f"✅ Oferta desarchivada: {title} @ {company}"
+                        st.rerun()
 
                 if techs:
                     st.markdown(f"**Stack:** {', '.join(techs)}")
