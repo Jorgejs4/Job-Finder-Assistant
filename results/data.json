@@ -8186,11 +8186,11 @@
           "project_match": null,
           "language": "es",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": 1,
+          "archive_reason": "Archivado manualmente",
           "needs_analysis": 0,
           "_first_seen": "2026-07-24T14:16:29.152478",
-          "_last_seen": "2026-07-24T14:16:29.152478",
+          "_last_seen": "2026-07-24T15:49:51.224032",
           "_last_run_id": "20260721_201705"
         },
         {
