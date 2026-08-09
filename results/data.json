@@ -33272,11 +33272,11 @@
           "project_match": null,
           "language": "es",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": 1,
+          "archive_reason": "Archivado manualmente",
           "needs_analysis": 0,
           "_first_seen": "2026-08-07T20:12:16.671540",
-          "_last_seen": "2026-08-07T20:12:16.671540",
+          "_last_seen": "2026-08-09T20:08:54.450982",
           "_last_run_id": null
         },
         {
