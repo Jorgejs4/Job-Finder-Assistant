@@ -24,8 +24,13 @@ class JobSpyScraper(BaseScraper):
         for location in search_locations:
             # JobSpy accepts a single location per call. Remote is represented by
             # the search flag; Spain keeps results useful for local/hybrid roles.
-            location_value = "Spain" if location.lower() in {"remoto", "remote"} else location
             is_remote = location.lower() in {"remoto", "remote"}
+            # Use the same country-aware location mapping as the legacy scrapers
+            # (e.g. ``sevilla`` -> ``Sevilla, España`` for Indeed).
+            location_value = (
+                "Spain" if is_remote
+                else config.get_location_for("indeed", location)
+            )
             kwargs = {
                 "site_name": sites,
                 "search_term": search_query,
