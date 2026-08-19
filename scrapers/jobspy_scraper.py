@@ -27,12 +27,19 @@ class JobSpyScraper(BaseScraper):
             is_remote = location.lower() in {"remoto", "remote"}
             # Use the same country-aware location mapping as the legacy scrapers
             # (e.g. ``sevilla`` -> ``Sevilla, España`` for Indeed).
-            location_value = (
-                "Spain" if is_remote
-                else config.get_location_for("indeed", location)
-            )
+            location_value = "Spain" if is_remote else config.get_location_for("indeed", location)
+            # JobSpy expects English country/city names for Glassdoor.
+            location_value = location_value.replace("España", "Spain")
+            location_value = location_value.replace("Sevilla", "Seville")
+
+            # ZipRecruiter only supports US/Canada; avoid predictable 403s for
+            # Spanish searches while retaining its configured source in logs.
+            location_sites = [
+                site for site in sites
+                if site != "zip_recruiter" or location_value.lower().endswith(("usa", "canada", "ca"))
+            ]
             kwargs = {
-                "site_name": sites,
+                "site_name": location_sites,
                 "search_term": search_query,
                 "location": location_value,
                 "results_wanted": config.MAX_JOBS_PER_SCRAPER,
