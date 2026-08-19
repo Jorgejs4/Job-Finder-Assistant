@@ -408,10 +408,25 @@ LOCATION_MAP = {
     },
 }
 
+LOCATION_ALIASES = {
+    "seville": "sevilla",
+    "seville, spain": "sevilla",
+    "sevilla, españa": "sevilla",
+    "madrid, spain": "madrid",
+    "madrid, españa": "madrid",
+    "barcelona, spain": "barcelona",
+    "barcelona, españa": "barcelona",
+    "valencia, spain": "valencia",
+    "valencia, españa": "valencia",
+    "remote": "remoto",
+    "remote, spain": "remoto",
+}
+
 
 def get_location_for(scraper_name: str, location_key: str) -> str:
     """Devuelve la ubicación formateada para un scraper dado."""
     key = location_key.lower().strip()
+    key = LOCATION_ALIASES.get(key, key)
     if key in LOCATION_MAP:
         return LOCATION_MAP[key].get(scraper_name, key.title())
     # Si no está en el mapping, devolver con capitalización básica
