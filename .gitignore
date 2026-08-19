@@ -3,6 +3,13 @@
 env
 *.env
 
+# Secretos y archivos temporales locales
+GEMINI_API_KEYS = *.txt
+.tmp_jobspy/
+check_leaked.py
+install.cmd
+tmp_debug_jf*.py
+
 # Caches de Python
 __pycache__/
 *.pyc

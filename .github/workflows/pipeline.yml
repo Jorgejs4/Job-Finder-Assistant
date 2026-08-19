@@ -10,7 +10,7 @@ on:
         required: false
         default: 'Sevilla,Remoto'
       years_of_experience:
-        description: 'Años de experiencia'
+        description: 'Tus años de experiencia; la oferta puede pedir hasta este valor + 2 años'
         required: false
         default: '0'
       min_salary:

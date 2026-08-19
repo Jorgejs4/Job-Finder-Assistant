@@ -133,6 +133,14 @@ def main():
         results.save()
         sys.exit(1)
 
+    max_required_experience = config.YEARS_OF_EXPERIENCE + config.EXPERIENCE_TOLERANCE_YEARS
+    print("\n[Filtros activos]")
+    print(f"  - Ubicaciones: {', '.join(config.DESIRED_LOCATIONS)}")
+    print(f"  - Tu experiencia: {config.YEARS_OF_EXPERIENCE} años")
+    print(f"  - Máximo exigido por oferta: {max_required_experience} años "
+          f"(tolerancia: +{config.EXPERIENCE_TOLERANCE_YEARS})")
+    print(f"  - Salario mínimo: {config.MIN_SALARY or 'sin filtro'}")
+
     notion_sync = NotionSync()
     gemini = GeminiClient()
 
@@ -331,6 +339,9 @@ def main():
         if is_remote or matches_city:
             filtered_jobs.append(job)
 
+    print(f"[Filtro ubicación] {len(filtered_jobs)} ofertas coinciden con remoto/ciudad "
+          f"de {len(jobs_to_process)} únicas")
+
     # Filtro por keywords no-tech (ahorra llamadas a Gemini)
     before_keyword = len(filtered_jobs)
     keyword_filtered = []
@@ -344,6 +355,9 @@ def main():
     keyword_skipped = before_keyword - len(keyword_filtered)
     if keyword_skipped:
         print(f"[Filtro] {keyword_skipped} ofertas no-tech eliminadas por keywords")
+
+    print(f"[Filtro previo IA] {len(keyword_filtered)} ofertas aptas para analizar "
+          f"(antes del límite de {config.MAX_JOBS_FOR_AI_ANALYSIS})")
 
     jobs_to_process = keyword_filtered[:config.MAX_JOBS_FOR_AI_ANALYSIS]
     print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx {config.MAX_JOBS_FOR_AI_ANALYSIS} para análisis IA)")
