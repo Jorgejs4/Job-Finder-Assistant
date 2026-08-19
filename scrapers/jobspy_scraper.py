@@ -78,5 +78,13 @@ class JobSpyScraper(BaseScraper):
         for job in jobs:
             unique.setdefault(job["link"], job)
         result = list(unique.values())
-        print(f"[JobSpy] {len(result)} ofertas únicas encontradas para '{search_query}'")
+        # Count unique results per source, after merging locations and URLs.
+        jobs_by_site = {site: 0 for site in sites}
+        for job in result:
+            source = job.get("source", "").removeprefix("JobSpy/")
+            jobs_by_site[source] = jobs_by_site.get(source, 0) + 1
+        for site in sites:
+            site_count = jobs_by_site.get(site, 0)
+            print(f"[JobSpy/{site}] {site_count} ofertas encontradas para '{search_query}'")
+        print(f"[JobSpy] Total único: {len(result)} ofertas para '{search_query}'")
         return result
