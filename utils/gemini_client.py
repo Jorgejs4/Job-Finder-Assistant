@@ -285,7 +285,7 @@ class GeminiClient:
         Analiza el siguiente Currículum Vitae (CV) o perfil profesional. 
         Extrae la información clave y sugiere hasta 4 títulos de trabajo específicos que se adapten perfectamente a este perfil para realizar una búsqueda de empleo efectiva en portales de empleo.
         Asegúrate de que los puestos recomendados estén alineados estrictamente con el perfil del candidato.
-        Para maximizar la cantidad de ofertas encontradas en portales españoles (como InfoJobs o Indeed España), incluye tanto el término en inglés como su traducción o equivalente común en español (por ejemplo, 'Desarrollador Junior' y 'Junior Developer', 'Frontend Developer' y 'Desarrollador Frontend', etc.) como roles separados en la lista de recomendados.
+        Devuelve únicamente familias profesionales canónicas en inglés, sin Junior, Senior, Jr, Sr, Mid, Lead, Principal, Staff ni equivalentes. No devuelvas traducciones duplicadas ni títulos completos de ofertas concretas.
 
         Texto del CV:
         ---

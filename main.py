@@ -208,16 +208,16 @@ def main():
         scrapers = [cls() for _, cls in SCRAPERS_SIMPLE]
         print("[Modo] SIMPLE: solo scrapers HTTP (usa USE_HEADLESS_SCRAPERS=true para el modo completo)")
 
-    roles_to_search = profile.recommended_roles[:4]
+    roles_to_search = []
+    for raw_role in profile.recommended_roles[:4]:
+        role = config.normalize_role_title(raw_role)
+        if role and role.lower() not in {r.lower() for r in roles_to_search}:
+            roles_to_search.append(role)
 
     # ── BÚSQUEDA MULTILINGÜE ──
     roles_en = []
     for role in roles_to_search:
-        role_lower = role.lower().strip()
-        if role_lower in config.ROLE_TRANSLATIONS:
-            roles_en.append(config.ROLE_TRANSLATIONS[role_lower])
-        else:
-            roles_en.append(role)
+        roles_en.append(config.translate_role_to_english(role))
 
     print(f"[Buscador] Roles (ES): {roles_to_search}")
     print(f"[Buscador] Roles (EN): {roles_en}")

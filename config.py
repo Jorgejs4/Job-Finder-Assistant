@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
@@ -179,6 +180,11 @@ def classify_archive_reason(job: dict) -> str | None:
 
 # Traducción de roles ES → EN para scrapers internacionales
 ROLE_TRANSLATIONS = {
+    "desarrollador full stack": "full stack developer",
+    "desarrollador de software": "software developer",
+    "desarrollador software": "software developer",
+    "desarrollador python": "python developer",
+    "desarrollador java": "java developer",
     "desarrollador backend": "backend developer",
     "desarrollador frontend": "frontend developer",
     "ingeniero de software": "software engineer",
@@ -208,6 +214,22 @@ ROLE_TRANSLATIONS = {
     "rust developer": "rust developer",
     "typescript developer": "typescript developer",
 }
+
+ROLE_LEVEL_PREFIXES = re.compile(r"^(?:junior|jr\.?|senior|sr\.?|mid(?:-level)?|lead|principal|staff|entry[- ]level)\s+", re.I)
+ROLE_LEVEL_SUFFIXES = re.compile(r"\s+(?:junior|jr\.?|senior|sr\.?|mid(?:-level)?|lead|principal|staff|entry[- ]level)$", re.I)
+
+def normalize_role_title(role: str) -> str:
+    value = re.sub(r"\s+", " ", (role or "").strip())
+    previous = None
+    while value and value != previous:
+        previous = value
+        value = ROLE_LEVEL_PREFIXES.sub("", value).strip(" -")
+        value = ROLE_LEVEL_SUFFIXES.sub("", value).strip(" -")
+    return value
+
+def translate_role_to_english(role: str) -> str:
+    normalized = normalize_role_title(role)
+    return ROLE_TRANSLATIONS.get(normalized.lower(), normalized)
 
 # Pipeline de aplicaciones
 APPLICATION_STATUSES = [
