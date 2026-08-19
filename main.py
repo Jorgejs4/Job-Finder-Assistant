@@ -15,12 +15,12 @@ from utils.cv_generator import CVGenerator
 from utils.feedback_manager import FeedbackManager
 from scrapers.infojobs_scraper import InfoJobsScraper
 from scrapers.linkedin_scraper import LinkedInScraper
-from scrapers.indeed_scraper import IndeedScraper
 from scrapers.remotive_scraper import RemotiveScraper
 from scrapers.tecnobs_scraper import TecnoJobsScraper
 from scrapers.jobfluent_scraper import JobfluentScraper
 from scrapers.jooble_scraper import JoobleScraper
 from scrapers.getonbrd_scraper import GetOnBoardScraper
+from scrapers.jobspy_scraper import JobSpyScraper
 from notion_sync import NotionSync
 
 
@@ -187,8 +187,9 @@ def main():
         ("Jooble", JoobleScraper),
         ("GetOnBoard", GetOnBoardScraper),
     ]
+    if config.USE_JOBSPY:
+        SCRAPERS_SIMPLE.append(("JobSpy", JobSpyScraper))
     SCRAPERS_HEADLESS = [
-        ("Indeed", IndeedScraper),
         ("Jobfluent", JobfluentScraper),
     ]
 

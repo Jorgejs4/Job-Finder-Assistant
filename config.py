@@ -77,6 +77,10 @@ MAX_DESCRIPTION_LENGTH = int(os.getenv("MAX_DESCRIPTION_LENGTH", "500"))
 INDEED_MAX_AGE_DAYS = int(os.getenv("INDEED_MAX_AGE_DAYS", "7"))
 REMOTIVE_CATEGORY = os.getenv("REMOTIVE_CATEGORY", "software-dev")
 GETONBRD_CATEGORY = os.getenv("GETONBRD_CATEGORY", "programming")
+USE_JOBSPY = os.getenv("USE_JOBSPY", "true").lower() in ("true", "1", "yes")
+JOBSPY_SITES = os.getenv("JOBSPY_SITES", "indeed,glassdoor,google,zip_recruiter")
+JOBSPY_HOURS_OLD = int(os.getenv("JOBSPY_HOURS_OLD", "168"))
+JOBSPY_COUNTRY_INDEED = os.getenv("JOBSPY_COUNTRY_INDEED", "Spain")
 
 # === HOSTING ===
 GITHUB_REPO = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
@@ -244,7 +248,7 @@ NON_TECH_KEYWORDS = [
 ]
 
 # Scrapers que buscan en inglés
-EN_SCRAPERS = {"LinkedInScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper"}
+EN_SCRAPERS = {"LinkedInScraper", "RemotiveScraper", "JoobleScraper", "GetOnBoardScraper", "JobSpyScraper"}
 
 # Plataformas que publican ofertas en inglés
 ENGLISH_SOURCES = {"LinkedIn", "Remotive"}

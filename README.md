@@ -12,13 +12,14 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 |------------|------|-----------|
 | InfoJobs | Scraping HTML | España |
 | LinkedIn | API pública guest | Global |
-| Indeed | Scraping HTML | España |
+| Indeed | JobSpy | España |
 | RemoteOK | API JSON | Remoto |
 | Remotive | API JSON | Remoto |
 | TecnoEmpleo | Scraping HTML | España |
 | Jobfluent | Scraping HTML | Global |
 | Jooble | API/HTML | Global (agregador) |
 | GetOnBoard | Scraping HTML | LATAM (remoto) |
+| JobSpy | Glassdoor / Google Jobs / ZipRecruiter | Global |
 
 ---
 

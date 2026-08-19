@@ -16,6 +16,9 @@ os.environ.setdefault("DESIRED_LOCATIONS", "Remoto")
 os.environ.setdefault("MOCK_GEMINI", "true")
 os.environ.setdefault("GEMINI_API_KEY", "test-key-not-real")
 os.environ.setdefault("GEMINI_API_KEYS", "test-key-not-real")
+# El test valida JobSpy a través de Indeed sin lanzar una búsqueda por cada
+# una de sus fuentes configuradas en producción.
+os.environ.setdefault("JOBSPY_SITES", "indeed")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -31,7 +34,7 @@ errors = []
 ALL_SCRAPERS = {
     "InfoJobs": ("scrapers.infojobs_scraper", "InfoJobsScraper"),
     "LinkedIn": ("scrapers.linkedin_scraper", "LinkedInScraper"),
-    "Indeed": ("scrapers.indeed_scraper", "IndeedScraper"),
+    "JobSpy/Indeed": ("scrapers.jobspy_scraper", "JobSpyScraper"),
     "Remotive": ("scrapers.remotive_scraper", "RemotiveScraper"),
     "TecnoJobs": ("scrapers.tecnobs_scraper", "TecnoJobsScraper"),
     "Jobfluent": ("scrapers.jobfluent_scraper", "JobfluentScraper"),
