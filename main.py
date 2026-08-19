@@ -214,6 +214,25 @@ def main():
         if role and role.lower() not in {r.lower() for r in roles_to_search}:
             roles_to_search.append(role)
 
+    # Añadir familias de puesto derivadas de las skills del CV. Gemini puede
+    # concentrar sus cuatro recomendaciones en variantes del mismo rol; estas
+    # búsquedas garantizan cobertura de frontend/backend y stacks relevantes.
+    skills_text = " ".join(profile.key_skills).lower()
+    skill_roles = []
+    if any(k in skills_text for k in ("javascript", "typescript", "react", "angular", "vue", "html", "css")):
+        skill_roles.append("Frontend Developer")
+    if any(k in skills_text for k in ("python", "java", "c#", ".net", "sql", "api", "backend")):
+        skill_roles.append("Backend Developer")
+    if "java" in skills_text:
+        skill_roles.append("Java Developer")
+    if "python" in skills_text:
+        skill_roles.append("Python Developer")
+    if any(k in skills_text for k in ("javascript", "html", "css", "api", "sql")):
+        skill_roles.append("Full Stack Developer")
+    for role in skill_roles:
+        if role.lower() not in {r.lower() for r in roles_to_search}:
+            roles_to_search.append(role)
+
     # ── BÚSQUEDA MULTILINGÜE ──
     roles_en = []
     for role in roles_to_search:
