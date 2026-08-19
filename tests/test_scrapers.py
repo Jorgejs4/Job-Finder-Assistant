@@ -42,7 +42,7 @@ ALL_SCRAPERS = {
     "GetOnBoard": ("scrapers.getonbrd_scraper", "GetOnBoardScraper"),
 }
 
-MAX_PER_PLATFORM = 50
+MAX_PER_PLATFORM = 250
 
 
 def import_scraper(module_path: str, class_name: str):

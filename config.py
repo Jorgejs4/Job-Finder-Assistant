@@ -44,7 +44,7 @@ SMTP_GMAIL_PASSWORD = os.getenv("SMTP_GMAIL_PASSWORD", "")
 NOTIFY_EMAIL = os.getenv("NOTIFY_EMAIL", SMTP_GMAIL_USER)
 
 # Límite de ofertas por plataforma por ejecución
-MAX_JOBS_PER_SCRAPER = int(os.getenv("MAX_JOBS_PER_SCRAPER", "50"))
+MAX_JOBS_PER_SCRAPER = int(os.getenv("MAX_JOBS_PER_SCRAPER", "250"))
 
 # Modo de scraping: "simple" (solo HTTP) o "full" (intenta headless/Playwright)
 USE_HEADLESS_SCRAPERS = os.getenv("USE_HEADLESS_SCRAPERS", "false").lower() in ("true", "1", "yes")
