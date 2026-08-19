@@ -356,11 +356,16 @@ def main():
     if keyword_skipped:
         print(f"[Filtro] {keyword_skipped} ofertas no-tech eliminadas por keywords")
 
+    analysis_limit = config.MAX_JOBS_FOR_AI_ANALYSIS
+    analysis_label = "sin límite" if analysis_limit <= 0 else str(analysis_limit)
     print(f"[Filtro previo IA] {len(keyword_filtered)} ofertas aptas para analizar "
-          f"(antes del límite de {config.MAX_JOBS_FOR_AI_ANALYSIS})")
+          f"(límite: {analysis_label})")
 
-    jobs_to_process = keyword_filtered[:config.MAX_JOBS_FOR_AI_ANALYSIS]
-    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (máx {config.MAX_JOBS_FOR_AI_ANALYSIS} para análisis IA)")
+    jobs_to_process = (
+        keyword_filtered if analysis_limit <= 0
+        else keyword_filtered[:analysis_limit]
+    )
+    print(f"[Procesamiento] {len(jobs_to_process)} ofertas tras filtros (límite IA: {analysis_label})")
 
     # Batch dedup: cargar URLs de Notion una sola vez
     existing_urls = set(notion_sync.get_existing_urls())
@@ -448,18 +453,20 @@ def main():
                 print(f"    [Error] Regenerando CV: {e}")
                 feedback_mgr.mark_done(fb_job_id)
 
-    print(f"\n[Análisis] Procesando {min(len(pre_filtered), config.MAX_JOBS_FOR_AI_ANALYSIS)} ofertas con {config.MAX_GEMINI_WORKERS} hilos Gemini...")
+    analysis_count = len(pre_filtered) if analysis_limit <= 0 else min(len(pre_filtered), analysis_limit)
+    print(f"\n[Análisis] Procesando {analysis_count} ofertas con {config.MAX_GEMINI_WORKERS} hilos Gemini...")
 
     pending_futures = []
     with ThreadPoolExecutor(max_workers=config.MAX_GEMINI_WORKERS) as executor:
-        for job in pre_filtered[:config.MAX_JOBS_FOR_AI_ANALYSIS]:
+        jobs_for_analysis = pre_filtered if analysis_limit <= 0 else pre_filtered[:analysis_limit]
+        for job in jobs_for_analysis:
             if stop_event.is_set():
                 break
             future = executor.submit(_analyze_single_job, (gemini, job, cv_text, rate_limiter, stop_event))
             pending_futures.append(future)
 
         for future in as_completed(pending_futures):
-            if analyzed_count >= config.MAX_JOBS_FOR_AI_ANALYSIS:
+            if analysis_limit > 0 and analyzed_count >= analysis_limit:
                 stop_event.set()
                 break
             if stop_event.is_set():
