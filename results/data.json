@@ -45411,19 +45411,30 @@
           "tech_stack": [],
           "work_mode": "Presencial",
           "salary": "22000",
-          "salary_is_estimate": 1,
+          "salary_is_estimate": true,
           "required_experience": 0,
-          "tailored_advice": "Since this is a junior position, emphasize your academic projects, internships, and any personal coding projects on GitHub. Highlight your ability to learn quickly and your familiarity with fundamental programming concepts. Since the job description is sparse, prepare to ask specific questions during the interview about the tech stack and the team structure to show proactive interest.",
-          "cover_letter": "Building software that solves real-world problems is what drives me every day. My experience spans from developing full-stack web applications like 'El Grano de Oro'—where I integrated AI-driven recommendation systems—to creating robust desktop tools like 'Music Downloader Pro'. I am eager to bring this hands-on technical background to the Junior Developer role at Agenda Assessoria, as I thrive in environments that demand both creativity and technical precision. My academic foundation in Multiplatform Application Development and Industrial Engineering has equipped me with a strong grasp of JavaScript, Java, and SQL, while my self-taught approach ensures I adapt quickly to new tech stacks. I am particularly drawn to your team's focus on innovation and efficiency, and I am confident that my ability to deploy production-ready solutions will allow me to contribute effectively from day one. I would welcome the opportunity to discuss how my skills in full-stack development and AI integration align with the goals of your engineering team. Are you available for a brief conversation next week to explore how I can add value to Agenda Assessoria?",
-          "cv_summary": "Passionate Junior Developer with a strong focus on full-stack web and desktop applications. Proven track record in deploying production-ready projects featuring AI integration and automated workflows. Highly adaptable, C1-certified in English, and committed to delivering efficient, scalable software solutions.",
+          "tailored_advice": "Since this is a junior position, emphasize your academic projects, internships, or personal coding portfolio. Highlight your willingness to learn and your familiarity with fundamental programming concepts. Since the job description is sparse, research Agenda Assessoria's core business and mention how your technical skills can contribute to their specific industry solutions.",
+          "cover_letter": "Building software that solves real-world problems is what drives me every day. My experience spans from developing full-stack web applications like 'El Grano de Oro'—where I integrated AI-driven recommendation systems—to creating robust desktop tools like Music Downloader Pro. I thrive on the challenge of bridging the gap between complex technical requirements and user-friendly interfaces, always ensuring high-quality, production-ready code. My background in Industrial Engineering and current studies in Multiplatform Application Development have provided me with a strong analytical foundation, allowing me to adapt quickly to new technologies and workflows. I am particularly drawn to the Junior Developer role at Agenda Assessoria because of your commitment to innovation and technical excellence. I am confident that my hands-on experience with JavaScript, Java, and Docker, combined with my proactive approach to problem-solving, will allow me to contribute effectively to your team from day one. I am eager to bring my passion for automation and AI integration to your upcoming projects. Could we schedule a brief call next week to discuss how my technical background and drive for continuous learning align with the goals of your development team?",
+          "cv_summary": "Aspiring Software Developer with a strong foundation in full-stack development, AI integration, and desktop application architecture. Proven track record of deploying production-ready projects using JavaScript, Java, and Docker. Highly analytical, C1 English proficient, and dedicated to building scalable solutions that enhance user experience.",
           "cv_experience_adapted": [
             {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-stack Development",
+            "Artificial Intelligence Integration",
+            "SQL",
+            "Java",
+            "Git",
+            "Docker",
+            "HTML/CSS"
+          ],
+          "cv_projects": [
             {},
             {},
             {}
           ],
-          "cv_skills": [],
-          "cv_projects": [],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
@@ -45432,12 +45443,13 @@
           "project_match": null,
           "language": "en",
           "status": "Nuevo",
-          "archived": 1,
+          "archived": true,
           "archive_reason": "match < 10% (0%)",
           "needs_analysis": 0,
           "_first_seen": "2026-08-19T14:34:47.040878",
           "_last_seen": "2026-08-19T14:34:47.040878",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 22000
         },
         {
           "id": "5402bb9efa78",
@@ -47381,11 +47393,11 @@
           "tech_stack": [],
           "work_mode": "Presencial",
           "salary": "45000",
-          "salary_is_estimate": 1,
+          "salary_is_estimate": true,
           "required_experience": 3,
-          "tailored_advice": "Since the job description is minimal, focus your CV on core software engineering fundamentals like data structures, algorithms, and clean code practices. Highlight your proficiency in common backend or frontend stacks used in Madrid, such as Java/Spring or React/Node.js, to demonstrate versatility. Since the company is Galadrim, research their specific product domain and emphasize any relevant experience in that industry to stand out.",
-          "cover_letter": "Building software that bridges the gap between complex logic and user-centric design is what drives my daily work. My experience developing full-stack solutions, such as the 'El Grano de Oro' e-commerce platform, has allowed me to master the integration of AI models like Gemini into real-world production environments. I am eager to bring this hands-on technical expertise to the Software Engineer role at Galadrim, where I can contribute to building scalable and innovative digital products. Beyond my academic background in Industrial Engineering and Multiplatform Application Development, I have spent significant time refining my skills in JavaScript, Java, and SQL. I thrive in environments that demand rapid adaptation and independent problem-solving, whether I am architecting a desktop application with automated synchronization or deploying responsive web interfaces. My C1 English proficiency ensures that I can seamlessly integrate into your international team and contribute effectively from day one. I am genuinely excited about the work Galadrim is doing and would welcome the opportunity to discuss how my technical background and passion for automation can support your engineering goals. Are you available for a brief conversation next week to explore how I can add value to your team?",
-          "cv_summary": "Proactive Software Engineer with a strong foundation in full-stack development and AI integration. Proven track record of deploying production-ready web and desktop applications using JavaScript, Java, and SQL. Passionate about automation and scalable architecture, with a C1 English level and a commitment to delivering high-quality, user-focused software solutions.",
+          "tailored_advice": "Since the job description is minimal, focus your CV on core software engineering fundamentals like data structures, algorithms, and clean code principles. Highlight your proficiency in common backend or frontend stacks used in Madrid's tech scene (e.g., Java/Spring, Python/Django, or React/Node.js). Since the company name is Galadrim, research their specific product domain and emphasize any relevant industry experience. Ensure your CV is ATS-friendly and clearly lists your technical stack and project impact.",
+          "cover_letter": "Building software that bridges the gap between complex logic and user-centric design is what drives me. My recent work on 'El Grano de Oro' demonstrates my ability to deliver full-stack solutions, specifically integrating AI models like Gemini to enhance user experience through personalized recommendations and automated support. I thrive on turning technical challenges into production-ready applications, whether it is developing desktop tools for music management or deploying responsive web platforms for local businesses. My background in Industrial Engineering combined with my current studies in Multiplatform Application Development has equipped me with a rigorous approach to problem-solving and system architecture. I am highly proficient in JavaScript, Java, and SQL, and I am comfortable working within containerized environments using Docker. Beyond the code, my C1 English proficiency allows me to collaborate effectively in international settings and stay at the forefront of technical documentation. I am eager to bring my proactive mindset and hands-on experience to the engineering team at Galadrim. I would welcome the opportunity to discuss how my technical skills and passion for automation can contribute to your upcoming projects. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Proactive Software Engineer with a strong foundation in full-stack development and AI integration. Experienced in building and deploying production-ready web and desktop applications using JavaScript, Java, and SQL. Passionate about automation and problem-solving, with a proven ability to deliver scalable solutions and a C1 level of English for international collaboration.",
           "cv_experience_adapted": [
             {},
             {},
@@ -47402,12 +47414,13 @@
           "project_match": null,
           "language": "en",
           "status": "Nuevo",
-          "archived": 1,
+          "archived": true,
           "archive_reason": "match < 10% (0%)",
           "needs_analysis": 0,
           "_first_seen": "2026-08-19T14:34:47.042699",
           "_last_seen": "2026-08-19T14:34:47.042699",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "c116e0ff5130",
@@ -49163,32 +49176,51 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 45,
+          "tech_stack": [
+            "WordPress",
+            "HTML",
+            "CSS",
+            "JavaScript"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "22000",
+          "salary_is_estimate": true,
+          "required_experience": 1,
+          "tailored_advice": "Dado que tu perfil tiene un match bajo, destaca cualquier proyecto personal o académico donde hayas gestionado contenido en WordPress. Enfócate en demostrar tu capacidad para editar HTML/CSS dentro del editor de bloques o mediante el editor de temas, y menciona tu familiaridad con plugins de maquetación. Si tienes experiencia básica en JavaScript, resalta cómo lo has usado para pequeñas personalizaciones o interactividad en el front-end.",
+          "cover_letter": "La creación de experiencias digitales funcionales y atractivas es lo que me motiva a diario. He seguido de cerca el trabajo de su equipo y me entusiasma la posibilidad de aportar mi capacidad técnica en el desarrollo web para optimizar sus plataformas actuales. Mi perfil combina una sólida base en HTML, CSS y JavaScript con una mentalidad orientada a la resolución de problemas complejos, habilidades que he puesto a prueba en proyectos reales como el desarrollo de sitios corporativos y tiendas online con integración de IA.\n\nAunque mi formación técnica es amplia, cuento con la versatilidad necesaria para adaptarme rápidamente a los flujos de trabajo en WordPress, asegurando una gestión de contenidos eficiente y un mantenimiento impecable del front-end. Mi enfoque no es solo técnico, sino también orientado al usuario, buscando siempre que cada línea de código contribuya a una mejor experiencia de navegación y a los objetivos de negocio de la empresa.\n\nEstoy convencido de que mi proactividad y mi capacidad para aprender de forma autónoma me permitirán integrarme con éxito en su equipo desde el primer día. Me encantaría tener la oportunidad de conversar sobre cómo mi experiencia técnica puede ayudarles a alcanzar sus metas actuales. ¿Tendrían disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador de software con sólida base en HTML, CSS y JavaScript, enfocado en la creación de soluciones web eficientes y escalables. Experto en el desarrollo de proyectos desde cero, con gran capacidad de adaptación a entornos WordPress y gestión de contenidos. Perfil proactivo, con nivel de inglés C1 y experiencia demostrable en el despliegue de aplicaciones funcionales.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "WordPress",
+            "Git",
+            "Desarrollo Web Full-stack"
+          ],
+          "cv_projects": [
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044307",
           "_last_seen": "2026-08-19T14:35:07.865502",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 22000
         },
         {
           "id": "b33ca8bb9ad8",
@@ -49201,32 +49233,91 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "Full-Stack",
+            "IA"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "65000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Para este puesto de liderazgo, destaca en tu CV proyectos donde hayas integrado modelos de IA (como LLMs o APIs de OpenAI) en arquitecturas Full-Stack escalables. Enfatiza tu capacidad para tomar decisiones técnicas de alto nivel y tu experiencia liderando equipos, no solo programando. Asegúrate de mencionar metodologías ágiles y cómo has resuelto problemas de rendimiento o integración en entornos de producción.",
+          "cover_letter": "Construir soluciones que integren el desarrollo Full-Stack con la potencia de la Inteligencia Artificial es lo que me motiva cada día. He seguido de cerca la trayectoria de su equipo y me entusiasma la posibilidad de aportar mi experiencia técnica, especialmente en la implementación de modelos como Gemini y el desarrollo de arquitecturas web escalables que ya tengo en producción. Mi enfoque no se limita a escribir código, sino a crear herramientas que resuelvan problemas reales, como lo he demostrado en proyectos donde he integrado asistentes virtuales y sistemas de recomendación personalizados. Mi formación en Ingeniería Industrial y Desarrollo de Aplicaciones Multiplataforma me ha dotado de una capacidad analítica sólida, permitiéndome abordar retos técnicos complejos con una visión orientada a la eficiencia y la experiencia de usuario. Además, mi dominio del inglés nivel C1 me permite colaborar sin fricciones en entornos internacionales y mantenerme al día con las últimas tendencias tecnológicas. Estoy convencido de que mi proactividad y mi capacidad para aprender de forma autónoma encajan perfectamente con la visión de su equipo. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil técnico y mi pasión por la IA pueden contribuir al éxito de sus próximos proyectos. ¿Tendrían disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador Full-Stack con experiencia práctica en la integración de modelos de IA y despliegue de aplicaciones web escalables. Especializado en crear soluciones end-to-end, desde la arquitectura de bases de datos hasta la implementación de asistentes inteligentes. Perfil autodidacta, orientado a resultados y con capacidad para liderar el desarrollo técnico de proyectos innovadores.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Desarrollo Full-Stack",
+            "Integración de IA (Gemini API)",
+            "JavaScript",
+            "Java",
+            "SQL",
+            "Docker",
+            "Git",
+            "Inglés C1"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_12a8f9c390f6.pdf",
+          "custom_cv_html": "cv_12a8f9c390f6.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_12a8f9c390f6.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Santiago",
+            "industry": "Tecnología y Desarrollo de Software",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Node.js",
+              "Python",
+              "OpenAI API",
+              "LangChain",
+              "AWS"
+            ],
+            "culture": "Innovadora, orientada a la experimentación y al desarrollo rápido de producto",
+            "pros": [
+              "Oportunidad de trabajar con tecnologías de vanguardia en IA",
+              "Rol con alto impacto estratégico en el producto",
+              "Entorno dinámico ideal para el crecimiento profesional acelerado",
+              "Posibilidad de influir en la arquitectura técnica desde cero"
+            ],
+            "cons": [
+              "Alta carga de responsabilidad al combinar liderazgo técnico con implementación de IA",
+              "Posible ambigüedad en los procesos internos debido a la naturaleza emergente de la IA"
+            ],
+            "salary_range": "60.000€ - 90.000€ anuales",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente oportunidad si buscas liderar proyectos de IA desde una etapa temprana y tienes capacidad de autogestión. Vale la pena aplicar si te motiva el desafío técnico de integrar modelos de lenguaje en aplicaciones escalables."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044341",
           "_last_seen": "2026-08-19T14:35:07.925570",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 65000
         },
         {
           "id": "4af9a0505af6",
@@ -49239,32 +49330,88 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "Node.js",
+            "AWS"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta es breve, destaca en tu CV proyectos específicos donde hayas implementado arquitecturas serverless o microservicios en AWS usando Node.js. Asegúrate de mencionar servicios concretos como Lambda, S3, DynamoDB o API Gateway para demostrar experiencia práctica. Si tienes certificaciones de AWS, colócalas en un lugar visible.",
+          "cover_letter": "El desarrollo de soluciones escalables y eficientes es mi principal motivación, y he seguido de cerca la trayectoria de su equipo. Con una sólida base en JavaScript y una mentalidad orientada a la resolución de problemas complejos, estoy convencido de que mi perfil técnico encaja perfectamente con los retos de back-end que afrontan actualmente. En mis proyectos personales, como la plataforma de e-commerce 'El Grano de Oro', he gestionado arquitecturas completas que requieren una lógica de servidor robusta, integrando servicios externos y automatización de procesos, lo cual me ha permitido desarrollar una gran agilidad en el despliegue y mantenimiento de aplicaciones. Mi formación técnica, sumada a mi experiencia práctica con herramientas de contenedorización como Docker y mi capacidad para trabajar en entornos internacionales gracias a mi nivel C1 de inglés, me permite adaptarme rápidamente a los flujos de trabajo de su equipo. Estoy muy interesado en profundizar en el ecosistema AWS para optimizar la infraestructura de sus servicios y contribuir activamente al rendimiento de sus sistemas. Me encantaría tener la oportunidad de conversar sobre cómo mi capacidad de aprendizaje y mi enfoque práctico en el desarrollo back-end pueden aportar valor inmediato a sus proyectos actuales. Quedo a su entera disposición para concertar una entrevista y profundizar en los detalles de mi perfil.",
+          "cv_summary": "Desarrollador de software con enfoque en back-end y arquitectura de sistemas. Experto en JavaScript y desarrollo de aplicaciones full-stack, con experiencia práctica en despliegue de servicios, integración de APIs y automatización. Perfil proactivo, con capacidad técnica para implementar soluciones escalables en AWS y un nivel de inglés C1 para entornos globales.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Node.js",
+            "AWS",
+            "SQL",
+            "Docker",
+            "Git",
+            "Inteligencia Artificial",
+            "Desarrollo Full-stack"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_d274cfb1080b.pdf",
+          "custom_cv_html": "cv_d274cfb1080b.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_d274cfb1080b.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remote",
+            "industry": "HR Tech / EOR (Employer of Record)",
+            "size": "grande",
+            "tech_stack": [
+              "Node.js",
+              "AWS",
+              "TypeScript",
+              "PostgreSQL",
+              "GraphQL"
+            ],
+            "culture": "asíncrona, orientada a resultados, transparente y radicalmente remota",
+            "pros": [
+              "Líder global en el sector de trabajo remoto, lo que garantiza estabilidad y visión clara.",
+              "Cultura de trabajo asíncrono que favorece el equilibrio vida-trabajo.",
+              "Oportunidad de trabajar con equipos multiculturales de alto nivel en todo el mundo.",
+              "Beneficios competitivos diseñados específicamente para empleados remotos."
+            ],
+            "cons": [
+              "Crecimiento acelerado que puede generar procesos internos cambiantes o falta de estructura en ciertas áreas.",
+              "Alta exigencia de autonomía debido a la naturaleza distribuida del equipo."
+            ],
+            "salary_range": "80.000 USD - 130.000 USD anuales (dependiendo de la ubicación y experiencia)",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente oportunidad si buscas trabajar en una empresa que define el estándar del trabajo remoto moderno; vale totalmente la pena aplicar si valoras la autonomía y el impacto global."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044367",
           "_last_seen": "2026-08-19T14:35:07.926712",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 42000
         },
         {
           "id": "782241021e5b",
@@ -49277,32 +49424,76 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "SQL",
+            "Java"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "38000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta es genérica, destaca en tu CV proyectos donde hayas integrado el frontend (JavaScript, HTML, CSS) con el backend (Java) y la gestión de bases de datos (SQL). Asegúrate de mencionar frameworks específicos que domines (como Spring Boot para Java o React/Angular para el frontend) para demostrar versatilidad técnica.",
+          "cover_letter": "El desarrollo de software es para mí una constante búsqueda de soluciones eficientes, y he seguido de cerca la trayectoria de su equipo. Con una base sólida en JavaScript, HTML y CSS, he logrado llevar proyectos desde la concepción hasta el despliegue en producción, integrando funcionalidades complejas como asistentes basados en IA y sistemas de gestión de datos. Mi enfoque no se limita a escribir código, sino a crear herramientas que aporten valor real al usuario final.\n\nMi experiencia técnica se complementa con el manejo de Java y SQL, lenguajes que utilizo habitualmente para estructurar aplicaciones robustas y escalables. En mis proyectos personales, como la plataforma 'El Grano de Oro', he demostrado mi capacidad para gestionar el ciclo de vida completo de un producto, asegurando tanto una interfaz intuitiva como una arquitectura de backend sólida. Esta versatilidad me permite adaptarme rápidamente a los retos técnicos que su equipo enfrenta diariamente.\n\nEstoy convencido de que mi proactividad y mi capacidad para aprender de forma autónoma encajan perfectamente con la cultura de innovación de su empresa. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil técnico y mi pasión por el desarrollo full-stack pueden contribuir a sus próximos objetivos. Quedo a su entera disposición para concertar una entrevista y profundizar en cómo puedo aportar valor a su equipo desde el primer día.",
+          "cv_summary": "Desarrollador de software con sólida base en JavaScript, Java, HTML, CSS y SQL. Especializado en el desarrollo full-stack y la integración de IA en aplicaciones reales. Enfocado en la creación de soluciones escalables, con capacidad demostrada para gestionar proyectos desde el diseño hasta el despliegue y un nivel de inglés C1.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_c3d14f3ca7e2.pdf",
+          "custom_cv_html": "cv_c3d14f3ca7e2.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_c3d14f3ca7e2.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remote",
+            "industry": "HR Tech / EOR (Employer of Record)",
+            "size": "grande",
+            "tech_stack": [
+              "Ruby on Rails",
+              "React",
+              "PostgreSQL",
+              "AWS",
+              "TypeScript"
+            ],
+            "culture": "remoto-first, asíncrona, orientada a la autonomía y la transparencia",
+            "pros": [
+              "Líder global en el sector de trabajo remoto con una cultura nativa en esta modalidad",
+              "Excelente balance vida-trabajo al fomentar la flexibilidad horaria",
+              "Oportunidad de trabajar con equipos diversos y distribuidos globalmente",
+              "Producto con alto impacto que facilita el empleo internacional"
+            ],
+            "cons": [
+              "Ritmo de trabajo acelerado debido al crecimiento constante de la plataforma",
+              "La naturaleza asíncrona requiere una autogestión y comunicación escrita excepcionales"
+            ],
+            "salary_range": "80.000 USD - 140.000 USD anuales dependiendo de la ubicación y seniority",
+            "remote_friendly": true,
+            "recommendation": "Es una opción excelente si buscas estabilidad en una empresa que define el estándar del trabajo remoto; altamente recomendada para ingenieros que valoran la autonomía."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044407",
           "_last_seen": "2026-08-19T14:35:07.833045",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 38000
         },
         {
           "id": "23d8aa427ee3",
@@ -49315,32 +49506,49 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 35,
+          "tech_stack": [],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que la oferta es muy escueta, tu CV debe destacar tu capacidad para liderar proyectos de principio a fin. Asegúrate de incluir un portafolio o enlaces a repositorios que demuestren tu dominio tanto en el frontend como en el backend. Resalta arquitecturas escalables y tu experiencia con metodologías ágiles, ya que es lo que se espera de un perfil Senior Full-Stack.",
+          "cover_letter": "Tu equipo busca un perfil capaz de liderar el desarrollo integral de soluciones complejas, y mi trayectoria construyendo aplicaciones desde cero me ha preparado para asumir este reto. A mis 21 años, he logrado desplegar proyectos en producción como 'El Grano de Oro', donde integré modelos de IA para recomendaciones personalizadas y gestión de asistentes virtuales, demostrando que mi capacidad técnica va más allá de la teoría. Mi enfoque full-stack, apoyado en un dominio sólido de JavaScript, Java y SQL, junto con mi experiencia en despliegues con Docker, me permite abordar el ciclo de vida completo del software con autonomía y rigor. Además, mi formación en Ingeniería Industrial me aporta una visión analítica y orientada a la resolución de problemas críticos, algo fundamental en entornos de alta exigencia. Mi nivel de inglés C1 me permite colaborar sin fricciones en equipos internacionales, garantizando una comunicación técnica fluida. Estoy convencido de que mi proactividad y mi capacidad para aprender tecnologías emergentes rápidamente me permitirán aportar valor inmediato a vuestra arquitectura actual. Me encantaría conversar sobre cómo mi experiencia en el desarrollo de herramientas escalables y mi pasión por la automatización pueden contribuir al éxito de vuestros próximos proyectos. ¿Tendríais disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador Full-Stack con experiencia demostrable en el despliegue de aplicaciones web y de escritorio. Especializado en la integración de IA, automatización y arquitecturas escalables. Perfil proactivo, con dominio de JavaScript, Java y SQL, capaz de liderar el ciclo de vida completo del producto y trabajar eficazmente en entornos internacionales gracias a mi nivel de inglés C1.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-Stack Development",
+            "AI Integration",
+            "SQL",
+            "Git",
+            "Docker",
+            "Java",
+            "English C1"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044433",
           "_last_seen": "2026-08-19T14:35:07.833490",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "cabb6a5049a8",
@@ -49353,32 +49561,80 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "Java",
+            "C",
+            "HTML",
+            "CSS",
+            "SQL",
+            "Git",
+            "Docker",
+            "Oracle"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "38000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta es generalista, estructura tu CV destacando proyectos donde hayas integrado el frontend (JS, HTML, CSS) con el backend (Java, C). Asegúrate de mencionar tu experiencia con Docker y Git, ya que son herramientas clave para el despliegue y control de versiones que buscan. Si tienes experiencia con bases de datos SQL, detalla qué tipo de consultas o esquemas has gestionado para demostrar tu capacidad de manejo de datos.",
+          "cover_letter": "La combinación de mi formación en Ingeniería Industrial y el desarrollo de aplicaciones multiplataforma me ha permitido construir un perfil técnico versátil, capaz de abordar proyectos desde la arquitectura de bases de datos hasta la interfaz de usuario. En mis proyectos personales, como la tienda online 'El Grano de Oro', he aplicado JavaScript, SQL y herramientas de despliegue como Docker para llevar soluciones reales a producción, integrando incluso modelos de IA para mejorar la experiencia del cliente. Mi enfoque no se limita solo a escribir código, sino a resolver problemas complejos de manera eficiente y escalable. Cuento con una sólida base en Java y C, lo que me permite adaptarme rápidamente a diferentes entornos de desarrollo y arquitecturas de software. Además, mi nivel de inglés C1 me facilita la colaboración en equipos internacionales y el manejo fluido de documentación técnica avanzada. Estoy muy interesado en aportar mi capacidad de aprendizaje autónomo y mi pasión por la automatización a su equipo de ingeniería. Me encantaría tener la oportunidad de conversar sobre cómo mi experiencia técnica y mi proactividad pueden sumar valor a sus proyectos actuales. Quedo a su entera disposición para concertar una entrevista y profundizar en cómo mi perfil encaja con sus necesidades.",
+          "cv_summary": "Desarrollador de software con sólida base en JavaScript, Java y SQL, especializado en crear aplicaciones full-stack desde el concepto hasta el despliegue con Docker. Enfocado en la resolución de problemas complejos y la integración de IA, con capacidad demostrada para gestionar proyectos en producción y trabajar en entornos técnicos exigentes.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_19c3a5117327.pdf",
+          "custom_cv_html": "cv_19c3a5117327.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_19c3a5117327.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remoto (Chile)",
+            "industry": "Recursos Humanos / Tech Recruiting",
+            "size": "startup",
+            "tech_stack": [
+              "JavaScript",
+              "React",
+              "Node.js",
+              "PostgreSQL",
+              "AWS"
+            ],
+            "culture": "orientada a resultados, ágil y enfocada en la eficiencia del trabajo remoto",
+            "pros": [
+              "Enfoque total en el trabajo remoto y flexibilidad horaria.",
+              "Exposición a diversas tecnologías al gestionar procesos de selección para múltiples clientes.",
+              "Ambiente dinámico ideal para el crecimiento profesional rápido.",
+              "Cultura moderna alineada con las tendencias globales de trabajo."
+            ],
+            "cons": [
+              "Al ser una plataforma de reclutamiento, la carga de trabajo puede ser variable dependiendo de la demanda de clientes externos.",
+              "La estructura organizacional puede ser menos formal que en una empresa corporativa tradicional."
+            ],
+            "salary_range": "2.500.000 - 4.500.000 CLP mensuales",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente opción si buscas flexibilidad total y quieres trabajar en un entorno que entiende perfectamente las dinámicas del trabajo remoto. Vale la pena aplicar si valoras la autonomía y el desarrollo constante de habilidades técnicas."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044458",
           "_last_seen": "2026-08-19T14:35:07.928136",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 38000
         },
         {
           "id": "c7c71c708b6d",
@@ -49391,32 +49647,75 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "Vue.js",
+            "Node.js"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "38000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Resalta proyectos donde hayas implementado una arquitectura de comunicación eficiente entre el frontend en Vue.js y el backend en Node.js. Incluye experiencia con el ecosistema de Vue (Vuex o Pinia, Vue Router) y destaca tu capacidad para gestionar APIs RESTful o GraphQL. Si tienes experiencia con bases de datos como MongoDB o PostgreSQL, asegúrate de mencionarlo explícitamente, ya que es un complemento habitual en este stack.",
+          "cover_letter": "El desarrollo de aplicaciones escalables y eficientes es mi principal motivación, y he seguido de cerca la trayectoria de su equipo. Con una sólida base técnica en JavaScript y una mentalidad orientada a la resolución de problemas, he construido proyectos en producción que integran arquitecturas modernas, lo que me permite aportar valor inmediato a sus desarrollos actuales en Vue.js y Node.js. Mi enfoque no se limita solo a escribir código, sino a crear soluciones completas que conectan la experiencia de usuario con una lógica de backend robusta. He trabajado en el despliegue de plataformas web que incluyen paneles de administración y sistemas de IA, lo que me ha dado una visión integral del ciclo de vida del software. Mi capacidad para aprender nuevas tecnologías de forma autónoma y mi nivel de inglés C1 me permiten integrarme con agilidad en entornos dinámicos y colaborativos. Me entusiasma la posibilidad de aplicar mis conocimientos técnicos para contribuir al éxito de sus próximos retos tecnológicos. ¿Tendrían disponibilidad para una breve entrevista la próxima semana y conversar sobre cómo mi perfil encaja en sus necesidades actuales?",
+          "cv_summary": "Desarrollador Full-Stack apasionado por la creación de soluciones web escalables. Experto en el ecosistema JavaScript, con experiencia práctica en el despliegue de aplicaciones utilizando Vue.js para interfaces dinámicas y Node.js para arquitecturas de backend eficientes. Enfocado en la calidad del código, la integración de IA y la entrega de productos funcionales en entornos de producción.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_9b8ad89b7fd6.pdf",
+          "custom_cv_html": "cv_9b8ad89b7fd6.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_9b8ad89b7fd6.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Santiago",
+            "industry": "Desarrollo de Software y Servicios Digitales",
+            "size": "startup",
+            "tech_stack": [
+              "Vue.js",
+              "Node.js",
+              "JavaScript",
+              "TypeScript"
+            ],
+            "culture": "orientada a producto, ágil y colaborativa",
+            "pros": [
+              "Oportunidad de trabajar con un stack moderno y muy demandado (Vue.js/Node.js)",
+              "Entorno dinámico que permite mayor visibilidad del impacto del código",
+              "Posibilidad de participar en el ciclo completo de desarrollo de producto"
+            ],
+            "cons": [
+              "Posible falta de estructura formal debido a la naturaleza de empresas de menor escala",
+              "Alta dependencia de un stack tecnológico específico que podría limitar la exposición a otras herramientas"
+            ],
+            "salary_range": "35.000€ - 55.000€ anuales dependiendo de la experiencia",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente opción si buscas un rol con alta responsabilidad y crecimiento técnico rápido en un entorno ágil. Vale la pena aplicar si prefieres entornos donde tu trabajo tiene un impacto directo y visible en el producto final."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044481",
           "_last_seen": "2026-08-19T14:35:07.928357",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 38000
         },
         {
           "id": "add935d51b6b",
@@ -49429,32 +49728,89 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "React",
+            "Next.JS"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "32000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que el puesto es híbrido, destaca en tu CV proyectos donde hayas optimizado el rendimiento (Core Web Vitals) y la estructura semántica de aplicaciones React/Next.js para mejorar el posicionamiento orgánico. Menciona herramientas como Lighthouse, Google Search Console y técnicas de renderizado (SSR/SSG) que favorezcan el SEO técnico.",
+          "cover_letter": "El desarrollo de interfaces modernas y eficientes es mi pasión, y he seguido de cerca cómo vuestro equipo utiliza React y Next.js para crear experiencias digitales de alto impacto. Como desarrollador enfocado en el ecosistema web, he volcado mi energía en construir proyectos que no solo son funcionales, sino que están optimizados para el rendimiento y la escalabilidad, pilares fundamentales en cualquier estrategia de SEO técnico. En mis desarrollos, como la plataforma 'El Grano de Oro', he implementado arquitecturas que priorizan la experiencia de usuario y la velocidad de carga, utilizando tecnologías que se alinean perfectamente con vuestro stack tecnológico. Mi capacidad para integrar soluciones complejas, como asistentes basados en IA, me permite aportar una visión técnica versátil y orientada a resultados. Estoy convencido de que mi perfil combina la curiosidad técnica necesaria para resolver problemas complejos con la disciplina de un desarrollador que disfruta llevando sus proyectos hasta producción. Me encantaría tener la oportunidad de conversar sobre cómo mi experiencia con React y Next.js puede contribuir al éxito de vuestros próximos proyectos y ayudar a elevar el posicionamiento y la calidad de vuestras aplicaciones. ¿Podríamos agendar una breve llamada la próxima semana para profundizar en cómo encajo en vuestro equipo?",
+          "cv_summary": "Desarrollador de software especializado en el ecosistema React y Next.js, con experiencia demostrable en el despliegue de aplicaciones web optimizadas y escalables. Enfocado en la creación de interfaces de alto rendimiento, integración de APIs y mejora de la experiencia de usuario, aportando una mentalidad orientada a la resolución de problemas y al desarrollo de productos listos para producción.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "React",
+            "Next.JS",
+            "HTML5",
+            "CSS3",
+            "Git",
+            "SQL",
+            "Docker",
+            "Integración de IA"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_7b1c75fefdfa.pdf",
+          "custom_cv_html": "cv_7b1c75fefdfa.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_7b1c75fefdfa.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Bogotá",
+            "industry": "Agencia de Marketing Digital / Consultoría SEO",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Next.JS",
+              "JavaScript",
+              "SEO técnico",
+              "Google Search Console"
+            ],
+            "culture": "orientada a resultados, técnica y dinámica",
+            "pros": [
+              "Oportunidad de especializarse en el cruce entre desarrollo y posicionamiento orgánico",
+              "Uso de tecnologías modernas como Next.JS",
+              "Perfil híbrido muy demandado en el mercado actual",
+              "Enfoque en rendimiento web y Core Web Vitals"
+            ],
+            "cons": [
+              "Posible ambigüedad en el rol al combinar SEO técnico con desarrollo Front-end",
+              "Alta carga de trabajo al gestionar dos áreas críticas simultáneamente"
+            ],
+            "salary_range": "25.000 USD - 45.000 USD anuales",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente oportunidad si buscas fortalecer tu perfil técnico con habilidades de marketing digital, ideal para quienes prefieren roles versátiles en entornos de agencia."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044503",
           "_last_seen": "2026-08-19T14:35:07.928585",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 32000
         },
         {
           "id": "17a045aebb0e",
@@ -49467,32 +49823,52 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 45,
+          "tech_stack": [
+            "Angular",
+            "Node.js"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que tu match es bajo, destaca proyectos donde hayas integrado el stack MEAN (MongoDB, Express, Angular, Node.js). Asegúrate de incluir ejemplos de consumo de APIs RESTful y gestión de estado en Angular, ya que son críticos para este rol. Si tienes experiencia trabajando en equipos remotos con metodologías ágiles, resáltalo explícitamente, ya que es un requisito común para posiciones LATAM.",
+          "cover_letter": "El desarrollo de aplicaciones robustas y escalables es mi verdadera pasión, y he seguido de cerca la trayectoria de su equipo. Con una base sólida en JavaScript y una mentalidad orientada a la resolución de problemas, estoy convencido de que mi perfil encaja perfectamente con los retos técnicos que plantean en su stack de Angular y Node.js. En mis proyectos personales, como mi plataforma de e-commerce con IA, he trabajado en la integración completa de sistemas, gestionando tanto la lógica de servidor como la experiencia de usuario, lo que me ha permitido desarrollar una visión integral del ciclo de vida del software. Mi capacidad para aprender de forma autónoma y mi experiencia previa desplegando soluciones reales me permiten adaptarme con agilidad a cualquier entorno de trabajo. Además, mi nivel C1 de inglés me facilita la colaboración fluida en equipos internacionales, asegurando una comunicación técnica precisa y eficiente. Me entusiasma la posibilidad de aportar mi energía y mis conocimientos técnicos a su equipo de desarrollo. ¿Tendrían disponibilidad para una breve entrevista la próxima semana y conversar sobre cómo puedo contribuir al éxito de sus proyectos actuales?",
+          "cv_summary": "Desarrollador Full-Stack con experiencia en la creación de aplicaciones web y de escritorio, especializado en JavaScript y entornos de producción. Enfocado en el desarrollo con Angular y Node.js, con capacidad demostrada para integrar soluciones de IA y gestionar arquitecturas completas. Profesional proactivo, con nivel de inglés C1 y gran capacidad de aprendizaje técnico.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Node.js",
+            "Angular",
+            "SQL",
+            "Git",
+            "Docker",
+            "HTML/CSS",
+            "Inteligencia Artificial"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044529",
           "_last_seen": "2026-08-19T14:35:07.928817",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "7510c81ae716",
@@ -49505,32 +49881,52 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 20,
+          "tech_stack": [
+            "Golang"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que tu match es bajo, enfoca tu CV en proyectos específicos desarrollados con Golang, destacando el uso de concurrencia (goroutines, channels) y microservicios. Si no tienes experiencia profesional en Go, incluye enlaces a repositorios de GitHub con código limpio y bien documentado en este lenguaje. Asegúrate de mencionar tu capacidad para trabajar en entornos remotos y distribuidos, ya que es un puesto para LATAM.",
+          "cover_letter": "La arquitectura de alto rendimiento y la concurrencia eficiente son los pilares que me han motivado a especializarme en el desarrollo back-end. Aunque mi trayectoria se ha centrado en el desarrollo full-stack y la integración de IA, he seguido de cerca el ecosistema de Golang por su capacidad para construir sistemas escalables y robustos, una tecnología que estoy decidido a dominar profesionalmente en este proyecto. Mi experiencia previa creando aplicaciones en producción, como mi plataforma de e-commerce con IA, me ha permitido desarrollar una mentalidad orientada a la resolución de problemas complejos y a la optimización de procesos. Entiendo que el desarrollo en Go requiere precisión y una estructura sólida, competencias que aplico rigurosamente en cada uno de mis proyectos personales. Mi capacidad de aprendizaje autónomo, sumada a mi nivel de inglés C1, me permite integrarme rápidamente en equipos internacionales y adaptarme a los estándares técnicos más exigentes. Estoy muy interesado en aportar mi proactividad y mi pasión por la ingeniería de software a su equipo de desarrollo. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil técnico y mi capacidad de adaptación pueden contribuir al éxito de sus próximos retos en Golang. ¿Podríamos agendar una breve llamada esta semana para profundizar en los detalles del proyecto?",
+          "cv_summary": "Desarrollador de software con sólida capacidad de aprendizaje y experiencia en el despliegue de aplicaciones full-stack. Enfocado en la transición hacia el desarrollo back-end con Golang, aporto una mentalidad analítica, experiencia en integración de IA y un nivel de inglés C1 para entornos internacionales. Orientado a la creación de sistemas escalables, eficientes y de alto rendimiento.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Golang (Interés y capacidad de aprendizaje rápido)",
+            "Desarrollo Backend",
+            "Integración de APIs e IA",
+            "Docker",
+            "SQL",
+            "Git",
+            "JavaScript",
+            "Java",
+            "C"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044554",
           "_last_seen": "2026-08-19T14:35:07.929269",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "4fd0e4ab4101",
@@ -49543,32 +49939,40 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 25,
+          "tech_stack": [
+            "AWS"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que tu match es bajo, enfócate en resaltar proyectos específicos donde hayas implementado arquitectura serverless, gestión de infraestructura como código (Terraform/CloudFormation) y optimización de costes en AWS. Si no tienes experiencia directa, destaca certificaciones oficiales de AWS (como Solutions Architect) y proyectos personales en la nube que demuestren tu capacidad para gestionar entornos escalables.",
+          "cover_letter": "La arquitectura en la nube es el siguiente paso lógico en mi trayectoria, y mi experiencia previa integrando servicios escalables y herramientas de automatización me motiva a postularme para esta posición de Cloud Developer. Aunque mi perfil es joven, he demostrado capacidad para llevar proyectos desde el concepto hasta la producción, gestionando despliegues y optimizando el rendimiento de aplicaciones web complejas, lo cual es fundamental para entornos AWS de alta disponibilidad. Mi enfoque autodidacta me ha permitido dominar el ciclo de vida del desarrollo de software, integrando tecnologías modernas con una mentalidad orientada a la eficiencia y la resolución de problemas técnicos complejos. Estoy convencido de que mi capacidad para aprender rápidamente nuevas arquitecturas cloud, sumada a mi dominio del inglés técnico nivel C1, me permitirá aportar valor inmediato a su equipo de infraestructura. Me entusiasma la posibilidad de aplicar mis conocimientos en desarrollo full-stack y automatización para escalar sus soluciones en AWS. Agradezco de antemano su tiempo y quedo a su entera disposición para concertar una entrevista y profundizar en cómo mi perfil técnico puede contribuir al éxito de sus proyectos actuales.",
+          "cv_summary": "Desarrollador de software con sólida capacidad técnica en despliegue de aplicaciones y automatización. Enfocado en la transición hacia arquitecturas Cloud, aporto experiencia práctica en el ciclo de vida completo de proyectos, integración de APIs y optimización de sistemas. Profesional proactivo, con nivel de inglés C1 y alta capacidad de aprendizaje en entornos tecnológicos exigentes.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044577",
           "_last_seen": "2026-08-19T14:35:07.929492",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "e1923df80d5b",
@@ -49581,32 +49985,52 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 50,
+          "tech_stack": [
+            "Full-Stack"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta es para LATAM, destaca tu capacidad para trabajar en entornos remotos y asíncronos. Asegúrate de incluir un portafolio con proyectos Full-Stack donde se vea claramente el uso de tecnologías modernas (React/Node.js o similares). Si tienes experiencia trabajando con equipos distribuidos, resáltalo, ya que es un factor crítico para este tipo de vacantes.",
+          "cover_letter": "La posibilidad de integrarme como desarrollador Full-Stack en un entorno dinámico y orientado a LATAM es el paso que busco para escalar mi capacidad técnica. A mis 21 años, he transformado mi curiosidad en proyectos reales, como una tienda online con integración de IA para recomendaciones personalizadas y herramientas de escritorio que ya están en producción. Mi enfoque no se limita al código; entiendo el ciclo completo del desarrollo, desde la arquitectura de bases de datos hasta la experiencia de usuario final. Mi formación en Ingeniería Industrial y Desarrollo de Aplicaciones, sumada a mi dominio del inglés C1, me permite abordar problemas complejos con una visión analítica y global. Estoy acostumbrado a trabajar de forma autónoma, desplegando soluciones robustas y escalables que aportan valor real desde el primer día. Me entusiasma la idea de aplicar mi experiencia con JavaScript, Java y Docker en los retos técnicos de su equipo. ¿Tendrían disponibilidad para una breve llamada esta semana y conversar sobre cómo mi perfil técnico y mi capacidad de aprendizaje pueden contribuir a sus objetivos actuales?",
+          "cv_summary": "Desarrollador Full-Stack apasionado por la creación de soluciones integrales y escalables. Experto en el despliegue de aplicaciones web y de escritorio con integración de IA, manejo de bases de datos y herramientas de contenedorización como Docker. Perfil proactivo, con nivel de inglés C1 y alta capacidad para resolver problemas técnicos complejos en entornos internacionales.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_ba125186fd52.pdf",
+          "custom_cv_html": "cv_ba125186fd52.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_ba125186fd52.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044600",
           "_last_seen": "2026-08-19T14:35:07.929711",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "f05d9ded0cf4",
@@ -49619,32 +50043,86 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "React",
+            "Node.js",
+            "Python"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "38000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta es breve, destaca proyectos donde hayas integrado el stack completo (React en frontend, Node.js y Python en backend). Si tienes experiencia en microservicios o APIs que conecten ambos lenguajes de backend, resáltalo, ya que es un perfil híbrido poco común. Asegúrate de mencionar cómo gestionas el estado en React y qué frameworks de Python (como FastAPI o Django) dominas.",
+          "cover_letter": "El desarrollo de software es para mí mucho más que una profesión; es una herramienta constante de creación. He seguido de cerca su trabajo y me entusiasma la posibilidad de aportar mi experiencia técnica en React, Node.js y Python a su equipo. En mis proyectos personales, como la plataforma 'El Grano de Oro', he logrado integrar arquitecturas full-stack robustas con asistentes de IA, demostrando mi capacidad para llevar aplicaciones desde el concepto hasta un entorno de producción real y funcional.\n\nMi perfil combina la versatilidad de un desarrollador autodidacta con la disciplina académica de la Ingeniería Industrial. Esta mezcla me permite no solo escribir código limpio y eficiente, sino también entender la lógica de negocio detrás de cada funcionalidad. Estoy habituado a trabajar con herramientas modernas como Docker y Git, y mi nivel de inglés C1 me permite integrarme sin fricciones en equipos técnicos internacionales.\n\nMe motiva enormemente el reto de escalar soluciones tecnológicas y aprender de profesionales con mayor trayectoria. Estoy convencido de que mi proactividad y mi enfoque orientado a resultados encajan perfectamente con la visión de su empresa. ¿Tendrían disponibilidad para una breve entrevista la próxima semana y conversar sobre cómo mi perfil puede sumar valor a sus proyectos actuales?",
+          "cv_summary": "Desarrollador Full-Stack apasionado por la creación de aplicaciones escalables. Experto en el ecosistema React, Node.js y Python, con experiencia demostrable en el despliegue de proyectos reales integrados con IA. Perfil proactivo, con capacidad de aprendizaje rápido y enfoque en la resolución de problemas complejos.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "React",
+            "Node.js",
+            "Python",
+            "SQL",
+            "Git",
+            "Docker",
+            "Inteligencia Artificial"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_f7c1f36964ce.pdf",
+          "custom_cv_html": "cv_f7c1f36964ce.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_f7c1f36964ce.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Santiago",
+            "industry": "Desarrollo de Software y Servicios Tecnológicos",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Node.js",
+              "Python"
+            ],
+            "culture": "orientada a producto, desarrollo rápido y versatilidad técnica",
+            "pros": [
+              "Oportunidad de trabajar con un stack tecnológico moderno y versátil.",
+              "Posibilidad de tener un impacto directo en el desarrollo del producto desde etapas iniciales.",
+              "Desarrollo de habilidades full-stack completas al manejar frontend y backend."
+            ],
+            "cons": [
+              "La falta de información pública detallada sugiere una estructura organizacional poco definida o en etapas muy tempranas.",
+              "Riesgo de alta carga de trabajo debido a la necesidad de cubrir múltiples tecnologías (React, Node.js, Python) simultáneamente."
+            ],
+            "salary_range": "35.000€ - 55.000€ anuales dependiendo de la experiencia y ubicación",
+            "remote_friendly": true,
+            "recommendation": "Es una opción interesante si buscas un rol con mucha autonomía y variedad técnica, pero asegúrate de validar la estabilidad financiera y la visión del proyecto durante la entrevista."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044623",
           "_last_seen": "2026-08-19T14:35:07.930192",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 38000
         },
         {
           "id": "a3bdcf0d1e25",
@@ -49721,32 +50199,82 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "28000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que la oferta es genérica, destaca proyectos donde hayas implementado interfaces responsivas utilizando JavaScript moderno (ES6+). Asegúrate de mencionar tu experiencia con frameworks populares como React, Vue o Angular, ya que son el estándar en el mercado actual. Incluye un enlace a tu portafolio o GitHub para demostrar tu dominio de HTML5 y CSS3 (especialmente Flexbox y Grid).",
+          "cover_letter": "Construir interfaces que no solo sean visualmente atractivas, sino también funcionales y eficientes, es lo que me motiva cada día. He seguido de cerca el trabajo de su equipo y me entusiasma la posibilidad de aportar mi experiencia técnica en JavaScript, HTML y CSS para elevar la calidad de sus productos digitales. En mis proyectos recientes, como el desarrollo de la plataforma 'El Grano de Oro', he logrado integrar soluciones complejas con un diseño web sólido, asegurando una experiencia de usuario fluida y profesional. Mi enfoque no se limita a escribir código, sino a entender las necesidades del negocio para traducirlas en soluciones técnicas escalables. Mi formación en Ingeniería Industrial y Desarrollo de Aplicaciones Multiplataforma me ha dotado de una capacidad analítica que aplico constantemente en la resolución de problemas de front-end. Además, mi dominio del inglés nivel C1 me permite colaborar sin barreras en entornos dinámicos y globales. Me encantaría tener la oportunidad de conversar sobre cómo mi proactividad y mis habilidades técnicas pueden sumar valor a sus próximos retos de desarrollo. ¿Tendrían disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador de software con sólida base en JavaScript, HTML y CSS, especializado en la creación de interfaces web funcionales y escalables. Experto en integrar soluciones de IA y optimizar la experiencia de usuario en proyectos reales en producción. Perfil proactivo, con capacidad de aprendizaje rápido y nivel de inglés C1, orientado a aportar valor inmediato en equipos de desarrollo front-end.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "Git",
+            "SQL",
+            "Java",
+            "Docker"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_db9b2629826a.pdf",
+          "custom_cv_html": "cv_db9b2629826a.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_db9b2629826a.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Santiago",
+            "industry": "Tecnología y Servicios de Software",
+            "size": "startup",
+            "tech_stack": [
+              "JavaScript",
+              "React",
+              "HTML5",
+              "CSS3"
+            ],
+            "culture": "Indefinida, probablemente ágil por necesidad de mercado.",
+            "pros": [
+              "Oportunidad de participar en la construcción de procesos desde cero.",
+              "Potencial para un impacto directo en el producto final.",
+              "Flexibilidad inherente a organizaciones pequeñas o emergentes."
+            ],
+            "cons": [
+              "La falta de información pública detallada sugiere una estructura organizacional poco definida o en etapa muy temprana.",
+              "Posible falta de procesos estandarizados de desarrollo debido a la ambigüedad de la marca."
+            ],
+            "salary_range": "25.000 - 45.000 USD anuales (estimado según mercado regional)",
+            "remote_friendly": true,
+            "recommendation": "Debido a la falta de presencia digital clara, se recomienda investigar profundamente la estabilidad financiera y el modelo de negocio antes de avanzar en el proceso de selección."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044714",
           "_last_seen": "2026-08-19T14:35:07.924781",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 28000
         },
         {
           "id": "45d0168a82b6",
@@ -49759,32 +50287,85 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "APIs REST"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que la oferta se centra exclusivamente en APIs REST, destaca en tu CV proyectos donde hayas diseñado, documentado (Swagger/OpenAPI) y consumido servicios RESTful. Menciona herramientas de testing como Postman o Insomnia y tu experiencia gestionando autenticación (OAuth2, JWT). Si tienes experiencia con arquitecturas de microservicios o integración de sistemas de terceros, resáltalo, ya que es el núcleo de este puesto.",
+          "cover_letter": "La arquitectura de sistemas y la comunicación eficiente entre servicios son los pilares que guían mi desarrollo técnico. He seguido de cerca su enfoque en la creación de soluciones escalables y creo firmemente que mi experiencia construyendo aplicaciones full-stack, donde la integración de APIs REST y la gestión de datos son fundamentales, encaja perfectamente con los retos técnicos de su equipo. En proyectos como 'El Grano de Oro', he implementado flujos de comunicación complejos, asegurando que la interacción entre el frontend y los servicios de IA sea fluida, robusta y eficiente. Mi capacidad para integrar modelos de lenguaje y gestionar servicios externos me ha permitido desarrollar una mentalidad orientada a la resolución de problemas técnicos complejos, siempre bajo un estándar de código limpio y mantenible. Más allá de las herramientas, aporto una gran capacidad de aprendizaje autónomo y una mentalidad analítica forjada en mi formación en Ingeniería Industrial. Estoy convencido de que mi perfil técnico y mi proactividad pueden aportar valor inmediato a sus proyectos de integración. Me encantaría tener la oportunidad de conversar sobre cómo mi experiencia con APIs y mi pasión por la automatización pueden contribuir a los objetivos de su equipo. ¿Tendrían disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador de software apasionado por la integración de sistemas y el desarrollo full-stack. Especializado en la implementación de APIs REST, integración de modelos de IA y automatización de procesos. Perfil proactivo con experiencia demostrable en proyectos en producción, alta capacidad analítica y dominio de inglés C1 para entornos técnicos internacionales.",
+          "cv_experience_adapted": [
+            {}
+          ],
+          "cv_skills": [
+            "APIs REST",
+            "JavaScript",
+            "Integración de IA",
+            "SQL",
+            "Git",
+            "Docker",
+            "Java",
+            "Desarrollo Full-Stack"
+          ],
+          "cv_projects": [
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_0d17fda276fa.pdf",
+          "custom_cv_html": "cv_0d17fda276fa.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_0d17fda276fa.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Santiago",
+            "industry": "Servicios de Software y Consultoría Tecnológica",
+            "size": "startup",
+            "tech_stack": [
+              "RESTful APIs",
+              "Node.js",
+              "Python",
+              "PostgreSQL",
+              "Docker",
+              "AWS"
+            ],
+            "culture": "orientada a la eficiencia técnica y resolución de problemas",
+            "pros": [
+              "Enfoque especializado en arquitectura de APIs y conectividad",
+              "Oportunidad de trabajar en proyectos de integración de alto impacto",
+              "Entorno dinámico con retos técnicos constantes",
+              "Posibilidad de especialización en protocolos de comunicación"
+            ],
+            "cons": [
+              "Posible falta de estructura formal en procesos debido a la ambigüedad de la marca",
+              "Alta dependencia de integraciones de terceros que pueden limitar la autonomía técnica"
+            ],
+            "salary_range": "35.000€ - 55.000€ anuales",
+            "remote_friendly": true,
+            "recommendation": "Es una opción sólida si buscas fortalecer tus habilidades en backend y arquitectura de sistemas; asegúrate de preguntar sobre la estabilidad de los proyectos durante la entrevista."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044770",
           "_last_seen": "2026-08-19T14:35:07.926267",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "3f0f0c0ab495",
@@ -49797,32 +50378,87 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "Java",
+            "Spring Boot"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que la oferta es breve, destaca en tu CV proyectos donde hayas implementado microservicios con Spring Boot. Incluye detalles sobre el uso de JPA/Hibernate, gestión de APIs REST y herramientas de testing como JUnit o Mockito. Si tienes experiencia con bases de datos SQL o contenedores como Docker, asegúrate de resaltarlo, ya que son complementos muy valorados para este perfil.",
+          "cover_letter": "El desarrollo de soluciones robustas y escalables es lo que me motiva a diario. He seguido de cerca la trayectoria de su equipo y me entusiasma la posibilidad de aportar mis conocimientos en Java y mi capacidad de resolución de problemas a sus proyectos actuales. Aunque mi perfil es versátil, mi enfoque técnico se ha consolidado en la creación de arquitecturas eficientes, y estoy convencido de que mi experiencia construyendo aplicaciones desde cero encaja perfectamente con las necesidades de su stack tecnológico basado en Spring Boot. Mi capacidad para integrar sistemas complejos, sumada a mi proactividad en el desarrollo de herramientas propias, me permite adaptarme con rapidez a entornos de alta exigencia. Además, mi dominio del inglés nivel C1 me facilita la colaboración en equipos internacionales y el manejo fluido de documentación técnica avanzada. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil técnico y mi pasión por la ingeniería de software pueden sumar valor a su equipo de desarrollo. Quedo a su entera disposición para concertar una entrevista y profundizar en cómo mis competencias pueden contribuir al éxito de sus próximos retos en Java.",
+          "cv_summary": "Desarrollador de software con sólida base en Java y arquitectura de sistemas. Enfocado en el desarrollo back-end, poseo experiencia práctica creando aplicaciones escalables y funcionales. Destaco por mi capacidad de aprendizaje autónomo, integración de tecnologías emergentes y un nivel de inglés C1 que facilita el trabajo en entornos técnicos globales.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Java",
+            "Spring Boot",
+            "SQL",
+            "Git",
+            "Docker",
+            "JavaScript",
+            "Oracle",
+            "Inteligencia Artificial"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_043be9fca5f0.pdf",
+          "custom_cv_html": "cv_043be9fca5f0.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_043be9fca5f0.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Santiago",
+            "industry": "Consultoría de Software y Servicios IT",
+            "size": "startup",
+            "tech_stack": [
+              "Java",
+              "Spring Boot",
+              "SQL",
+              "Microservicios"
+            ],
+            "culture": "orientada a la entrega de proyectos y desarrollo técnico especializado",
+            "pros": [
+              "Enfoque claro en tecnologías robustas como Java Spring Boot.",
+              "Oportunidad de trabajar en diversos proyectos de software.",
+              "Posibilidad de crecimiento técnico en entornos de backend complejos."
+            ],
+            "cons": [
+              "La falta de información pública detallada sugiere una estructura organizacional poco definida o en etapas muy tempranas.",
+              "Posible alta carga de trabajo debido a la naturaleza de los proyectos de consultoría o desarrollo a medida."
+            ],
+            "salary_range": "25.000€ - 45.000€ anuales dependiendo de la experiencia",
+            "remote_friendly": true,
+            "recommendation": "Es una opción viable si buscas ganar experiencia sólida en el ecosistema Java, pero asegúrate de preguntar sobre la estabilidad de los proyectos y el balance vida-trabajo durante la entrevista."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044802",
           "_last_seen": "2026-08-19T14:35:07.927420",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "3e01d3c33eaf",
@@ -49835,32 +50471,63 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "Java",
+            "Spring",
+            "Angular"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que la oferta es breve, destaca en tu CV proyectos donde hayas integrado el backend (Spring Boot) con el frontend (Angular) de forma completa. Asegúrate de mencionar versiones específicas de Java (8, 11 o 17) y de Angular, ya que esto suele ser un filtro clave para los reclutadores. Si tienes experiencia en despliegues o bases de datos, inclúyelo para diferenciarte.",
+          "cover_letter": "El desarrollo de software es mi pasión y mi forma de entender la resolución de problemas complejos. He seguido de cerca su trayectoria y me entusiasma la posibilidad de aportar mi capacidad técnica y mi proactividad a su equipo de desarrollo. Mi perfil combina una sólida base en Java, que he aplicado en diversos proyectos personales, con una gran curiosidad por las arquitecturas modernas y el ecosistema Spring, herramientas que considero fundamentales para construir aplicaciones robustas y escalables. Además, mi experiencia desarrollando interfaces web me ha permitido familiarizarme con Angular, facilitando una visión full-stack que me permite entender el ciclo de vida completo de un producto digital. Más allá de la teoría, mi enfoque es práctico: he desplegado soluciones reales que integran desde bases de datos hasta asistentes inteligentes, demostrando que puedo pasar de la idea a la producción con autonomía. Me motiva especialmente la oportunidad de trabajar en un entorno donde la calidad del código y la innovación sean la prioridad. Estoy convencido de que mi capacidad de aprendizaje rápido y mi compromiso con la excelencia técnica encajan perfectamente con los retos que afrontan. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil puede contribuir al éxito de sus próximos proyectos. ¿Podríamos agendar una breve llamada esta semana para profundizar en cómo mi experiencia técnica puede sumar valor a su equipo?",
+          "cv_summary": "Desarrollador de software con sólida base en Java, Spring y Angular, enfocado en la creación de aplicaciones full-stack escalables. Experiencia demostrable en el despliegue de proyectos reales, integrando arquitecturas backend con interfaces dinámicas. Perfil proactivo, con nivel de inglés C1 y gran capacidad para la resolución de problemas técnicos complejos.",
+          "cv_experience_adapted": [
+            {}
+          ],
+          "cv_skills": [
+            "Java",
+            "JavaScript",
+            "SQL",
+            "Git",
+            "Docker",
+            "Oracle",
+            "HTML/CSS"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_77ace43d7836.pdf",
+          "custom_cv_html": "cv_77ace43d7836.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_77ace43d7836.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044831",
           "_last_seen": "2026-08-19T14:35:07.929967",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "5099b8735f1e",
@@ -49873,32 +50540,52 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 25,
+          "tech_stack": [
+            "Ruby",
+            "React"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que tu match es bajo, enfócate en resaltar proyectos donde hayas utilizado Ruby on Rails junto con React en entornos de producción. Incluye métricas de rendimiento o escalabilidad que hayas logrado. Si no tienes experiencia directa con ambos, destaca tu capacidad de aprendizaje rápido en el stack full-stack y tu experiencia en arquitectura de software, ya que el puesto es Senior.",
+          "cover_letter": "La combinación de Ruby y React es el núcleo de los proyectos que más me apasionan, y tras revisar los requisitos de su equipo, estoy convencido de que mi perfil técnico y mi capacidad de aprendizaje autónomo encajan perfectamente con sus necesidades actuales. Aunque mi trayectoria académica en Ingeniería Industrial y Desarrollo de Aplicaciones Multiplataforma me ha dado una base sólida, es en el desarrollo de soluciones full-stack donde realmente aporto valor, integrando arquitecturas robustas con interfaces dinámicas. En mis proyectos personales, como la tienda online 'El Grano de Oro', he demostrado mi habilidad para llevar aplicaciones desde la concepción hasta la puesta en producción, gestionando bases de datos y lógica de negocio compleja. Estoy muy motivado por la posibilidad de aplicar mi experiencia en el desarrollo de software y mi capacidad de resolución de problemas en un entorno profesional de alto nivel como el suyo. Me encantaría tener la oportunidad de conversar sobre cómo mi enfoque técnico y mi proactividad pueden contribuir al éxito de sus próximos retos en Ruby y React. ¿Tendrían disponibilidad para una breve llamada la próxima semana?",
+          "cv_summary": "Desarrollador de software apasionado por la creación de aplicaciones full-stack, con experiencia práctica en despliegue de proyectos web y herramientas de automatización. Enfocado en la arquitectura de sistemas y el desarrollo de interfaces eficientes, con gran capacidad de aprendizaje en nuevas tecnologías y un nivel de inglés C1 para entornos internacionales.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "SQL",
+            "Git",
+            "Docker",
+            "HTML/CSS",
+            "Java",
+            "C",
+            "Inteligencia Artificial"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044855",
           "_last_seen": "2026-08-19T14:35:07.926492",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "f09c82023c02",
@@ -49911,32 +50598,52 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 15,
+          "tech_stack": [
+            "Cloud",
+            "Platform Engineering"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "65000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que tu match actual es bajo, enfoca tu CV en proyectos donde hayas diseñado y mantenido infraestructuras escalables en la nube (AWS, Azure o GCP). Destaca tu experiencia con herramientas de IaC como Terraform o Pulumi y plataformas de orquestación como Kubernetes. Dado que el puesto es para LATAM, enfatiza tu capacidad para trabajar en entornos remotos y distribuidos, y asegúrate de incluir certificaciones oficiales de Cloud que validen tu perfil senior.",
+          "cover_letter": "La arquitectura en la nube y la ingeniería de plataformas son áreas que me apasionan profundamente, y sigo de cerca el impacto que tienen en la escalabilidad de las aplicaciones modernas. Aunque mi trayectoria se ha centrado en el desarrollo full-stack y la integración de IA, he incorporado herramientas como Docker y Git en mis proyectos en producción, como mi plataforma de e-commerce desplegada en Vercel, lo que me ha permitido entender la importancia de la automatización y el despliegue eficiente. Mi formación en Ingeniería Industrial me ha dotado de una mentalidad analítica orientada a la optimización de procesos, una habilidad que considero clave para el rol de Cloud Platform Engineer. Estoy acostumbrado a trabajar de forma autónoma, resolviendo problemas complejos y adaptándome rápidamente a nuevas tecnologías, siempre con el objetivo de mejorar la infraestructura subyacente. Me entusiasma la posibilidad de aportar mi capacidad técnica y mi proactividad a un equipo de alto nivel, aprendiendo de los desafíos que implica gestionar entornos cloud a gran escala. Agradecería mucho la oportunidad de conversar sobre cómo mi perfil, enfocado en la resolución de problemas y la mejora continua, puede contribuir al éxito de su equipo de ingeniería. Quedo a su entera disposición para concertar una entrevista.",
+          "cv_summary": "Desarrollador de software con sólida base técnica en automatización, despliegue en la nube y arquitectura de aplicaciones. Experto en integrar soluciones escalables, con experiencia práctica en Docker y Git, y una fuerte capacidad analítica orientada a la optimización de plataformas. Enfocado en la excelencia operativa y el aprendizaje continuo en entornos de alta exigencia.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Docker",
+            "Git",
+            "JavaScript",
+            "SQL",
+            "Java",
+            "C",
+            "Automatización",
+            "Desarrollo Full-stack"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044898",
           "_last_seen": "2026-08-19T14:34:47.044898",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 65000
         },
         {
           "id": "a9ecbcf9d59d",
@@ -49949,32 +50656,51 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 40,
+          "tech_stack": [
+            "Ruby",
+            "Node.js"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que el puesto es Senior, destaca en tu CV proyectos donde hayas liderado la arquitectura de sistemas escalables, ya sea en Ruby on Rails o Node.js. Si tienes experiencia en ambos, enfatiza tu capacidad de adaptación técnica. Incluye métricas de rendimiento o mejora de procesos que hayas implementado, ya que esto es clave para perfiles senior. Si tu experiencia es mayormente en un lenguaje, resalta tu capacidad de aprendizaje rápido y tu conocimiento profundo en patrones de diseño y buenas prácticas de ingeniería de software.",
+          "cover_letter": "La arquitectura de software y la resolución de problemas complejos son los pilares sobre los que he construido mi perfil técnico. Aunque mi trayectoria académica en Ingeniería Industrial y Desarrollo de Aplicaciones Multiplataforma me ha dado una base sólida, es en el desarrollo de proyectos propios donde he perfeccionado mi capacidad para implementar soluciones full-stack, integrando tecnologías modernas con herramientas de inteligencia artificial para optimizar la experiencia de usuario. Entiendo que buscan un perfil con experiencia en Ruby o Node.js, y aunque mi stack principal se ha centrado en JavaScript, mi capacidad de aprendizaje autodidacta y mi experiencia previa con arquitecturas de backend me permiten adaptarme con rapidez a nuevos entornos de desarrollo. Estoy muy motivado por la posibilidad de aplicar mis conocimientos en un entorno profesional exigente donde pueda contribuir al crecimiento de sus productos digitales. Me entusiasma la idea de aportar mi enfoque proactivo y mi habilidad para integrar servicios complejos en sus sistemas actuales. Agradezco de antemano su tiempo al revisar mi perfil y quedo a su entera disposición para concertar una entrevista y profundizar en cómo mi capacidad técnica y mi pasión por el desarrollo pueden sumar valor a su equipo de ingeniería.",
+          "cv_summary": "Desarrollador de software con sólida capacidad técnica en el ciclo completo de aplicaciones web y de escritorio. Especializado en la integración de IA y arquitecturas backend, con una alta capacidad de aprendizaje autodidacta y fluidez en inglés C1. Enfocado en la entrega de soluciones escalables y eficientes, con gran adaptabilidad a nuevos lenguajes y entornos de trabajo.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Node.js",
+            "SQL",
+            "Git",
+            "Docker",
+            "Inteligencia Artificial",
+            "Desarrollo Web Full-stack"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044924",
           "_last_seen": "2026-08-19T14:35:07.929043",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "6d19dec4211d",
@@ -49987,32 +50713,52 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 35,
+          "tech_stack": [
+            "DataOps",
+            "Data Engineering",
+            "CI/CD",
+            "Cloud Infrastructure",
+            "Monitoring",
+            "Automation"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que tu match es bajo, enfoca tu CV en proyectos donde hayas automatizado pipelines de datos. Resalta tu experiencia con herramientas de CI/CD (Jenkins, GitLab CI) y plataformas Cloud (AWS, Azure o GCP). Si no tienes experiencia directa en DataOps, destaca tu capacidad para gestionar infraestructura y monitorización, ya que son pilares fundamentales de este rol. Incluye palabras clave como 'Data Pipeline', 'Infrastructure as Code' y 'Monitoring' para superar los filtros ATS.",
+          "cover_letter": "La automatización y la eficiencia en el despliegue de software son los pilares sobre los que he construido mis proyectos personales, como mi plataforma de e-commerce con IA y mis herramientas de gestión de escritorio. Mi experiencia desarrollando aplicaciones full-stack y desplegándolas en entornos cloud me ha permitido entender la importancia de un ciclo de vida de software robusto, donde la integración continua y la monitorización son clave para garantizar la estabilidad del sistema. Actualmente, estoy profundizando en el uso de Docker y Git para optimizar mis flujos de trabajo, alineándome con las necesidades de un entorno DataOps. Mi capacidad para aprender de forma autónoma y mi formación técnica en Ingeniería Industrial me brindan una base sólida para abordar los retos de infraestructura y automatización de datos que requiere vuestro equipo. Estoy muy interesado en aportar mi proactividad y mis habilidades técnicas para mejorar vuestros procesos de despliegue y gestión de datos. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil encaja con vuestros objetivos actuales y cómo puedo contribuir al éxito de vuestra infraestructura. ¿Podríamos agendar una breve llamada la próxima semana para profundizar en ello?",
+          "cv_summary": "Desarrollador de software con enfoque en automatización, despliegue en la nube y arquitectura de sistemas. Experiencia práctica en integración de IA, contenedores Docker y control de versiones, con una fuerte capacidad para optimizar flujos de trabajo y resolver problemas complejos de infraestructura. Orientado a la mejora continua y al desarrollo de soluciones escalables.",
+          "cv_experience_adapted": [
+            {}
+          ],
+          "cv_skills": [
+            "Docker",
+            "Git",
+            "SQL",
+            "JavaScript",
+            "Java",
+            "Automatización",
+            "Inglés C1"
+          ],
+          "cv_projects": [
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044952",
           "_last_seen": "2026-08-19T14:34:47.044952",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "daa90f6fc068",
@@ -50025,32 +50771,50 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 20,
+          "tech_stack": [],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "65000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que la descripción es extremadamente breve, tu CV debe enfocarse en demostrar liderazgo técnico y gestión de equipos. Resalta proyectos donde hayas tomado decisiones arquitectónicas, mentorizado a desarrolladores y gestionado el ciclo de vida completo de un producto. Asegúrate de incluir palabras clave como 'metodologías ágiles', 'gestión de stakeholders' y 'escalabilidad de sistemas' para compensar la falta de detalles en la oferta.",
+          "cover_letter": "La tecnología no es solo mi campo de estudio, sino el motor con el que construyo soluciones reales. He seguido de cerca la trayectoria de su equipo y me entusiasma la posibilidad de aportar mi capacidad técnica y visión estratégica a un rol de liderazgo tecnológico. A mis 21 años, combino mi formación en Ingeniería Industrial y Desarrollo de Aplicaciones Multiplataforma con una mentalidad orientada a la ejecución, habiendo desplegado proyectos en producción que integran desde arquitecturas web full-stack hasta modelos de inteligencia artificial como Gemini.\n\nMi experiencia técnica abarca desde el desarrollo de sistemas robustos con Java y JavaScript hasta la gestión de infraestructuras con Docker y SQL. Más allá de escribir código, me especializo en resolver problemas complejos, como lo demuestra mi proyecto 'El Grano de Oro', donde implementé un sistema de recomendaciones con IA y soporte multilingüe. Esta capacidad de ver el ciclo de vida completo del software, sumada a mi nivel C1 de inglés, me permite liderar equipos técnicos con una comunicación clara y efectiva.\n\nEstoy convencido de que mi enfoque proactivo y mi experiencia autodidacta encajan perfectamente con los retos de innovación que afrontan. Me encantaría conversar sobre cómo mi perfil puede contribuir a elevar la calidad técnica y la eficiencia de sus próximos desarrollos. ¿Tendrían disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador de software con sólida base en ingeniería y experiencia en despliegue de aplicaciones full-stack e integración de IA. Especialista en crear soluciones escalables, desde la arquitectura de bases de datos hasta la interfaz de usuario. Perfil proactivo, con capacidad técnica demostrada en entornos reales y nivel de inglés C1, orientado a liderar equipos hacia la excelencia técnica.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-stack Development",
+            "Artificial Intelligence Integration",
+            "Git",
+            "Docker",
+            "SQL",
+            "Java",
+            "C",
+            "English C1"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044975",
           "_last_seen": "2026-08-19T14:35:07.917448",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 65000
         },
         {
           "id": "05e42d2f2dc5",
@@ -50063,32 +50827,49 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 25,
+          "tech_stack": [],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 5,
+          "tailored_advice": "Dado que la descripción es extremadamente breve, tu CV debe destacar proyectos donde hayas liderado la arquitectura de sistemas back-end y escalabilidad. Enfócate en demostrar experiencia con microservicios, bases de datos de alto rendimiento y metodologías ágiles. Como el puesto es senior, enfatiza tu capacidad para mentorizar equipos y tomar decisiones técnicas críticas.",
+          "cover_letter": "Tu búsqueda de un Ingeniero Back-end Senior resuena con mi perfil orientado a la creación de soluciones robustas y escalables. Aunque mi trayectoria es joven, mi enfoque en el desarrollo de software va más allá de la teoría; he desplegado aplicaciones completas que integran bases de datos, lógica de servidor y herramientas de inteligencia artificial, como mi proyecto 'El Grano de Oro', donde implementé sistemas de recomendación y gestión de datos en producción. Mi capacidad para trabajar con JavaScript, Java y SQL, sumada a mi experiencia con Docker para la contenerización de servicios, me permite abordar retos de arquitectura con una visión técnica sólida y pragmática. Además, mi formación en Ingeniería Industrial me aporta una mentalidad analítica orientada a la optimización de procesos y la resolución de problemas complejos. Estoy habituado a trabajar con documentación técnica en inglés gracias a mi certificación C1, lo que facilita mi integración en equipos internacionales. Me entusiasma la posibilidad de aportar mi capacidad de aprendizaje rápido y mi proactividad a vuestro equipo de ingeniería. ¿Tendríais disponibilidad para una breve llamada esta semana y comentar cómo mi experiencia técnica puede sumar valor a vuestros proyectos actuales?",
+          "cv_summary": "Desarrollador de software con sólida base técnica en Java, JavaScript y SQL, especializado en el despliegue de aplicaciones full-stack y sistemas integrados con IA. Experto en arquitectura de software, uso de Docker y optimización de bases de datos, con capacidad demostrada para llevar proyectos desde el desarrollo hasta la producción. Perfil analítico, bilingüe (C1) y orientado a la resolución de problemas complejos en entornos de alta exigencia.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "Docker",
+            "Git",
+            "Inteligencia Artificial",
+            "Desarrollo Full-stack",
+            "C"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.044998",
           "_last_seen": "2026-08-19T14:34:47.044998",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "40f7110a5469",
@@ -50101,32 +50882,49 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 50,
+          "tech_stack": [],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que la descripción es extremadamente breve, tu CV debe destacar tu capacidad de adaptación y polivalencia. Incluye un resumen profesional que mencione tus lenguajes de programación principales y proyectos donde hayas participado en el ciclo completo de desarrollo. Al no haber requisitos técnicos específicos, enfócate en demostrar habilidades de resolución de problemas y trabajo en equipo, que son universales para cualquier puesto de ingeniería.",
+          "cover_letter": "La capacidad de transformar ideas en productos digitales funcionales es lo que guía mi carrera como desarrollador. He seguido de cerca el trabajo de su equipo y me entusiasma la posibilidad de aportar mi experiencia técnica en el desarrollo de soluciones robustas, desde la arquitectura de bases de datos hasta la implementación de interfaces intuitivas. Mi enfoque no se limita a escribir código, sino a resolver problemas reales mediante tecnología eficiente. En proyectos como 'El Grano de Oro', he integrado modelos de inteligencia artificial para mejorar la experiencia del usuario, demostrando mi capacidad para llevar aplicaciones desde el concepto hasta un entorno de producción real. Además, mi formación en Ingeniería Industrial y Desarrollo de Aplicaciones Multiplataforma me ha dotado de una mentalidad analítica y estructurada, ideal para enfrentar los retos técnicos de un puesto de Ingeniero de Desarrollo. Mi dominio de JavaScript, Java y herramientas de despliegue como Docker, junto con un nivel de inglés C1, me permiten integrarme rápidamente en equipos dinámicos y colaborar en entornos internacionales. Estoy convencido de que mi proactividad y mi pasión por la automatización encajan perfectamente con la visión de su empresa. Me encantaría tener la oportunidad de conversar sobre cómo mi perfil técnico y mi capacidad de aprendizaje continuo pueden sumar valor a sus proyectos actuales. Quedo a su entera disposición para concertar una entrevista.",
+          "cv_summary": "Desarrollador de software con sólida base en Ingeniería Industrial y desarrollo multiplataforma. Especializado en crear soluciones full-stack integrando inteligencia artificial y herramientas de automatización. Perfil proactivo, con proyectos en producción y capacidad para trabajar en entornos técnicos complejos con fluidez en inglés.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_1234c3311799.pdf",
+          "custom_cv_html": "cv_1234c3311799.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_1234c3311799.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.045020",
           "_last_seen": "2026-08-19T14:35:07.922066",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "dbcca7c5c817",
@@ -50139,32 +50937,87 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "IA",
+            "Hiperautomatización"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Resalta proyectos donde hayas combinado herramientas de RPA (como UiPath o Blue Prism) con modelos de lenguaje o visión artificial. Dado que es un rol de implementación, enfatiza tu capacidad para integrar APIs y gestionar el ciclo de vida completo de los modelos, desde el despliegue hasta la monitorización en entornos de producción.",
+          "cover_letter": "La intersección entre la inteligencia artificial y la hiperautomatización es el terreno donde más disfruto aplicando mis conocimientos técnicos. Tras haber desarrollado soluciones reales, como una tienda online con asistentes virtuales basados en Gemini y sistemas de automatización de procesos, he comprobado cómo la tecnología puede transformar la eficiencia operativa de cualquier negocio. Mi enfoque no se limita a escribir código, sino a diseñar arquitecturas que resuelvan problemas complejos de forma autónoma y escalable. Mi experiencia integrando modelos de lenguaje y creando herramientas de gestión automatizada, sumada a mi formación en Ingeniería Industrial, me permite entender tanto la lógica del software como la optimización de procesos de negocio. Estoy convencido de que mi capacidad para aprender rápido y mi proactividad en el desarrollo de proyectos en producción encajan perfectamente con los retos de su equipo. Me entusiasma la posibilidad de aportar mi visión técnica y mi pasión por la automatización inteligente a sus proyectos actuales. ¿Tendrían disponibilidad para una breve entrevista la próxima semana y conversar sobre cómo mi perfil puede contribuir a sus objetivos de hiperautomatización?",
+          "cv_summary": "Desarrollador de software con experiencia en la integración de modelos de IA y automatización de procesos. Especializado en el despliegue de soluciones full-stack, incluyendo asistentes virtuales y herramientas de gestión automatizada. Perfil técnico orientado a resultados, con capacidad para optimizar flujos de trabajo mediante tecnología de vanguardia y un nivel de inglés C1.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Integración de modelos de IA (Gemini)",
+            "Hiperautomatización y automatización de procesos",
+            "Desarrollo Full-stack (JavaScript, SQL)",
+            "Docker y despliegue de aplicaciones",
+            "Inglés profesional (C1)",
+            "Algoritmos de recomendación"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_183c7a7b27ae.pdf",
+          "custom_cv_html": "cv_183c7a7b27ae.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_183c7a7b27ae.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remoto (Chile)",
+            "industry": "Consultoría Tecnológica e Inteligencia Artificial",
+            "size": "startup",
+            "tech_stack": [
+              "Python",
+              "OpenAI API",
+              "LangChain",
+              "RPA (UiPath/Power Automate)",
+              "Cloud Platforms (AWS/Azure)"
+            ],
+            "culture": "orientada a resultados, innovadora y enfocada en la transformación digital",
+            "pros": [
+              "Enfoque directo en tecnologías de vanguardia como IA e hiperautomatización.",
+              "Flexibilidad laboral total al ser una empresa nativa remota.",
+              "Oportunidad de trabajar en proyectos de transformación digital de alto impacto.",
+              "Entorno dinámico ideal para el aprendizaje continuo."
+            ],
+            "cons": [
+              "Al ser una empresa de servicios de consultoría, la carga de trabajo puede ser variable según los proyectos de los clientes.",
+              "Requiere una alta capacidad de autogestión debido a la naturaleza remota y el enfoque en resultados."
+            ],
+            "salary_range": "2.500.000 - 4.500.000 CLP mensuales",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente oportunidad si buscas especializarte en IA aplicada y automatización dentro de un entorno flexible. Vale la pena aplicar si disfrutas de la consultoría y el aprendizaje rápido en tecnologías emergentes."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.045054",
           "_last_seen": "2026-08-19T14:35:07.927651",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "9646c7b8e591",
@@ -50177,32 +51030,91 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 60,
+          "tech_stack": [
+            "JavaScript",
+            "Java",
+            "SQL"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que la oferta es genérica, destaca proyectos donde hayas integrado servicios Java con bases de datos SQL y APIs en JavaScript. Asegúrate de mencionar tu experiencia en el ciclo de vida completo de desarrollo backend y tu capacidad para optimizar consultas SQL, ya que son los pilares técnicos mencionados.",
+          "cover_letter": "La capacidad de transformar requisitos complejos en soluciones funcionales y escalables es lo que guía mi trabajo diario. Como desarrollador apasionado por el backend, he construido aplicaciones completas que integran lógica de negocio robusta con bases de datos eficientes, utilizando Java y JavaScript como pilares fundamentales para mis proyectos en producción. Mi enfoque no se limita a escribir código, sino a entender la arquitectura detrás de cada sistema.\n\nEn mis desarrollos, como la plataforma de comercio electrónico 'El Grano de Oro', he gestionado flujos de datos complejos y optimizado consultas SQL para garantizar una experiencia fluida. Mi formación técnica, combinada con una mentalidad orientada a la resolución de problemas, me permite adaptarme rápidamente a entornos de trabajo exigentes. Además, mi dominio del inglés nivel C1 facilita mi integración en equipos internacionales y el manejo de documentación técnica avanzada.\n\nEstoy convencido de que mi perfil técnico y mi proactividad encajan con los retos que afronta su equipo de desarrollo. Me encantaría tener la oportunidad de conversar sobre cómo mi experiencia con Java y SQL puede aportar valor inmediato a sus proyectos actuales. Quedo a su entera disposición para concertar una entrevista y profundizar en cómo puedo contribuir a sus objetivos técnicos.",
+          "cv_summary": "Desarrollador de software con sólida base en Java, JavaScript y SQL. Especializado en la creación de aplicaciones full-stack y gestión de bases de datos, con experiencia demostrable en proyectos en producción. Perfil proactivo, con capacidad de aprendizaje rápido y nivel de inglés C1, orientado a aportar soluciones eficientes en entornos de desarrollo backend.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "Git",
+            "Docker",
+            "Oracle",
+            "HTML/CSS"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_ae954db42f6c.pdf",
+          "custom_cv_html": "cv_ae954db42f6c.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_ae954db42f6c.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remoto",
+            "industry": "HR Tech / EOR (Employer of Record)",
+            "size": "mediana",
+            "tech_stack": [
+              "Ruby on Rails",
+              "React",
+              "PostgreSQL",
+              "AWS",
+              "TypeScript"
+            ],
+            "culture": "orientada a resultados, asíncrona, global y altamente tecnológica",
+            "pros": [
+              "Líder en la industria de habilitación de trabajo remoto global.",
+              "Cultura de trabajo asíncrono que favorece el equilibrio vida-trabajo.",
+              "Oportunidad de trabajar con equipos multiculturales de alto nivel.",
+              "Producto con alto impacto en la transformación del mercado laboral actual."
+            ],
+            "cons": [
+              "Al ser una empresa que facilita el trabajo remoto para otros, los procesos internos pueden ser altamente exigentes en cuanto a autonomía y autogestión.",
+              "La competencia por el talento es global, lo que puede elevar la presión por mantener un alto rendimiento constante."
+            ],
+            "salary_range": "60.000 USD - 110.000 USD anuales dependiendo de la ubicación y seniority",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente opción si buscas estabilidad en una empresa que define el estándar del trabajo remoto; vale la pena aplicar si valoras la autonomía y el crecimiento en un entorno global."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-19T14:34:47.045079",
           "_last_seen": "2026-08-19T14:34:47.045079",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         }
       ]
     }
