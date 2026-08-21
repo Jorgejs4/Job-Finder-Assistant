@@ -935,6 +935,8 @@ with tab_sin_analizar:
                     with st.expander("Ver ofertas procesadas", expanded=True):
                         for line in task["log_lines"]:
                             st.markdown(line)
+            elif task.get("error"):
+                st.error(f"El reanálisis terminó con error: {task['error']}")
             elif task.get("result") and "reanalyze_result" not in st.session_state:
                 st.session_state["reanalyze_result"] = task["result"]
                 _cached_get_all_jobs.clear()
@@ -944,7 +946,7 @@ with tab_sin_analizar:
             st.info(
                 f"Se analizarán {len(unanalyzed_jobs)} ofertas "
                 f"(~{len(unanalyzed_jobs) * 2} llamadas API, "
-                f"~{len(unanalyzed_jobs) * 6 // 60} min)."
+                f"~{max(1, round(len(unanalyzed_jobs) * 2 * config.GEMINI_RATE_LIMIT_ANALYSIS / 60))} min)."
             )
             if st.button(
                 f"🔍 Reanalizar {len(unanalyzed_jobs)} sin analizar",
