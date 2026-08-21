@@ -872,38 +872,27 @@ with tab_sin_analizar:
         masked_first = f"{first_key[:6]}...{first_key[-4:]}" if len(first_key) > 8 else "****"
         st.caption(f"🔑 {num_keys} API key(s) configurada(s) - activa: {masked_first}")
 
-        c_norm, c_force = st.columns(2)
-        with c_norm:
-            if unanalyzed_jobs:
-                if st.button(f"🔍 Reanalizar {len(unanalyzed_jobs)} sin analizar", type="primary", use_container_width=True):
-                    try:
-                        result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
-                        if result["analyzed"] > 0:
-                            st.session_state["reanalyze_result"] = result
-                            _invalidate_cache(sync=True)
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"Error inesperado durante el reanalisis: {e}")
-            else:
-                st.info("No hay ofertas sin analizar.")
-
-        with c_force:
-            unanalyzed_only = [j for j in all_jobs if j.get("needs_analysis")]
-            st.warning(
-                f"⚠ Re-analiza {len(unanalyzed_only)} ofertas sin analizar "
-                f"(~{len(unanalyzed_only) * 2} llamadas API, "
-                f"~{len(unanalyzed_only) * 6 // 60} min). "
-                "Recalcula match, salario, modalidad y re-aplica filtros."
+        if unanalyzed_jobs:
+            st.info(
+                f"Se analizarán {len(unanalyzed_jobs)} ofertas "
+                f"(~{len(unanalyzed_jobs) * 2} llamadas API, "
+                f"~{len(unanalyzed_jobs) * 6 // 60} min)."
             )
-            if st.button("🔄 Forzar reanalisis", type="secondary", use_container_width=True):
+            if st.button(
+                f"🔍 Reanalizar {len(unanalyzed_jobs)} sin analizar",
+                type="primary",
+                use_container_width=True,
+            ):
                 try:
-                    result = reanalyze_jobs_with_gemini(unanalyzed_only)
+                    result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
                     if result["analyzed"] > 0:
                         st.session_state["reanalyze_result"] = result
                         _invalidate_cache(sync=True)
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error inesperado durante el reanalisis: {e}")
+        else:
+            st.info("No hay ofertas sin analizar.")
 
     st.divider()
 
