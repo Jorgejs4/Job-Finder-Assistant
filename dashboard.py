@@ -4,6 +4,7 @@ import hashlib
 import time
 import threading
 import unicodedata
+from contextlib import nullcontext
 from pathlib import Path
 from collections import defaultdict
 
@@ -171,29 +172,44 @@ def _sync_to_github():
     threading.Thread(target=_bg, daemon=True).start()
 
 
-def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
+@st.cache_resource
+def _get_reanalysis_task():
+    return {
+        "lock": threading.Lock(), "running": False, "processed": 0,
+        "total": 0, "result": None, "error": None,
+    }
+
+
+def reanalyze_jobs_with_gemini(jobs_list: list, ui: bool = True, task_state: dict = None) -> dict:
     from utils.gemini_client import GeminiClient
     from utils.cv_parser import parse_cv
 
     if not config.GEMINI_API_KEYS:
-        st.error("No hay API key de Gemini configurada.")
+        if ui:
+            st.error("No hay API key de Gemini configurada.")
         return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [], "key_info": []}
 
-    st.info("Inicializando Gemini...")
+    if ui:
+        st.info("Inicializando Gemini...")
     try:
         gemini = GeminiClient()
     except Exception as e:
-        st.error(f"Error al crear GeminiClient: {e}")
+        if ui:
+            st.error(f"Error al crear GeminiClient: {e}")
         return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error: {e}"], "key_info": []}
 
-    st.info("Parseando CV...")
+    if ui:
+        st.info("Parseando CV...")
     try:
         cv_text = parse_cv(config.CV_PATH)
     except Exception as e:
-        st.error(f"Error al parsear CV: {e}")
+        if ui:
+            st.error(f"Error al parsear CV: {e}")
         return {"analyzed": 0, "errors": len(jobs_list), "log_lines": [f"Error CV: {e}"], "key_info": []}
 
     total = len(jobs_list)
+    if task_state is not None:
+        task_state.update({"total": total, "processed": 0, "running": True, "result": None, "error": None})
     analyzed = 0
     errors = 0
     archived = 0
@@ -216,8 +232,9 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
     masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
     key_info.append(f"API key activa: {masked} (1/{num_keys})")
 
-    with st.status(f"Analizando {total} ofertas...", expanded=True) as status:
-        progress_bar = st.progress(0)
+    status_context = st.status(f"Analizando {total} ofertas...", expanded=True) if ui else nullcontext()
+    with status_context as status:
+        progress_bar = st.progress(0) if ui else None
         log_lines = []
 
         for i, job in enumerate(jobs_list):
@@ -225,7 +242,8 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
             company = job.get("company", "")[:30]
             current_idx = gemini.key_pool.active_index
             current_masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
-            st.write(f"[{i+1}/{total}] **{title}** @ {company} - key {current_masked}")
+            if ui:
+                st.write(f"[{i+1}/{total}] **{title}** @ {company} - key {current_masked}")
             try:
                 language = config.detect_language(
                     job.get("source", ""), job.get("title", ""),
@@ -308,23 +326,27 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
             if new_idx != current_idx:
                 key_info.append(f"Key rotada a: {new_masked} ({new_idx + 1}/{num_keys})")
 
-            progress_bar.progress((i + 1) / total)
+            if task_state is not None:
+                task_state["processed"] = i + 1
+            if ui:
+                progress_bar.progress((i + 1) / total)
 
-        status.update(label=f"Completado: {analyzed} analizadas, {archived} archivadas, {kept} en mis ofertas, {errors} errores", state="complete")
+        if ui:
+            status.update(label=f"Completado: {analyzed} analizadas, {archived} archivadas, {kept} en mis ofertas, {errors} errores", state="complete")
 
-    if log_lines:
+    if ui and log_lines:
         st.subheader("Resultados del analisis")
         for line in log_lines:
             st.markdown(line)
 
-    if analyzed > 0:
+    if ui and analyzed > 0:
         st.success(f"✅ {analyzed} ofertas analizadas: {kept} en mis ofertas, {archived} archivadas.")
-    if errors > 0:
+    if ui and errors > 0:
         st.warning(f"⚠ {errors} ofertas tuvieron errores.")
 
     from collections import Counter
     reason_counts = Counter(archive_reasons)
-    return {
+    result = {
         "analyzed": analyzed,
         "errors": errors,
         "archived": archived,
@@ -333,6 +355,19 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
         "log_lines": log_lines,
         "key_info": key_info,
     }
+    if task_state is not None:
+        task_state.update({"running": False, "processed": total, "result": result})
+    return result
+
+
+def _run_reanalysis_background(task_state: dict, jobs_list: list):
+    """Run reanalysis without touching Streamlit from the worker thread."""
+    try:
+        result = reanalyze_jobs_with_gemini(jobs_list, ui=False, task_state=task_state)
+        task_state["result"] = result
+    except Exception as exc:
+        task_state["error"] = str(exc)
+        task_state["running"] = False
 
 
 def parse_salary(val):
@@ -873,6 +908,15 @@ with tab_sin_analizar:
         st.caption(f"🔑 {num_keys} API key(s) configurada(s) - activa: {masked_first}")
 
         if unanalyzed_jobs:
+            task = _get_reanalysis_task()
+            if task["running"]:
+                st.info(f"⏳ Reanálisis en segundo plano: {task['processed']}/{task['total']} ofertas procesadas. Puedes cambiar de sección.")
+            elif task.get("result") and "reanalyze_result" not in st.session_state:
+                st.session_state["reanalyze_result"] = task["result"]
+                _cached_get_all_jobs.clear()
+                _cached_get_runs.clear()
+                _cached_get_history.clear()
+                db.export_data_json()
             st.info(
                 f"Se analizarán {len(unanalyzed_jobs)} ofertas "
                 f"(~{len(unanalyzed_jobs) * 2} llamadas API, "
@@ -882,13 +926,16 @@ with tab_sin_analizar:
                 f"🔍 Reanalizar {len(unanalyzed_jobs)} sin analizar",
                 type="primary",
                 use_container_width=True,
-            ):
+                disabled=task["running"],
+            ) and not task["running"]:
                 try:
-                    result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
-                    if result["analyzed"] > 0:
-                        st.session_state["reanalyze_result"] = result
-                        _invalidate_cache(sync=True)
-                        st.rerun()
+                    task.update({"running": True, "processed": 0, "total": len(unanalyzed_jobs), "result": None, "error": None})
+                    worker = threading.Thread(
+                        target=lambda: _run_reanalysis_background(task, unanalyzed_jobs),
+                        daemon=True,
+                    )
+                    worker.start()
+                    st.info("Reanálisis iniciado en segundo plano. Puedes cambiar de sección.")
                 except Exception as e:
                     st.error(f"Error inesperado durante el reanalisis: {e}")
         else:
