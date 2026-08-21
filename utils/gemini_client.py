@@ -224,7 +224,9 @@ class GeminiClient:
     def _generate_with_retry(self, prompt: str, schema, max_retries: int = 3) -> str:
         """
         Realiza la llamada a la API de Gemini con reintentos.
-        Reintenta en 429 (rotando key) y en errores de validación (respuesta incompleta).
+        Reintenta los 429 con backoff sobre el mismo proyecto. Las cuotas de
+        Gemini son por proyecto, no por API key; rotar claves no evita un límite
+        temporal de RPM/TPM.
         """
         import time
         from google.api_core.exceptions import ResourceExhausted
@@ -237,7 +239,9 @@ class GeminiClient:
         )
         
         last_error = None
-        for attempt in range(max_retries):
+        # Los límites RPM/TPM pueden tardar más de un minuto en recuperarse.
+        max_attempts = max(max_retries, 6)
+        for attempt in range(max_attempts):
             try:
                 response = self.model.generate_content(
                     prompt,
@@ -249,13 +253,14 @@ class GeminiClient:
                 schema(**data)  # Pydantic validation
                 return text
             except ResourceExhausted:
-                last_error = "429"
-                if self._on_429():
-                    wait_time = min(5 * (attempt + 1), 30)
-                    print(f"\n[Gemini] 429 → key #{self.key_pool.active_index + 1}. Reintentando en {wait_time}s... (attempt {attempt+1}/{max_retries})")
-                    time.sleep(wait_time)
-                else:
-                    raise RuntimeError("429 - Todas las API keys de Gemini agotadas.")
+                last_error = "429 RESOURCE_EXHAUSTED (límite del proyecto)"
+                wait_time = min(15 * (2 ** attempt), 120)
+                print(
+                    f"\n[Gemini] 429 temporal (RPM/TPM/RPD o capacidad del proyecto). "
+                    f"Manteniendo la misma key; reintentando en {wait_time}s "
+                    f"({attempt + 1}/{max_attempts})"
+                )
+                time.sleep(wait_time)
             except (json.JSONDecodeError, ValidationError) as e:
                 last_error = str(e)[:100]
                 wait_time = min(3 * (attempt + 1), 15)
@@ -264,7 +269,7 @@ class GeminiClient:
             except Exception as e:
                 raise e
                 
-        raise RuntimeError(f"Gemini falló tras {max_retries} intentos. Último error: {last_error}")
+        raise RuntimeError(f"Gemini límite temporal tras {max_attempts} intentos: {last_error}")
 
     def analyze_cv(self, cv_text: str) -> ProfileAnalysis:
         """

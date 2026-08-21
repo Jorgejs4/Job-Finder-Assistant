@@ -200,6 +200,17 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
     kept = 0
     archive_reasons = []
     key_info = []
+    # Reanálisis usa dos llamadas por oferta y antes no tenía ningún limitador,
+    # por lo que agotaba RPM/TPM mucho antes que el pipeline principal.
+    last_gemini_call = 0.0
+
+    def wait_for_gemini():
+        nonlocal last_gemini_call
+        elapsed = time.time() - last_gemini_call
+        delay = config.GEMINI_RATE_LIMIT_ANALYSIS - elapsed
+        if delay > 0:
+            time.sleep(delay)
+        last_gemini_call = time.time()
 
     num_keys = gemini.key_pool.total_keys
     masked = gemini.key_pool._mask_key(gemini.key_pool.current_key())
@@ -222,6 +233,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                 )
                 desc = job.get("description", "") or job.get("title", "")
 
+                wait_for_gemini()
                 match_result = gemini.match_offer(
                     cv_text=cv_text,
                     offer_title=job["title"],
@@ -230,6 +242,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     language=language,
                 )
 
+                wait_for_gemini()
                 details = gemini.match_details(
                     cv_text=cv_text,
                     offer_title=job["title"],
