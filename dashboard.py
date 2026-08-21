@@ -236,6 +236,12 @@ def reanalyze_jobs_with_gemini(jobs_list: list, ui: bool = True, task_state: dic
     with status_context as status:
         progress_bar = st.progress(0) if ui else None
         log_lines = []
+        if task_state is not None:
+            task_state["log_lines"] = log_lines
+            task_state["analyzed"] = 0
+            task_state["archived"] = 0
+            task_state["kept"] = 0
+            task_state["errors"] = 0
 
         for i, job in enumerate(jobs_list):
             title = job.get("title", "?")[:50]
@@ -306,16 +312,25 @@ def reanalyze_jobs_with_gemini(jobs_list: list, ui: bool = True, task_state: dic
                     archived += 1
                     archive_reasons.append(reason)
                     log_lines.append(f"  📦 Archivada: {reason}")
+                    if task_state is not None:
+                        task_state["archived"] = archived
                 else:
                     if job.get("archived"):
                         db.update_job_archived(job_id, False)
                         log_lines.append(f"  📋 Desarchivada (ya no cumple criterios)")
                     kept += 1
+                    log_lines.append("  📋 Mantenida en Mis ofertas")
+                    if task_state is not None:
+                        task_state["kept"] = kept
 
                 analyzed += 1
+                if task_state is not None:
+                    task_state["analyzed"] = analyzed
             except Exception as e:
                 errors += 1
                 log_lines.append(f"❌ {title} @ {company} - Error: {e}")
+                if task_state is not None:
+                    task_state["errors"] = errors
                 if gemini.key_pool.exhausted:
                     remaining = total - (i + 1)
                     log_lines.append(f"⛔ API keys agotadas. Quedan {remaining} ofertas sin procesar.")
@@ -911,6 +926,15 @@ with tab_sin_analizar:
             task = _get_reanalysis_task()
             if task["running"]:
                 st.info(f"⏳ Reanálisis en segundo plano: {task['processed']}/{task['total']} ofertas procesadas. Puedes cambiar de sección.")
+                p1, p2, p3, p4 = st.columns(4)
+                p1.metric("Procesadas", task.get("processed", 0))
+                p2.metric("✅ Analizadas", task.get("analyzed", 0))
+                p3.metric("📦 Archivadas", task.get("archived", 0))
+                p4.metric("📋 Mantenidas", task.get("kept", 0))
+                if task.get("log_lines"):
+                    with st.expander("Ver ofertas procesadas", expanded=True):
+                        for line in task["log_lines"]:
+                            st.markdown(line)
             elif task.get("result") and "reanalyze_result" not in st.session_state:
                 st.session_state["reanalyze_result"] = task["result"]
                 _cached_get_all_jobs.clear()
