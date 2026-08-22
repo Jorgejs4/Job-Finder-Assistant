@@ -4,6 +4,7 @@ import hashlib
 import time
 import threading
 import unicodedata
+import requests
 from pathlib import Path
 from collections import defaultdict
 
@@ -30,6 +31,34 @@ st.set_page_config(
 
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
 db = Database()
+
+
+def _sync_remote_data_to_db():
+    """Import the latest Actions results before reading jobs from SQLite."""
+    now = time.time()
+    last_sync = st.session_state.get("remote_data_sync_at", 0.0)
+    if now - last_sync < 30:
+        return
+
+    url = (
+        f"https://raw.githubusercontent.com/{config.GITHUB_REPO}/main/"
+        f"results/data.json?refresh={int(now)}"
+    )
+    try:
+        response = requests.get(url, timeout=20)
+        response.raise_for_status()
+        remote_data = response.json()
+        remote_path = os.path.join(RESULTS_DIR, "data.json")
+        with open(remote_path, "w", encoding="utf-8") as file:
+            import json
+            json.dump(remote_data, file, ensure_ascii=False, indent=2)
+        db.migrate_from_json(remote_path)
+        st.session_state.remote_data_sync_at = now
+        _cached_get_all_jobs.clear()
+        _cached_get_runs.clear()
+    except Exception as exc:
+        # Keep the dashboard usable with its local copy if GitHub is temporarily unavailable.
+        print(f"[Dashboard] No se pudo sincronizar data.json desde GitHub: {exc}")
 
 # Migración automática desde data.json si la DB está vacía
 if db.get_job_count() == 0:
@@ -102,6 +131,9 @@ def _cached_get_runs():
 @st.cache_data(ttl=30, show_spinner=False)
 def _cached_get_history():
     return db.get_history()
+
+
+_sync_remote_data_to_db()
 
 
 def _invalidate_cache(sync: bool = True):
