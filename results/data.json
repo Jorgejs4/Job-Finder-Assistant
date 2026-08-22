@@ -55692,32 +55692,80 @@
           "date_posted": "2026-08-05",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
+          "match_score": 65,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "SQL"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since the role focuses on core web technologies, highlight your proficiency in building responsive interfaces using JavaScript, HTML, and CSS. Showcase specific projects where you managed database interactions using SQL, as this is a key requirement. Since your match score is 65%, emphasize any experience you have with full-stack development or specific web frameworks that Bobex might use to bridge the gap.",
+          "cover_letter": "Building functional, user-centric web applications is what drives me. My experience spans the entire development lifecycle, from crafting responsive interfaces with HTML and CSS to architecting robust backend logic using JavaScript and SQL. In projects like 'El Grano de Oro,' I successfully integrated complex features such as AI-driven recommendation engines and automated administrative panels, ensuring a seamless experience for end-users while maintaining clean, scalable code. My technical foundation, combined with a proactive approach to problem-solving, allows me to bridge the gap between design and high-performance functionality. I am particularly drawn to the work at Bobex.com because of your commitment to delivering efficient digital solutions, and I am eager to bring my hands-on experience in full-stack development to your engineering team. I am confident that my ability to adapt quickly to new challenges and my passion for building software that solves real-world problems make me a strong fit for your current needs. I would welcome the opportunity to discuss how my technical skills and project-driven mindset can contribute to the continued success of your web applications. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Full-stack developer with a strong foundation in JavaScript, HTML, CSS, and SQL. Proven track record of deploying end-to-end web applications, including AI-integrated platforms and professional corporate sites. Highly adaptable, C1-certified in English, and passionate about building scalable, user-focused software solutions.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "SQL",
+            "Git",
+            "Docker",
+            "Oracle",
+            "Artificial Intelligence Integration"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_a3ac5a6d1cea.pdf",
+          "custom_cv_html": "cv_a3ac5a6d1cea.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_a3ac5a6d1cea.pdf",
           "interview_prep": null,
-          "company_profile": null,
+          "company_profile": {
+            "name": "Bobex.com",
+            "industry": "B2B E-commerce and Procurement Platform",
+            "size": "mediana",
+            "tech_stack": [
+              "PHP",
+              "MySQL",
+              "JavaScript",
+              "HTML/CSS",
+              "Apache"
+            ],
+            "culture": "Traditional, stable, and B2B-focused",
+            "pros": [
+              "Established market presence since 2000 providing high job stability.",
+              "Opportunity to work on a niche platform that facilitates B2B transactions.",
+              "Clear business model focused on procurement and lead generation.",
+              "Stable work-life balance typical of established B2B service companies."
+            ],
+            "cons": [
+              "Legacy codebase maintenance might be required due to the company's long-standing history in the market.",
+              "Limited information on modern engineering practices compared to high-growth tech startups."
+            ],
+            "salary_range": "45,000 EUR - 65,000 EUR",
+            "remote_friendly": false,
+            "recommendation": "It is a solid choice if you prioritize job stability and a mature business environment over the fast-paced, high-risk culture of modern startups."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (No. 62, Berbice Oriental Courantyne Corentyne, Guyana)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424640",
           "_last_seen": "2026-08-22T08:13:45.156563",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 42000
         },
         {
           "id": "6fc5cbb2b0d9",
@@ -55730,32 +55778,79 @@
           "date_posted": "2026-03-30",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Since the job description is minimal, focus your CV on demonstrating a strong foundation in core web technologies. Highlight specific projects where you used JavaScript, HTML, and CSS to solve real-world problems. Mention any experience with modern frameworks like React or Vue, as these are standard in the industry. Ensure your portfolio showcases clean, responsive code and mention any version control experience like Git.",
+          "cover_letter": "Building functional, high-impact web applications is what drives me. My recent work on 'El Grano de Oro' allowed me to leverage JavaScript, HTML, and CSS to create a fully responsive e-commerce platform integrated with AI, proving that I can bridge the gap between complex technical requirements and seamless user experiences. I thrive on turning clean code into production-ready solutions that solve real-world business problems.\n\nBeyond my technical foundation, I am deeply committed to continuous learning and independent problem-solving. Whether I am architecting a corporate site like 'Catering SanMor' or optimizing desktop tools, I focus on writing maintainable code and ensuring high performance. My background in Industrial Engineering and current studies in Multiplatform Application Development provide me with a unique analytical perspective that I am eager to apply to the projects at Takt.\n\nI am confident that my hands-on experience with modern web technologies and my proactive approach to development make me a strong fit for your team. I would welcome the opportunity to discuss how my skills can contribute to the continued success of Takt. Are you available for a brief conversation next week to explore how I can add value to your current web initiatives?",
+          "cv_summary": "Proactive Software Developer with a strong foundation in JavaScript, HTML, and CSS. Experienced in building and deploying full-stack web applications with AI integration. Passionate about creating efficient, user-centric digital solutions and eager to contribute technical expertise to a dynamic development team.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_e9b3fa182c1d.pdf",
+          "custom_cv_html": "cv_e9b3fa182c1d.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_e9b3fa182c1d.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Takt",
+            "industry": "Construction Technology (ConTech)",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "TypeScript",
+              "Node.js",
+              "PostgreSQL",
+              "AWS"
+            ],
+            "culture": "Fast-paced, product-focused, and highly collaborative",
+            "pros": [
+              "Opportunity to work on high-impact software that improves construction efficiency",
+              "Direct influence on product development and architecture",
+              "Exposure to modern web development stacks",
+              "Fast-paced environment ideal for rapid skill acquisition"
+            ],
+            "cons": [
+              "High pressure environment typical of early-stage startups",
+              "Potential for rapid pivots in product strategy",
+              "Limited formal mentorship compared to enterprise organizations"
+            ],
+            "salary_range": "$90,000 - $130,000",
+            "remote_friendly": true,
+            "recommendation": "Takt is an excellent choice for developers who thrive in agile, mission-driven startups and want to see the direct impact of their code on real-world operations. It is highly recommended if you prefer autonomy over rigid corporate structures."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Vancouver, Columbia Británica, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424655",
           "_last_seen": "2026-08-22T08:13:45.156900",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "b16ce1f36b97",
@@ -55768,32 +55863,78 @@
           "date_posted": "2026-08-14",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS"
+          ],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Since the job description is brief, emphasize your proficiency in modern JavaScript frameworks like React or Vue. Showcase a portfolio that demonstrates clean, responsive HTML/CSS code. Highlight any experience with version control (Git) and cross-browser compatibility, as these are standard expectations for general Web Developer roles.",
+          "cover_letter": "Building high-performance web applications is what drives me, and I have spent the last few years turning that passion into production-ready software. My experience with JavaScript, HTML, and CSS has allowed me to develop full-stack solutions, such as my recent e-commerce project for 'El Grano de Oro', where I integrated AI-driven recommendations and automated workflows to enhance user experience. I thrive on solving complex technical challenges and am constantly refining my ability to build clean, responsive interfaces that perform seamlessly across devices. Beyond just writing code, I focus on creating tools that provide real value, whether through custom web platforms or desktop applications. I am eager to bring my technical background and proactive mindset to the Web Developer role at CGT. I am confident that my ability to adapt quickly and my hands-on experience with modern web technologies will allow me to contribute effectively to your team from day one. I would love to discuss how my skills align with your current projects and how I can help drive your development goals forward. Are you available for a brief conversation next week?",
+          "cv_summary": "Proactive Software Developer with a strong foundation in JavaScript, HTML, and CSS. Experienced in building and deploying full-stack web applications with integrated AI features. Passionate about clean code, responsive design, and solving complex problems to deliver high-quality digital solutions.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "Full-stack Development",
+            "Git",
+            "SQL",
+            "Docker",
+            "AI Integration"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_b4b05be1d680.pdf",
+          "custom_cv_html": "cv_b4b05be1d680.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_b4b05be1d680.pdf",
           "interview_prep": null,
-          "company_profile": null,
+          "company_profile": {
+            "name": "CGT",
+            "industry": "IT Services and Software Consulting",
+            "size": "mediana",
+            "tech_stack": [
+              "JavaScript",
+              "React",
+              "Node.js",
+              "SQL",
+              "AWS"
+            ],
+            "culture": "Professional, client-focused, and delivery-oriented",
+            "pros": [
+              "Exposure to diverse client projects and industries",
+              "Opportunities for rapid skill development",
+              "Stable environment within the consulting sector",
+              "Collaborative team structure"
+            ],
+            "cons": [
+              "Limited public information available regarding internal processes",
+              "Potential for high pressure depending on specific client project deadlines"
+            ],
+            "salary_range": "45,000 - 65,000 USD",
+            "remote_friendly": true,
+            "recommendation": "It is a solid choice if you are looking to build a versatile portfolio through consulting work, but ensure you clarify the specific project scope during the interview."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Presencial fuera de ciudad objetivo (Cambridge, Ontario, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424670",
           "_last_seen": "2026-08-22T08:13:45.157334",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "e0629c1c9305",
