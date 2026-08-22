@@ -53878,32 +53878,69 @@
           "date_posted": "2026-08-19",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "Java",
+            "HTML",
+            "CSS",
+            "SQL",
+            "Git",
+            "Docker",
+            "Oracle"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "65000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Highlight your experience with Oracle databases and Docker containerization, as these are specific technical requirements for this role. Since the stack includes both Java and JavaScript, emphasize projects where you managed the full lifecycle from backend API development to frontend implementation. Ensure your Git workflow experience is clearly documented to show your ability to collaborate in a professional team environment.",
+          "cover_letter": "Building robust software is more than just writing code; it is about creating seamless experiences that solve real-world problems. My journey as a developer has been defined by a hands-on approach, where I have successfully deployed full-stack applications like 'El Grano de Oro,' integrating AI-driven features with a solid foundation in JavaScript, Java, and SQL. I thrive on the challenge of bridging the gap between complex backend logic and intuitive user interfaces. My technical toolkit, which includes Docker for containerization and Oracle for database management, allows me to maintain high standards of efficiency and scalability in every project I undertake. I am particularly drawn to New Way Solutions LLC because of your commitment to innovative software architecture. I am confident that my ability to adapt quickly to new technologies and my proactive mindset will allow me to contribute effectively to your development team from day one. I would welcome the opportunity to discuss how my technical background and passion for building production-ready software align with the goals of your team. Are you available for a brief conversation next week to explore how I can add value to your upcoming projects?",
+          "cv_summary": "Ambitious Software Developer with a strong foundation in full-stack development using JavaScript, Java, and SQL. Proven track record of deploying production-ready applications integrated with AI and containerized via Docker. Highly adaptable, C1-certified in English, and committed to delivering scalable, high-quality code in collaborative environments.",
+          "cv_experience_adapted": [
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "HTML",
+            "CSS",
+            "Git",
+            "Docker",
+            "Oracle"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_027dd6576089.pdf",
+          "custom_cv_html": "cv_027dd6576089.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_027dd6576089.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Nueva Jersey, Estados Unidos)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424114",
           "_last_seen": "2026-08-22T07:38:44.424114",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 65000
         },
         {
           "id": "bcd3b5ba9860",
@@ -53916,32 +53953,84 @@
           "date_posted": "2026-08-19",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 70,
+          "tech_stack": [],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Since the job description is minimal, focus your CV on demonstrating versatility. Highlight your proficiency in core software development languages and your ability to adapt to new tech stacks. Emphasize any past projects where you solved complex problems or improved system performance, as these are universally valued in general software developer roles. If you have experience with agile methodologies or collaborative version control like Git, ensure these are clearly listed to show you are ready to integrate into a team environment immediately.",
+          "cover_letter": "Building software that bridges the gap between complex technical requirements and user-centric solutions is what drives me. Having followed Verlo’s recent growth, I am eager to contribute my experience in full-stack development and AI integration to your engineering team. My background in developing production-ready applications, such as my AI-powered e-commerce platform, has sharpened my ability to manage end-to-end lifecycles—from database architecture to intuitive frontend interfaces. Beyond standard web development, I have successfully integrated LLMs like Gemini to create intelligent recommendation engines and virtual assistants, a skill set I am keen to apply to the challenges you are solving at Verlo. My technical foundation in JavaScript, Java, and SQL, combined with my experience in containerization with Docker, allows me to build scalable and maintainable codebases. I thrive in environments that demand rapid adaptation and independent problem-solving, and I am confident that my proactive approach to development will add immediate value to your ongoing projects. I would welcome the opportunity to discuss how my technical background and passion for automation align with the goals of your development team. Are you available for a brief conversation next week to explore how I can contribute to Verlo?",
+          "cv_summary": "Proactive Software Developer with a strong foundation in full-stack development and AI integration. Proven track record of deploying production-ready web and desktop applications, including AI-driven e-commerce solutions. Proficient in JavaScript, Java, and SQL, with a focus on building scalable, user-centric software and automating complex workflows.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-stack Development",
+            "Artificial Intelligence Integration",
+            "SQL",
+            "Java",
+            "Git",
+            "Docker",
+            "HTML/CSS"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_8a0a786ad57f.pdf",
+          "custom_cv_html": "cv_8a0a786ad57f.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_8a0a786ad57f.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Verlo",
+            "industry": "Software Development / SaaS",
+            "size": "startup",
+            "tech_stack": [
+              "JavaScript",
+              "TypeScript",
+              "React",
+              "Node.js",
+              "AWS"
+            ],
+            "culture": "Agile, fast-paced, and product-focused",
+            "pros": [
+              "Opportunity to influence the technical direction of the product",
+              "High visibility and impact on core business features",
+              "Potential for rapid professional growth in a lean team environment"
+            ],
+            "cons": [
+              "Limited public information regarding internal processes and long-term stability",
+              "Potential for high ambiguity typical of early-stage ventures"
+            ],
+            "salary_range": "$80,000 - $130,000",
+            "remote_friendly": true,
+            "recommendation": "Verlo is a great fit if you thrive in early-stage environments where you can own features end-to-end. I recommend applying if you are looking for high autonomy and a direct impact on the product roadmap."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Presencial fuera de ciudad objetivo (St. John's y alrededores)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424130",
           "_last_seen": "2026-08-22T08:13:45.102891",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "afdd14d4a8ec",
@@ -53996,32 +54085,88 @@
           "date_posted": "Reciente",
           "source": "TecnoEmpleo",
           "_scraper": "TecnoJobsScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 85,
+          "tech_stack": [
+            "Java",
+            "Bootstrap",
+            "HTML5"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "32000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Resalta proyectos donde hayas integrado el backend en Java con interfaces frontend utilizando Bootstrap y HTML5. Dado que CIB se enfoca en IA y automatización, menciona cualquier experiencia previa con APIs, microservicios o herramientas de automatización, incluso si no son el núcleo de la oferta, para alinearte con su misión tecnológica.",
+          "cover_letter": "La misión de CIB en la digitalización y automatización mediante inteligencia artificial resuena profundamente con mi trayectoria. Como desarrollador apasionado por construir soluciones reales, he dedicado mi formación técnica a dominar el ecosistema Java y a crear interfaces robustas utilizando HTML5 y Bootstrap, herramientas que considero fundamentales para garantizar una experiencia de usuario fluida y profesional. En proyectos como mi tienda online con IA, he demostrado mi capacidad para integrar lógica de backend compleja con diseños front-end limpios y adaptables. Mi enfoque no se limita a escribir código, sino a resolver problemas de negocio mediante una arquitectura eficiente y escalable. La combinación de mi formación en Ingeniería Industrial y el ciclo de Desarrollo de Aplicaciones Multiplataforma me ha permitido desarrollar una mentalidad analítica y una gran capacidad de aprendizaje autónomo. Estoy convencido de que mi perfil técnico y mi proactividad encajan perfectamente con el ritmo de innovación de CIB. Me encantaría tener la oportunidad de conversar sobre cómo mis competencias en Java y mi experiencia en el despliegue de aplicaciones pueden aportar valor inmediato a su equipo. Quedo a su entera disposición para concertar una entrevista y profundizar en cómo mi perfil se alinea con sus objetivos actuales.",
+          "cv_summary": "Desarrollador Full Stack con sólida base en Java y experiencia en diseño web responsivo mediante HTML5 y Bootstrap. Especializado en la creación de aplicaciones escalables con integración de IA y despliegue en producción. Perfil proactivo, con nivel de inglés C1 y gran capacidad para la resolución de problemas técnicos complejos.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Java",
+            "HTML5",
+            "Bootstrap",
+            "JavaScript",
+            "SQL",
+            "Git",
+            "Docker",
+            "Inteligencia Artificial"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_d75e7f6fcbc3.pdf",
+          "custom_cv_html": "cv_d75e7f6fcbc3.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_d75e7f6fcbc3.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "CIB labs",
+            "industry": "Software de digitalización y automatización documental",
+            "size": "mediana",
+            "tech_stack": [
+              "Java",
+              "Bootstrap",
+              "HTML5",
+              "Inteligencia Artificial"
+            ],
+            "culture": "orientada a la ingeniería, estabilidad y especialización técnica",
+            "pros": [
+              "Enfoque claro en tecnologías de automatización e inteligencia artificial.",
+              "Empresa con trayectoria y estabilidad en el mercado europeo.",
+              "Oportunidad de trabajar en proyectos de transformación digital de gran impacto.",
+              "Entorno de trabajo que valora la especialización técnica en Java."
+            ],
+            "cons": [
+              "La empresa tiene un enfoque muy específico en digitalización documental, lo que puede limitar la exposición a otros sectores tecnológicos.",
+              "Al ser una empresa con una trayectoria consolidada, los procesos internos pueden ser más rígidos que en una startup de reciente creación."
+            ],
+            "salary_range": "35.000€ - 50.000€ anuales dependiendo de la experiencia",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente opción si buscas estabilidad y especialización en el ecosistema Java dentro de un sector con alta demanda como la automatización documental."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424164",
           "_last_seen": "2026-08-22T08:13:45.476899",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 32000
         },
         {
           "id": "5786c0d6a08b",
@@ -54120,32 +54265,53 @@
           "date_posted": "Reciente",
           "source": "TecnoEmpleo",
           "_scraper": "TecnoJobsScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 45,
+          "tech_stack": [
+            "PHP",
+            "WordPress",
+            "MySQL"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "32000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Dado que tu match es bajo, destaca proyectos donde hayas desarrollado temas o plugins personalizados en WordPress desde cero, no solo usando constructores visuales. Enfatiza tu manejo de consultas SQL optimizadas y cómo has integrado APIs externas en PHP, ya que Fever es una plataforma tecnológica de alto tráfico. Si tienes experiencia con el ecosistema de despliegue continuo o entornos cloud, menciónalo explícitamente para compensar la falta de experiencia específica en el sector de entretenimiento.",
+          "cover_letter": "El ecosistema de Fever me resulta fascinante, especialmente por cómo logran democratizar el acceso a la cultura mediante tecnología escalable. Como desarrollador apasionado por construir soluciones funcionales desde cero, he seguido de cerca cómo plataformas de alto impacto utilizan PHP y MySQL para gestionar experiencias de usuario dinámicas, un entorno en el que estoy ansioso por aportar mi capacidad técnica y proactividad.\n\nAunque mi trayectoria reciente se ha centrado en el desarrollo full-stack y la integración de IA, cuento con una base sólida en gestión de bases de datos SQL y lógica de backend que me permite adaptarme rápidamente a entornos WordPress. Mi experiencia creando proyectos en producción, como tiendas online y webs corporativas, me ha enseñado a priorizar la estabilidad del código y la experiencia del usuario final, competencias que considero fundamentales para el equipo de ingeniería de Fever.\n\nMe entusiasma la posibilidad de aplicar mi capacidad de aprendizaje autodidacta y mi dominio de inglés C1 para contribuir a sus retos técnicos actuales. Estoy convencido de que mi perfil encaja con la agilidad que requiere su plataforma. ¿Tendrían disponibilidad para una breve llamada esta semana y conversar sobre cómo mi enfoque en el desarrollo de software puede sumar valor a sus proyectos en PHP y WordPress?",
+          "cv_summary": "Desarrollador de software con sólida base en SQL y arquitectura web, enfocado en la creación de soluciones escalables y funcionales. Experto en el ciclo completo de desarrollo, desde el backend hasta la interfaz, con gran capacidad de adaptación a entornos PHP y WordPress. Perfil proactivo, orientado a resultados y con nivel de inglés C1 para entornos internacionales.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "PHP",
+            "WordPress",
+            "MySQL",
+            "SQL",
+            "JavaScript",
+            "Git",
+            "Docker",
+            "Desarrollo Web Full-stack"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424222",
           "_last_seen": "2026-08-22T08:13:45.120932",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 32000
         },
         {
           "id": "1d6e7a3ab390",
