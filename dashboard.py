@@ -903,7 +903,7 @@ with tab_sin_analizar:
                         "Reinicia/re despliega la aplicación desde el último commit."
                     )
                     st.stop()
-                ok, message = dispatch(limit=0, workers=1)
+                ok, message = dispatch(limit=0, workers=3)
                 if ok:
                     st.success(message + ". Puedes cerrar Streamlit; el workflow continuará.")
                     st.link_button(

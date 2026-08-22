@@ -212,7 +212,7 @@ def main():
     parser.add_argument("--limit", type=int, default=0, help="Máximo de ofertas a analizar (0=todas)")
     parser.add_argument("--dry-run", action="store_true", help="Solo mostrar estadísticas")
     parser.add_argument("--cv", type=str, default=None, help="Ruta al CV (default: config.CV_PATH)")
-    parser.add_argument("--workers", type=int, default=1, help="Número de hilos Gemini (default: 1)")
+    parser.add_argument("--workers", type=int, default=3, help="Número de hilos Gemini (default: 3)")
     args = parser.parse_args()
 
     config.validate_config()

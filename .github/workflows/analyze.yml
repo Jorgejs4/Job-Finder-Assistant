@@ -10,7 +10,7 @@ on:
       workers:
         description: 'Hilos Gemini paralelos (1-3)'
         required: false
-        default: '1'
+        default: '3'
 
 concurrency:
   group: analyze-run
@@ -92,7 +92,7 @@ jobs:
           -e MIN_SALARY="$MIN_SALARY" \
           -e CV_PATH="$CV_PATH" \
           job-scraper:latest \
-          python analyze_pending.py --limit "${{ github.event.inputs.limit || '0' }}" --workers "${{ github.event.inputs.workers || '1' }}"
+          python analyze_pending.py --limit "${{ github.event.inputs.limit || '0' }}" --workers "${{ github.event.inputs.workers || '3' }}"
 
         kill $COMMIT_PID 2>/dev/null || true
 
