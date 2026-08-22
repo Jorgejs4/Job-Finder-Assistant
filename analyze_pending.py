@@ -29,7 +29,9 @@ from notion_sync import NotionSync
 
 
 DATA_PATH = Path(__file__).resolve().parent / "results" / "data.json"
-SAVE_INTERVAL = 10
+# El workflow hace commits periódicos; guardar cada oferta evita perder progreso
+# si el runner se cancela entre dos checkpoints.
+SAVE_INTERVAL = 1
 
 
 def sync_to_notion(notion, job):
@@ -239,7 +241,7 @@ def main():
     print(f"\n[Va a analizar] {len(to_analyze)} ofertas con {args.workers} hilo(s)")
 
     gemini = GeminiClient()
-    rate_limiter = RateLimiter(min_interval=10.0)
+    rate_limiter = RateLimiter(min_interval=config.GEMINI_RATE_LIMIT_ANALYSIS)
     cv_gen = CVGenerator()
 
     notion = None

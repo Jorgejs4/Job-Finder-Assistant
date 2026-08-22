@@ -877,24 +877,37 @@ with tab_sin_analizar:
         st.caption(f"🔑 {num_keys} API key(s) configurada(s) - activa: {masked_first}")
 
         if unanalyzed_jobs:
+            estimated_minutes = max(
+                1,
+                round(
+                    len(unanalyzed_jobs)
+                    * 2
+                    * config.GEMINI_RATE_LIMIT_ANALYSIS
+                    / 60
+                ),
+            )
             st.info(
-                f"Se analizarán {len(unanalyzed_jobs)} ofertas "
-                f"(~{len(unanalyzed_jobs) * 2} llamadas API, "
-                f"~{len(unanalyzed_jobs) * 6 // 60} min)."
+                f"Se enviarán {len(unanalyzed_jobs)} ofertas a GitHub Actions "
+                f"(~{len(unanalyzed_jobs) * 2} llamadas base, mínimo estimado "
+                f"{estimated_minutes} min). Puedes cerrar Streamlit; el workflow continuará."
             )
             if st.button(
-                f"🔍 Reanalizar {len(unanalyzed_jobs)} sin analizar",
+                f"🚀 Reanalizar {len(unanalyzed_jobs)} en GitHub Actions",
                 type="primary",
                 use_container_width=True,
             ):
-                try:
-                    result = reanalyze_jobs_with_gemini(unanalyzed_jobs)
-                    if result["analyzed"] > 0:
-                        st.session_state["reanalyze_result"] = result
-                        _invalidate_cache(sync=True)
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Error inesperado durante el reanalisis: {e}")
+                ok, message = github_sync.dispatch_analysis_workflow(
+                    limit=0,
+                    workers=1,
+                )
+                if ok:
+                    st.success(message + ". Puedes cerrar Streamlit; el workflow continuará.")
+                    st.link_button(
+                        "Ver progreso en GitHub Actions",
+                        f"https://github.com/{config.GITHUB_REPO}/actions/workflows/analyze.yml",
+                    )
+                else:
+                    st.error(message)
         else:
             st.info("No hay ofertas sin analizar.")
 
