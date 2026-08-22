@@ -896,10 +896,14 @@ with tab_sin_analizar:
                 type="primary",
                 use_container_width=True,
             ):
-                ok, message = github_sync.dispatch_analysis_workflow(
-                    limit=0,
-                    workers=1,
-                )
+                dispatch = getattr(github_sync, "dispatch_analysis_workflow", None)
+                if dispatch is None:
+                    st.error(
+                        "La versión desplegada no incluye la integración con GitHub Actions. "
+                        "Reinicia/re despliega la aplicación desde el último commit."
+                    )
+                    st.stop()
+                ok, message = dispatch(limit=0, workers=1)
                 if ok:
                     st.success(message + ". Puedes cerrar Streamlit; el workflow continuará.")
                     st.link_button(

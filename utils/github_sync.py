@@ -7,30 +7,36 @@ import config
 
 def dispatch_analysis_workflow(limit: int = 0, workers: int = 1) -> tuple[bool, str]:
     """Start the durable GitHub Actions analysis job from the dashboard."""
-    token = config.GITHUB_TOKEN
+    token = getattr(config, "GITHUB_TOKEN", "")
     if not token:
         return False, "GITHUB_TOKEN no configurado"
-    url = f"https://api.github.com/repos/{config.GITHUB_REPO}/actions/workflows/analyze.yml/dispatches"
-    response = requests.post(
-        url,
-        json={"ref": "main", "inputs": {"limit": str(max(0, limit)), "workers": str(max(1, workers))}},
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        timeout=20,
-    )
+    repo = getattr(config, "GITHUB_REPO", "")
+    if not repo:
+        return False, "GITHUB_REPO no configurado"
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/analyze.yml/dispatches"
+    try:
+        response = requests.post(
+            url,
+            json={"ref": "main", "inputs": {"limit": str(max(0, limit)), "workers": str(max(1, workers))}},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        return False, f"No se pudo contactar con GitHub: {exc}"
     if response.status_code == 204:
         return True, "Workflow de análisis iniciado en GitHub Actions"
     return False, f"GitHub respondió {response.status_code}: {response.text[:300]}"
 
 def commit_data_json(json_path: str, commit_message: str = None) -> bool:
-    token = config.GITHUB_TOKEN
+    token = getattr(config, "GITHUB_TOKEN", "")
     if not token:
         return False
 
-    repo = config.GITHUB_REPO
+    repo = getattr(config, "GITHUB_REPO", "")
     path_in_repo = "results/data.json"
     url = f"https://api.github.com/repos/{repo}/contents/{path_in_repo}"
 
