@@ -63750,32 +63750,74 @@
           "date_posted": "2026-08-21",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "match_score": 65,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Since the job description is minimal, focus your CV on demonstrating a strong command of core web technologies. Highlight specific projects where you used JavaScript, HTML, and CSS to solve UI/UX problems. If you have experience with modern frameworks like React or Vue, emphasize them as they are standard for Frontend roles. Ensure your portfolio showcases clean, responsive code and mention any experience with version control systems like Git.",
+          "cover_letter": "Building high-performance web interfaces is what drives me, and I have spent the last few years turning that passion into functional, production-ready applications. My experience centers on crafting clean, responsive user experiences using JavaScript, HTML, and CSS, ensuring that every project I touch is both visually engaging and technically robust. Whether I am developing a corporate site like Catering SanMor or integrating complex AI features into e-commerce platforms, I prioritize writing maintainable code that solves real-world problems. I am particularly drawn to Noir because of your commitment to high-quality frontend standards, and I am eager to bring my proactive approach to your development team. My background in both software development and industrial engineering has taught me how to bridge the gap between complex logic and user-centric design. I am confident that my ability to adapt quickly and my hands-on experience with modern web stacks will allow me to contribute effectively to your ongoing projects from day one. I would love to discuss how my technical skills and my drive for continuous improvement can support the goals of your frontend team. Are you available for a brief conversation next week to explore how I can add value to Noir?",
+          "cv_summary": "Software Developer with a strong foundation in JavaScript, HTML, and CSS, focused on building responsive and scalable web applications. Proven track record of deploying production-ready projects, including e-commerce platforms with AI integration. Highly adaptable, C1 English proficient, and eager to contribute to high-impact frontend development teams.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_129d5ce0136f.pdf",
+          "custom_cv_html": "cv_129d5ce0136f.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_129d5ce0136f.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Noir",
+            "industry": "Digital Agency / Creative Tech",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Next.js",
+              "Three.js",
+              "GSAP",
+              "TypeScript"
+            ],
+            "culture": "creative-driven, fast-paced, client-focused",
+            "pros": [
+              "Exposure to high-end, visually demanding projects",
+              "Opportunity to work with cutting-edge frontend frameworks",
+              "Collaborative environment with design-led teams",
+              "High level of autonomy in technical implementation"
+            ],
+            "cons": [
+              "Potential for high pressure due to the boutique nature of the agency",
+              "Limited information on long-term career progression paths"
+            ],
+            "salary_range": "60,000 - 95,000 USD",
+            "remote_friendly": true,
+            "recommendation": "If you are a frontend developer with a strong eye for design and animation, Noir is an excellent place to build a high-impact portfolio. It is highly recommended for those who thrive in creative, agency-style environments."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Newcastle upon Tyne, Inglaterra, Reino Unido)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.428603",
           "_last_seen": "2026-08-22T08:13:45.264649",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "606e82ac7297",
@@ -63788,32 +63830,49 @@
           "date_posted": "2026-08-04",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 0,
+          "tech_stack": [],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Since the job description is empty, focus your CV on demonstrating versatility and adaptability. Highlight your core technical skills and any past projects that show problem-solving capabilities. Ensure your LinkedIn profile is updated with clear keywords related to the industry you are targeting to attract recruiters.",
+          "cover_letter": "Building software that bridges the gap between complex logic and user-centric design is what drives me every day. My experience developing full-stack applications, such as the 'El Grano de Oro' e-commerce platform, has allowed me to master the integration of AI models like Gemini to create truly intelligent user experiences. I thrive on the challenge of taking a project from a blank screen to a production-ready environment, whether it is a web application or a desktop tool like my Music Downloader Pro. My background in Industrial Engineering, combined with my current studies in Multiplatform Application Development, has instilled in me a rigorous approach to problem-solving and system architecture. I am particularly drawn to the work being done at Quartz, as your commitment to innovation aligns perfectly with my passion for building scalable, high-impact software solutions. I am confident that my technical versatility in JavaScript, Java, and SQL, along with my ability to adapt quickly to new tech stacks, would allow me to contribute effectively to your team from day one. I would welcome the opportunity to discuss how my hands-on experience and proactive mindset can support your upcoming projects. Are you available for a brief conversation next week to explore how I can add value to your development team?",
+          "cv_summary": "Versatile Software Developer with a strong foundation in full-stack development and AI integration. Proven track record of deploying production-ready web and desktop applications, including intelligent e-commerce solutions. Highly adaptable, C1-certified in English, and eager to leverage technical expertise in JavaScript, Java, and SQL to drive innovation within a dynamic team.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-stack Development",
+            "Artificial Intelligence Integration",
+            "Java",
+            "SQL",
+            "Git",
+            "Docker",
+            "HTML/CSS"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "match < 10% (0%)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.428620",
           "_last_seen": "2026-08-22T08:13:45.264939",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "bc4d4a8c153a",
@@ -63826,32 +63885,83 @@
           "date_posted": "2026-06-11",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "match_score": 85,
+          "tech_stack": [
+            "JavaScript"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since the job description is brief, focus your CV on demonstrating proficiency in modern JavaScript (ES6+). Highlight specific projects where you used frameworks like React, Vue, or Node.js, as these are standard for JavaScript Engineer roles. Emphasize your problem-solving skills and your ability to write clean, maintainable code. If you have experience with testing libraries like Jest or Cypress, make sure to list them prominently to stand out.",
+          "cover_letter": "Building robust, scalable applications is what drives me, and my recent work with JavaScript has been focused on creating seamless user experiences that integrate complex backend logic. Having developed full-stack projects like 'El Grano de Oro', I have gained hands-on experience in deploying production-ready web applications that leverage AI integrations and automated workflows. My technical background, combined with a proactive approach to problem-solving, allows me to bridge the gap between creative design and efficient code execution. I am particularly drawn to Codelynks because of your commitment to high-quality engineering and innovative software solutions. My ability to manage the entire development lifecycle—from database architecture to frontend implementation—ensures that I can contribute effectively to your team from day one. I am confident that my technical proficiency in JavaScript and my passion for continuous learning align perfectly with the goals of your engineering department. I would welcome the opportunity to discuss how my background in building real-world applications can support the upcoming projects at Codelynks. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Software Developer with a strong focus on JavaScript and full-stack development. Proven track record of deploying production-ready applications featuring AI integration and automated systems. Highly adaptable, C1 English proficient, and passionate about building efficient, scalable software solutions.",
+          "cv_experience_adapted": [
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-stack Web Development",
+            "AI Integration (Gemini API)",
+            "Git",
+            "SQL",
+            "Docker",
+            "HTML/CSS",
+            "Java"
+          ],
+          "cv_projects": [
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_6897cb834ce7.pdf",
+          "custom_cv_html": "cv_6897cb834ce7.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_6897cb834ce7.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Codelynks",
+            "industry": "IT Services and Software Consultancy",
+            "size": "startup",
+            "tech_stack": [
+              "JavaScript",
+              "React",
+              "Node.js",
+              "TypeScript"
+            ],
+            "culture": "client-focused, fast-paced, delivery-oriented",
+            "pros": [
+              "Exposure to diverse projects and technologies",
+              "Opportunities for rapid skill development",
+              "Collaborative team environment",
+              "Focus on modern JavaScript frameworks"
+            ],
+            "cons": [
+              "High pressure environment typical of software consultancy firms",
+              "Potential for rapid context switching between different client projects"
+            ],
+            "salary_range": "Competitive market rates for mid-level software engineers",
+            "remote_friendly": true,
+            "recommendation": "Codelynks is a solid choice if you are looking to accelerate your career through diverse project experience, though be prepared for a fast-paced consultancy environment."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Cochin, Saskatchewan, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.428636",
           "_last_seen": "2026-08-22T08:13:45.265227",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "1282a53e8eb0",
@@ -63864,32 +63974,51 @@
           "date_posted": "2026-05-28",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "match_score": 45,
+          "tech_stack": [
+            "React"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since your match score is low, focus your CV on demonstrating deep proficiency in React hooks, state management libraries like Redux or Zustand, and performance optimization techniques. Synechron often works on financial services projects, so highlight any experience with complex data visualization, real-time dashboards, or high-security web applications. Ensure your portfolio includes clean, modular code samples that follow modern React best practices.",
+          "cover_letter": "Building high-performance web applications is what drives me, and I have spent the last year honing my skills in React to create seamless user experiences. My recent work on projects like 'El Grano de Oro' allowed me to implement complex state management and responsive interfaces, ensuring that the front-end architecture is both scalable and intuitive. I thrive on solving technical challenges, whether it is integrating AI-driven features or optimizing component rendering for better performance. Beyond just writing code, I am deeply committed to the entire development lifecycle, from initial design to deployment on platforms like Vercel. My background in Industrial Engineering and my current studies in Multiplatform Application Development have provided me with a rigorous analytical mindset that I apply to every React component I build. I am eager to bring my proactive approach and technical versatility to the development team at Synechron. I would welcome the opportunity to discuss how my hands-on experience with modern web technologies can contribute to your upcoming projects. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Software Developer with a strong focus on React and modern web technologies. Proven experience in building and deploying full-stack applications with integrated AI features. Highly adaptable, C1 English certified, and passionate about creating efficient, user-centric interfaces that solve real-world business problems.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "React",
+            "HTML/CSS",
+            "Full-stack Development",
+            "Git",
+            "SQL",
+            "Docker",
+            "AI Integration"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Halifax, Nueva Escocia, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.428655",
           "_last_seen": "2026-08-22T08:13:45.265560",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "3ccc8dbe18a4",
@@ -63902,32 +64031,59 @@
           "date_posted": "2026-08-07",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS"
+          ],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
+          "salary": "35000",
+          "salary_is_estimate": true,
+          "required_experience": 2,
+          "tailored_advice": "Since the job description is minimal, focus your CV on demonstrating a strong command of core JavaScript, semantic HTML5, and modern CSS (Flexbox/Grid). Highlight any projects where you have built responsive interfaces from scratch. Since the match score is 65%, ensure your portfolio showcases clean, maintainable code and mention any experience with modern frameworks like React or Vue, as these are standard expectations for Front End roles even if not explicitly listed.",
+          "cover_letter": "Building functional and visually engaging web interfaces is what drives me. My experience developing full-stack projects, such as the 'El Grano de Oro' e-commerce platform, has allowed me to master the nuances of JavaScript, HTML, and CSS to create seamless user experiences. I thrive on turning complex requirements into clean, responsive code that performs reliably in production environments. Beyond just writing code, I focus on building tools that solve real-world problems, whether through intuitive UI design or efficient state management. My background in both software development and industrial engineering gives me a unique analytical perspective on how to structure web applications for scalability and performance. I am eager to bring this proactive, problem-solving mindset to the front-end team at Plogg. I would welcome the opportunity to discuss how my technical skills and passion for modern web development can contribute to your upcoming projects. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Passionate Software Developer with a strong foundation in JavaScript, HTML, and CSS. Proven track record of deploying full-stack web applications and interactive interfaces. Highly adaptable, C1 English certified, and dedicated to building efficient, user-centric solutions that bridge the gap between complex logic and clean design.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "Web Development",
+            "Git",
+            "SQL",
+            "Artificial Intelligence Integration"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_b72723ea4abf.pdf",
+          "custom_cv_html": "cv_b72723ea4abf.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_b72723ea4abf.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Presencial fuera de ciudad objetivo (Quebec, Quebec, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.428673",
           "_last_seen": "2026-08-22T08:13:45.265897",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 35000
         },
         {
           "id": "28f2a01ef081",
