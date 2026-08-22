@@ -51675,32 +51675,78 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 60,
+          "tech_stack": [
+            "Python",
+            "Node.js"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "38000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta es breve, destaca proyectos donde hayas integrado Python (backend/data) con Node.js (API/real-time). Asegúrate de mencionar frameworks específicos como Django/FastAPI para Python y Express/NestJS para Node.js, ya que son el estándar en el mercado español para este perfil híbrido.",
+          "cover_letter": "La combinación de Python y Node.js es el núcleo de mi enfoque para construir soluciones escalables y eficientes. He seguido de cerca el trabajo de su equipo y me entusiasma la posibilidad de aportar mi experiencia técnica, especialmente en el desarrollo de aplicaciones full-stack que integran lógica de backend robusta con interfaces de usuario intuitivas. En mis proyectos personales, como la plataforma de e-commerce 'El Grano de Oro', he implementado arquitecturas que requieren una gestión eficiente de datos y automatización, retos que me han permitido dominar el ciclo de vida completo del desarrollo de software. Mi capacidad para aprender nuevas tecnologías de forma autónoma, sumada a mi formación técnica actual, me permite adaptarme rápidamente a los flujos de trabajo de su equipo. Estoy convencido de que mi perfil encaja con la visión de su empresa y tengo muchas ganas de demostrar cómo mi enfoque práctico puede añadir valor a sus proyectos actuales. Me encantaría tener la oportunidad de conversar en una entrevista sobre cómo mis habilidades técnicas y mi proactividad pueden contribuir al éxito de su equipo. Quedo a su entera disposición para concertar una reunión cuando les venga bien.",
+          "cv_summary": "Desarrollador de software apasionado por el ecosistema full-stack, con sólida experiencia en Python y Node.js aplicada en proyectos reales en producción. Especializado en la creación de aplicaciones escalables, integración de IA y automatización de procesos, con un enfoque orientado a la resolución de problemas complejos y el aprendizaje continuo.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_1747622cbe1d.pdf",
+          "custom_cv_html": "cv_1747622cbe1d.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_1747622cbe1d.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remoto",
+            "industry": "Recursos Humanos y Tecnología (HR Tech)",
+            "size": "mediana",
+            "tech_stack": [
+              "Python",
+              "Node.js",
+              "React",
+              "AWS",
+              "PostgreSQL"
+            ],
+            "culture": "orientada a resultados, remota-first, colaborativa y flexible",
+            "pros": [
+              "Flexibilidad geográfica total para trabajar desde cualquier lugar.",
+              "Enfoque en la autonomía y la confianza del empleado.",
+              "Exposición a diversos proyectos y tecnologías al trabajar con múltiples clientes.",
+              "Cultura moderna adaptada a las nuevas formas de trabajo global."
+            ],
+            "cons": [
+              "Al ser una empresa enfocada en servicios de reclutamiento remoto, la carga de trabajo puede ser variable dependiendo de los clientes asignados.",
+              "La comunicación asíncrona requiere una autogestión muy alta que puede resultar aislante para algunos perfiles."
+            ],
+            "salary_range": "45.000 USD - 85.000 USD anuales dependiendo de la ubicación y experiencia",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente opción si buscas libertad geográfica y un entorno dinámico; vale la pena aplicar si valoras la autonomía sobre la estructura jerárquica tradicional."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.423240",
           "_last_seen": "2026-08-22T07:38:44.423240",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 38000
         },
         {
           "id": "b1adf766eee8",
@@ -51713,32 +51759,88 @@
           "date_posted": "Reciente",
           "source": "GetOnBoard",
           "_scraper": "GetOnBoardScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "React",
+            "Node.js",
+            "IA"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Dado que la oferta menciona IA, destaca en tu CV cualquier proyecto donde hayas integrado APIs de LLMs (como OpenAI o LangChain) con React y Node.js. Asegúrate de mencionar tu experiencia gestionando el estado en aplicaciones complejas y cómo optimizas el rendimiento del backend para manejar respuestas de modelos de IA.",
+          "cover_letter": "La combinación de React y Node.js es el motor que impulsa mis proyectos actuales, y me entusiasma la posibilidad de aplicar esta experiencia en su equipo. Como desarrollador apasionado por la creación de soluciones integrales, he logrado llevar a producción aplicaciones que no solo resuelven problemas técnicos, sino que aportan valor real al usuario final, como mi plataforma de comercio electrónico con recomendaciones basadas en IA. Mi enfoque se centra en construir arquitecturas robustas y escalables, integrando modelos de lenguaje como Gemini para optimizar la experiencia de usuario. Entiendo que su equipo busca un perfil capaz de navegar tanto el frontend como el backend con soltura, y mi trayectoria autodidacta, sumada a mi formación técnica, me permite adaptarme con rapidez a cualquier stack tecnológico. Más allá del código, disfruto enfrentándome a retos complejos y optimizando procesos mediante la automatización. Me encantaría tener la oportunidad de conversar sobre cómo mi capacidad para integrar inteligencia artificial en aplicaciones web puede contribuir directamente a los objetivos de su equipo. ¿Tendrían disponibilidad para una breve entrevista la próxima semana?",
+          "cv_summary": "Desarrollador Full-Stack con experiencia práctica en React y Node.js, especializado en la integración de modelos de IA para optimizar la experiencia de usuario. Enfocado en el desarrollo de aplicaciones escalables y funcionales, con capacidad demostrada para llevar proyectos desde la concepción hasta el despliegue en producción. Perfil proactivo, con nivel de inglés C1 y gran capacidad de aprendizaje técnico.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "React",
+            "Node.js",
+            "Inteligencia Artificial (Integración de LLMs)",
+            "JavaScript",
+            "SQL",
+            "Git",
+            "Docker"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_126f6770bb9b.pdf",
+          "custom_cv_html": "cv_126f6770bb9b.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_126f6770bb9b.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Remoto",
+            "industry": "Tecnología / Software as a Service (SaaS)",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Node.js",
+              "OpenAI API",
+              "TypeScript",
+              "PostgreSQL"
+            ],
+            "culture": "orientada a producto, ágil, innovadora y enfocada en la entrega rápida",
+            "pros": [
+              "Trabajo con tecnologías de vanguardia en Inteligencia Artificial",
+              "Cultura nativa de trabajo remoto",
+              "Oportunidad de alto impacto en el desarrollo del producto",
+              "Entorno flexible y orientado a resultados"
+            ],
+            "cons": [
+              "Alta dependencia de la evolución de las APIs de IA de terceros",
+              "Ritmo de trabajo acelerado típico de startups en etapa de crecimiento"
+            ],
+            "salary_range": "45.000€ - 70.000€ anuales dependiendo de la experiencia y ubicación",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente oportunidad si buscas especializarte en la integración de IA en productos reales y valoras la autonomía del trabajo remoto. Vale la pena aplicar si te motiva el desarrollo ágil y el aprendizaje continuo."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.423258",
           "_last_seen": "2026-08-22T07:38:44.423258",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 42000
         },
         {
           "id": "c76e7c00ebd2",
@@ -51751,32 +51853,89 @@
           "date_posted": "2026-07-19",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "Data Infrastructure",
+            "Data Acquisition"
+          ],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Highlight your experience with distributed systems and data pipelines, specifically focusing on tools like Apache Kafka, Airflow, or Spark. Since Speechify deals with audio and text-to-speech, emphasize any background in processing large-scale unstructured data or building robust ingestion services. Showcase projects where you optimized data acquisition latency and reliability, as these are critical for infrastructure roles.",
+          "cover_letter": "Building robust data pipelines and efficient acquisition systems is where I thrive. My experience developing full-stack applications, such as my AI-integrated e-commerce platform, has given me a deep understanding of how to manage data flow from acquisition to user-facing insights. I am particularly drawn to this role because it aligns perfectly with my technical background in SQL, Docker, and automated systems, which I have consistently applied to solve real-world problems in my own projects.\n\nBeyond my technical skills, I bring a proactive mindset and a strong foundation in software engineering principles. Whether I am optimizing database queries or automating data synchronization tasks, I focus on creating scalable and maintainable infrastructure. My ability to bridge the gap between complex backend logic and functional applications allows me to contribute effectively to data-heavy environments from day one.\n\nI am eager to bring my passion for data infrastructure and my C1-level English proficiency to your team in Seville. I would welcome the opportunity to discuss how my hands-on experience with automated data workflows can support your current objectives. Are you available for a brief conversation next week to explore how I can contribute to your engineering goals?",
+          "cv_summary": "Software Engineer with a strong focus on data infrastructure and automated acquisition systems. Proficient in SQL, Docker, and full-stack development, with a proven track record of deploying AI-integrated applications. Highly adaptable, C1 English speaker, and passionate about building scalable solutions that bridge complex data processing with high-performance software.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "SQL",
+            "Data Acquisition",
+            "Docker",
+            "JavaScript",
+            "Java",
+            "Git",
+            "Automation",
+            "Full-stack Development"
+          ],
+          "cv_projects": [
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_64fe38be1620.pdf",
+          "custom_cv_html": "cv_64fe38be1620.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_64fe38be1620.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Speechify",
+            "industry": "EdTech / Artificial Intelligence",
+            "size": "mediana",
+            "tech_stack": [
+              "Python",
+              "AWS",
+              "PostgreSQL",
+              "React",
+              "TypeScript",
+              "Kubernetes"
+            ],
+            "culture": "Product-led, fast-paced, high-growth, and mission-driven",
+            "pros": [
+              "Working on cutting-edge AI and text-to-speech technology",
+              "High impact on product development and user experience",
+              "Competitive compensation packages including equity",
+              "Opportunity to work in a global, distributed team environment"
+            ],
+            "cons": [
+              "High-pressure environment typical of fast-growing startups",
+              "Rapidly evolving product roadmap can lead to shifting priorities",
+              "Limited formal structure compared to established enterprise companies"
+            ],
+            "salary_range": "60,000€ - 95,000€",
+            "remote_friendly": true,
+            "recommendation": "If you are passionate about AI and want to work in a high-growth environment with significant autonomy, Speechify is an excellent choice for career acceleration."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.423275",
           "_last_seen": "2026-08-22T07:38:44.423275",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "e076659bb373",
@@ -51789,32 +51948,60 @@
           "date_posted": "2026-08-17",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 50,
+          "tech_stack": [],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
+          "salary": "75000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since the job description is minimal, focus your CV on core software engineering fundamentals like data structures, algorithms, and system design. Highlight your proficiency in the most common industry stacks (e.g., Java, Python, or JavaScript) and emphasize any experience with cloud platforms like AWS or GCP. Since Nuvo likely values scalability, showcase projects where you improved performance or handled high traffic. Prepare to explain your problem-solving process clearly in interviews.",
+          "cover_letter": "Building software that bridges the gap between complex logic and user-centric design is what drives me every day. My experience spans from developing full-stack web applications like 'El Grano de Oro'—which integrates AI-driven recommendations and virtual assistants—to creating robust desktop utilities like Music Downloader Pro. I thrive on solving technical challenges independently and am constantly pushing the boundaries of what I can build, whether it is optimizing database interactions or deploying scalable web solutions. My background in Industrial Engineering combined with my current focus on Multiplatform Application Development has equipped me with a unique analytical mindset. I am particularly drawn to Nuvo because of your commitment to high-quality engineering and innovation. I am confident that my proficiency in JavaScript, Java, and Docker, paired with my ability to integrate advanced AI models, will allow me to contribute effectively to your team from day one. I would love to discuss how my hands-on experience with production-ready applications aligns with the goals of your engineering department. Are you available for a brief conversation next week to explore how I can add value to your current projects?",
+          "cv_summary": "Passionate Software Engineer with a strong foundation in full-stack development and AI integration. Proven track record of deploying production-ready web and desktop applications using JavaScript, Java, and Docker. Highly adaptable, C1 English proficient, and dedicated to building scalable, user-focused software solutions.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Full-stack Development",
+            "AI Integration (Gemini API)",
+            "JavaScript",
+            "Java",
+            "SQL",
+            "Docker",
+            "Git",
+            "English C1"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_35eca04b48b9.pdf",
+          "custom_cv_html": "cv_35eca04b48b9.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_35eca04b48b9.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Presencial fuera de ciudad objetivo (Nueva York, Nueva York, Estados Unidos)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.423291",
           "_last_seen": "2026-08-22T08:13:45.110626",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 75000
         },
         {
           "id": "23ebb0dc64ea",
