@@ -53497,32 +53497,94 @@
           "date_posted": "2026-06-10",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "HTML",
+            "CSS"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since adesso SE is a major IT consultancy, emphasize your experience with enterprise-level projects and agile methodologies. Highlight your proficiency in Java and JavaScript by showcasing specific modules or features you have built. Since the role is full-stack, ensure your CV clearly demonstrates your ability to manage both the front-end (HTML/CSS/JS) and back-end (Java/SQL) layers. Mention any experience with cloud platforms or microservices, as these are highly valued in the consultancy sector.",
+          "cover_letter": "Building software that bridges the gap between complex logic and user-friendly interfaces is what drives me. My experience spans from developing full-stack web applications like 'El Grano de Oro'—which integrates AI-driven recommendations—to creating robust desktop tools using Java and JavaScript. I thrive on solving technical challenges, whether it is optimizing database queries with SQL or ensuring a seamless responsive design with HTML and CSS. My background in Industrial Engineering, combined with my current studies in Multiplatform Application Development, has instilled in me a disciplined approach to problem-solving and a deep appreciation for scalable architecture. I am particularly drawn to adesso SE because of your reputation for delivering high-quality, innovative digital solutions. I am confident that my ability to learn quickly and my hands-on experience with the full development lifecycle will allow me to contribute effectively to your team from day one. I would welcome the opportunity to discuss how my technical skills and passion for building production-ready software align with the goals of your development team. Are you available for a brief conversation next week to explore how I can add value to your upcoming projects?",
+          "cv_summary": "Passionate Full-stack Developer with a strong foundation in JavaScript, Java, and SQL. Proven track record of deploying production-ready web and desktop applications, including AI-integrated solutions. Highly adaptable, C1 English proficient, and dedicated to building scalable, user-centric software.",
+          "cv_experience_adapted": [
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "HTML",
+            "CSS",
+            "Git",
+            "Docker",
+            "Oracle"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_926fa5f866e0.pdf",
+          "custom_cv_html": "cv_926fa5f866e0.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_926fa5f866e0.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "adesso SE",
+            "industry": "IT Consulting and Software Development",
+            "size": "enterprise",
+            "tech_stack": [
+              "Java",
+              "Spring Boot",
+              "Angular",
+              "React",
+              "TypeScript",
+              "Azure",
+              "AWS",
+              "Docker",
+              "Kubernetes"
+            ],
+            "culture": "Professional, consulting-oriented, structured, and focused on continuous professional development.",
+            "pros": [
+              "Strong emphasis on training, certifications, and career growth paths.",
+              "Stable and well-established company with a solid reputation in the DACH region.",
+              "Diverse project portfolio across various industries like banking, insurance, and automotive.",
+              "Collaborative environment with a strong focus on knowledge sharing."
+            ],
+            "cons": [
+              "High dependency on client-specific projects which can lead to varying work-life balance depending on the project phase.",
+              "Large corporate structure can sometimes result in slower decision-making processes compared to smaller startups."
+            ],
+            "salary_range": "60,000 EUR - 85,000 EUR per year depending on experience and location",
+            "remote_friendly": true,
+            "recommendation": "Adesso is an excellent choice if you value professional growth, structured career progression, and stability within a large consulting firm. It is highly recommended for developers looking to work on diverse enterprise-level projects."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Jerez de la Frontera)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424041",
           "_last_seen": "2026-08-22T08:13:45.264276",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "52836ab5336d",
@@ -53535,32 +53597,94 @@
           "date_posted": "2026-06-30",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "HTML",
+            "CSS",
+            "Git",
+            "Docker"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since the job description is brief, emphasize your full-stack versatility by highlighting projects where you integrated Java backends with JavaScript frontends. Showcase your experience with Docker and Git to demonstrate modern DevOps practices, as these are key technical requirements for Uptech Studio. Ensure your CV clearly lists your proficiency in SQL for database management, as this is a core skill mentioned in the requirements.",
+          "cover_letter": "Building software that moves from concept to production is what drives me. My experience spans the entire development lifecycle, from crafting responsive interfaces with HTML, CSS, and JavaScript to architecting robust backends using Java and SQL. I thrive on solving complex problems, whether I am optimizing database queries or containerizing applications with Docker to ensure seamless deployment environments. My background in both Industrial Engineering and software development has taught me to approach technical challenges with a structured, analytical mindset. Beyond the core stack, I have successfully integrated AI models into live projects, demonstrating my ability to adapt to emerging technologies and deliver tangible value. I am particularly drawn to Uptech Studio because of your commitment to high-quality, scalable solutions. I am eager to bring my technical versatility and proactive problem-solving skills to your team. I would welcome the opportunity to discuss how my hands-on experience with full-stack development and my passion for clean, efficient code can contribute to your upcoming projects. Are you available for a brief conversation next week to explore how I can support your development goals?",
+          "cv_summary": "Full Stack Developer with a strong foundation in JavaScript, Java, and SQL. Proven track record of deploying production-ready applications, including AI-integrated web platforms and desktop tools. Proficient in Git and Docker, with a C1 English level and a passion for building scalable, user-centric software solutions.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Java",
+            "SQL",
+            "HTML",
+            "CSS",
+            "Git",
+            "Docker"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_f27164ee0907.pdf",
+          "custom_cv_html": "cv_f27164ee0907.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_f27164ee0907.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Uptech Studio",
+            "industry": "Software Development Agency",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Node.js",
+              "TypeScript",
+              "React Native",
+              "AWS"
+            ],
+            "culture": "Agile, collaborative, and product-focused",
+            "pros": [
+              "Exposure to a wide variety of projects and industries",
+              "Strong emphasis on professional growth and skill development",
+              "Collaborative team environment with a focus on modern best practices",
+              "Opportunity to work with cutting-edge technologies"
+            ],
+            "cons": [
+              "High pressure environment typical of software development agencies",
+              "Potential for tight deadlines due to client-driven project timelines"
+            ],
+            "salary_range": "Competitive market rates based on experience and location",
+            "remote_friendly": true,
+            "recommendation": "If you enjoy fast-paced environments and want to build a diverse portfolio of products, Uptech Studio is an excellent place to accelerate your career."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Bend, Oregón, Estados Unidos)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424064",
           "_last_seen": "2026-08-22T08:13:45.101727",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "71d3531ce287",
@@ -53573,32 +53697,77 @@
           "date_posted": "2026-08-20",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "Full Stack"
+          ],
           "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "75000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since Redpath Mining operates in the industrial and mining sector, emphasize your experience with internal tools, data visualization, or operational efficiency software. Highlight your ability to bridge the gap between backend infrastructure and user-facing dashboards. Since your match score is 65%, ensure your CV explicitly lists both frontend (React/Angular) and backend (Node/Python/Java) technologies to demonstrate true full-stack capability.",
+          "cover_letter": "Building scalable software that bridges the gap between complex backend logic and intuitive user interfaces is what drives my professional development. Having successfully deployed full-stack projects like 'El Grano de Oro', where I integrated AI-driven recommendation engines and automated administrative panels, I have developed a deep understanding of the entire development lifecycle. My technical foundation in JavaScript, Java, and SQL, combined with my experience in containerization with Docker, allows me to build robust applications that are ready for production environments. I am particularly drawn to Redpath Mining’s commitment to innovation and operational excellence, and I am eager to apply my problem-solving skills to your engineering challenges. My background in Industrial Engineering and my current focus on Multiplatform Application Development have equipped me with a unique perspective on system efficiency and automation. I am confident that my ability to learn quickly and my hands-on experience with real-world deployments make me a strong fit for your team. I would welcome the opportunity to discuss how my technical background and passion for full-stack development can contribute to the continued success of Redpath Mining. Are you available for a brief conversation next week to explore how I can add value to your current projects?",
+          "cv_summary": "Full Stack Developer with a strong foundation in JavaScript, Java, and SQL. Proven track record of deploying production-ready applications featuring AI integration and automated workflows. Passionate about building efficient, scalable software solutions and leveraging a C1 English proficiency to thrive in international technical environments.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [],
+          "cv_projects": [],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_a3024f38fb7d.pdf",
+          "custom_cv_html": "cv_a3024f38fb7d.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_a3024f38fb7d.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "REDPATH MINING",
+            "industry": "Mining and Engineering Services",
+            "size": "enterprise",
+            "tech_stack": [
+              "C#",
+              ".NET",
+              "SQL Server",
+              "JavaScript",
+              "Azure"
+            ],
+            "culture": "Industrial, safety-focused, and operationally driven",
+            "pros": [
+              "Stable and established global organization",
+              "Opportunity to build software that impacts critical industrial operations",
+              "Strong emphasis on safety and professional standards",
+              "Long-term career growth within a specialized sector"
+            ],
+            "cons": [
+              "Traditional industry focus may lead to legacy system constraints",
+              "Less emphasis on cutting-edge consumer tech compared to pure software companies",
+              "Work environment is often tied to industrial or site-based operational needs"
+            ],
+            "salary_range": "$85,000 - $120,000 USD",
+            "remote_friendly": false,
+            "recommendation": "Apply if you are interested in applying modern software development to industrial engineering and mining operations, as it offers high stability and unique domain challenges."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Presencial fuera de ciudad objetivo (Bahía del Norte, Ontario, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424080",
           "_last_seen": "2026-08-22T08:13:45.102135",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 75000
         },
         {
           "id": "f4ef092e50b3",
@@ -53611,32 +53780,92 @@
           "date_posted": "2026-08-18",
           "source": "LinkedIn",
           "_scraper": "LinkedInScraper",
-          "match_score": null,
-          "tech_stack": null,
-          "work_mode": "Presencial",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "match_score": 75,
+          "tech_stack": [
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "SQL",
+            "Full-Stack"
+          ],
+          "work_mode": "Híbrido",
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since the role is at a Virtual Health Hub, emphasize any experience you have with HIPAA compliance, patient data security, or healthcare-related APIs. Highlight your proficiency in JavaScript and SQL by showcasing a project where you managed complex relational databases for a web application. Since the role is full-stack, ensure your CV explicitly lists both frontend (HTML/CSS/JS) and backend (SQL/Server-side) accomplishments to demonstrate a balanced skill set.",
+          "cover_letter": "Building functional, user-centric applications is what drives me, and I have spent the last few years turning that passion into production-ready software. My experience spans the entire development lifecycle, from crafting responsive interfaces with HTML and CSS to architecting robust back-end logic and managing data through SQL. I thrive on solving complex problems, whether it is integrating AI models into web platforms or optimizing desktop tools for seamless user experiences. My project, 'El Grano de Oro,' is a testament to my ability to deliver full-stack solutions that combine modern JavaScript frameworks with intelligent features to solve real-world business needs. I am particularly drawn to Virtual Health Hub because of your commitment to innovation in the digital health space, and I am eager to bring my technical versatility and proactive mindset to your engineering team. I am confident that my background in both software development and industrial engineering provides me with a unique analytical perspective that would be an asset to your current projects. I would welcome the opportunity to discuss how my skills in full-stack development can contribute to the continued success of Virtual Health Hub. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Full-stack developer with a strong foundation in JavaScript, HTML, CSS, and SQL. Proven track record of deploying production-ready web and desktop applications, including AI-integrated solutions. Highly adaptable, C1 English proficient, and passionate about building scalable software that solves complex user problems.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Full-Stack Development",
+            "SQL",
+            "HTML",
+            "CSS",
+            "Git",
+            "Docker",
+            "AI Integration"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_3b40edb15b28.pdf",
+          "custom_cv_html": "cv_3b40edb15b28.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_3b40edb15b28.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Virtual Health Hub",
+            "industry": "Health-tech",
+            "size": "startup",
+            "tech_stack": [
+              "React",
+              "Node.js",
+              "TypeScript",
+              "AWS",
+              "PostgreSQL"
+            ],
+            "culture": "Mission-driven, collaborative, and security-conscious",
+            "pros": [
+              "Opportunity to work on impactful software that improves patient outcomes",
+              "Exposure to modern cloud-native architectures and telemedicine infrastructure",
+              "Strong focus on professional development and continuous learning",
+              "Competitive benefits package often found in the health-tech sector"
+            ],
+            "cons": [
+              "High pressure environment due to strict healthcare compliance and data security regulations",
+              "Potential for legacy system integration challenges common in health-tech"
+            ],
+            "salary_range": "$90,000 - $135,000",
+            "remote_friendly": true,
+            "recommendation": "If you are passionate about digital health and building scalable, secure applications, this is a great place to grow your career. Ensure you are comfortable with the regulatory complexities inherent in the healthcare industry before applying."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "Híbrido fuera de ciudad objetivo (Saskatoon, Saskatchewan, Canadá)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T07:38:44.424095",
           "_last_seen": "2026-08-22T07:38:44.424095",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "8002afc1fabf",
