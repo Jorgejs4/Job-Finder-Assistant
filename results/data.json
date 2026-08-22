@@ -45893,28 +45893,17 @@
           "salary": "22000",
           "salary_is_estimate": true,
           "required_experience": 0,
-          "tailored_advice": "Since this is a junior position, emphasize your academic projects, internships, and any personal coding projects on GitHub. Highlight your willingness to learn and your familiarity with fundamental programming concepts. Since the job description is sparse, focus your CV on demonstrating a strong foundation in computer science principles and a proactive attitude toward problem-solving.",
-          "cover_letter": "Building software that solves real-world problems is what drives me every day. My experience spans from developing full-stack web applications like 'El Grano de Oro'—where I integrated AI-driven recommendation systems—to creating robust desktop tools like 'Music Downloader Pro'. I thrive on the challenge of bridging the gap between complex technical requirements and user-friendly interfaces, always ensuring high performance and scalability. My background in Industrial Engineering, combined with my current studies in Multiplatform Application Development, has provided me with a strong analytical foundation and a disciplined approach to coding. I am particularly drawn to the opportunity at Agenda Assessoria because of your commitment to innovation and technical excellence. I am confident that my proficiency in JavaScript, Java, and SQL, along with my hands-on experience with Docker and AI integration, will allow me to contribute effectively to your development team from day one. I am eager to bring my proactive mindset and technical versatility to your upcoming projects. I would welcome the chance to discuss how my background and passion for building efficient software align with the goals of your team. Are you available for a brief conversation next week to explore how I can add value to Agenda Assessoria?",
-          "cv_summary": "Versatile Software Developer with a strong foundation in full-stack development and AI integration. Proven track record of deploying production-ready web and desktop applications using JavaScript, Java, and SQL. Highly adaptable, self-taught professional with a C1 English proficiency, eager to contribute technical problem-solving skills to the Agenda Assessoria team.",
+          "tailored_advice": "Since this is a junior position, emphasize your academic projects, internships, or personal coding portfolio. Highlight your willingness to learn and your familiarity with fundamental programming concepts. Since the job description is sparse, research Agenda Assessoria's core business and mention how your technical skills can contribute to their specific industry solutions.",
+          "cover_letter": "Building software that solves real-world problems is what drives me every day. My experience spans from developing full-stack web applications like 'El Grano de Oro'—where I integrated AI-driven recommendation systems—to creating robust desktop tools like 'Music Downloader Pro'. I thrive on the challenge of bridging the gap between complex technical requirements and user-friendly interfaces, always ensuring that my code is scalable and efficient. My background in Industrial Engineering, combined with my current studies in Multiplatform Application Development, has provided me with a strong analytical foundation that allows me to adapt quickly to new tech stacks and project demands. I am particularly excited about the opportunity to contribute to Agenda Assessoria, as I am eager to apply my skills in JavaScript, Java, and SQL to your ongoing projects. I am confident that my proactive approach to learning and my hands-on experience with deployment and automation will make me a valuable asset to your development team. I would welcome the chance to discuss how my technical background and passion for innovation align with the goals of your team. Are you available for a brief conversation next week to explore how I can contribute to your upcoming initiatives?",
+          "cv_summary": "Aspiring Software Developer with a strong foundation in full-stack development, AI integration, and desktop application architecture. Proven ability to deliver production-ready projects using JavaScript, Java, and SQL. Highly motivated, self-taught, and fluent in English (C1), with a focus on building scalable solutions and automating complex workflows.",
           "cv_experience_adapted": [
             {},
-            {}
-          ],
-          "cv_skills": [
-            "Full-stack Web Development",
-            "JavaScript",
-            "Artificial Intelligence Integration",
-            "Java",
-            "SQL",
-            "Git",
-            "Docker",
-            "English C1"
-          ],
-          "cv_projects": [
             {},
             {},
             {}
           ],
+          "cv_skills": [],
+          "cv_projects": [],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
@@ -63833,10 +63822,10 @@
           "match_score": 0,
           "tech_stack": [],
           "work_mode": "Presencial",
-          "salary": "45000",
+          "salary": "0",
           "salary_is_estimate": true,
-          "required_experience": 2,
-          "tailored_advice": "Since the job description is empty, focus your CV on demonstrating versatility and adaptability. Highlight your core technical skills and any past projects that show problem-solving capabilities. Ensure your LinkedIn profile is updated with clear keywords related to the industry you are targeting to attract recruiters.",
+          "required_experience": 0,
+          "tailored_advice": "No se pudieron generar consejos.",
           "cover_letter": "Building software that bridges the gap between complex logic and user-centric design is what drives me every day. My experience developing full-stack applications, such as the 'El Grano de Oro' e-commerce platform, has allowed me to master the integration of AI models like Gemini to create truly intelligent user experiences. I thrive on the challenge of taking a project from a blank screen to a production-ready environment, whether it is a web application or a desktop tool like my Music Downloader Pro. My background in Industrial Engineering, combined with my current studies in Multiplatform Application Development, has instilled in me a rigorous approach to problem-solving and system architecture. I am particularly drawn to the work being done at Quartz, as your commitment to innovation aligns perfectly with my passion for building scalable, high-impact software solutions. I am confident that my technical versatility in JavaScript, Java, and SQL, along with my ability to adapt quickly to new tech stacks, would allow me to contribute effectively to your team from day one. I would welcome the opportunity to discuss how my hands-on experience and proactive mindset can support your upcoming projects. Are you available for a brief conversation next week to explore how I can add value to your development team?",
           "cv_summary": "Versatile Software Developer with a strong foundation in full-stack development and AI integration. Proven track record of deploying production-ready web and desktop applications, including intelligent e-commerce solutions. Highly adaptable, C1-certified in English, and eager to leverage technical expertise in JavaScript, Java, and SQL to drive innovation within a dynamic team.",
           "cv_experience_adapted": [
