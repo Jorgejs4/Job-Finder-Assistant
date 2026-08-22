@@ -224,9 +224,9 @@ class GeminiClient:
     def _generate_with_retry(self, prompt: str, schema, max_retries: int = 3) -> str:
         """
         Realiza la llamada a la API de Gemini con reintentos.
-        Reintenta los 429 con backoff sobre el mismo proyecto. Las cuotas de
-        Gemini son por proyecto, no por API key; rotar claves no evita un límite
-        temporal de RPM/TPM.
+        Ante un 429 cambia de clave antes de reintentar. Esto permite aprovechar
+        claves asociadas a proyectos distintos; si comparten proyecto, Gemini
+        puede seguir aplicando la misma cuota.
         """
         import time
         from google.api_core.exceptions import ResourceExhausted
@@ -255,10 +255,15 @@ class GeminiClient:
                 return text
             except ResourceExhausted:
                 last_error = "429 RESOURCE_EXHAUSTED (límite del proyecto)"
-                wait_time = min(15 * (2 ** attempt), 60)
+                rotated = self._on_429()
+                wait_time = 5 if rotated else min(15 * (2 ** attempt), 60)
+                action = (
+                    f"cambiando a key #{self.key_pool.active_index + 1}"
+                    if rotated else "sin más keys disponibles"
+                )
                 print(
-                    f"\n[Gemini] 429 temporal (RPM/TPM/RPD o capacidad del proyecto). "
-                    f"Manteniendo la misma key; reintentando en {wait_time}s "
+                    f"\n[Gemini] 429 temporal (RPM/TPM/RPD o capacidad del proyecto); "
+                    f"{action}. Reintentando en {wait_time}s "
                     f"({attempt + 1}/{max_attempts})"
                 )
                 time.sleep(wait_time)
