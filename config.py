@@ -7,12 +7,24 @@ from dotenv import load_dotenv
 # Cargar variables de entorno desde .env para desarrollo local
 load_dotenv()
 
+
+def _setting(name: str, default=None):
+    """Read a setting from environment first, then Streamlit secrets."""
+    value = os.getenv(name)
+    if value not in (None, ""):
+        return value
+    try:
+        import streamlit as st
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
 # Rutas del proyecto
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_CV_PATH = BASE_DIR / "cv.pdf"
 
 # Credenciales de API
-NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+NOTION_TOKEN = _setting("NOTION_TOKEN")
 
 def _sanitize_db_id(db_id: str) -> str:
     if not db_id:
@@ -24,13 +36,15 @@ def _sanitize_db_id(db_id: str) -> str:
     db_id = db_id.split("?")[0]
     return db_id.strip()
 
-NOTION_DATABASE_ID = _sanitize_db_id(os.getenv("NOTION_DATABASE_ID"))
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+NOTION_DATABASE_ID = _sanitize_db_id(_setting("NOTION_DATABASE_ID", ""))
+GEMINI_API_KEY = _setting("GEMINI_API_KEY")
 
 # Múltiples API keys de Gemini para rotación/failover
-_gemini_keys_raw = os.getenv("GEMINI_API_KEYS", "")
+_gemini_keys_raw = _setting("GEMINI_API_KEYS", "")
 GEMINI_API_KEYS: list = (
-    [k.strip() for k in _gemini_keys_raw.split(",") if k.strip()]
+    ([k.strip() for k in _gemini_keys_raw.split(",") if k.strip()]
+     if isinstance(_gemini_keys_raw, str)
+     else [str(k).strip() for k in _gemini_keys_raw if str(k).strip()])
     if _gemini_keys_raw
     else ([GEMINI_API_KEY] if GEMINI_API_KEY else [])
 )
@@ -85,8 +99,8 @@ JOBSPY_HOURS_OLD = int(os.getenv("JOBSPY_HOURS_OLD", "168"))
 JOBSPY_COUNTRY_INDEED = os.getenv("JOBSPY_COUNTRY_INDEED", "Spain")
 
 # === HOSTING ===
-GITHUB_REPO = os.getenv("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO = _setting("GITHUB_REPO", "Jorgejs4/Job-Finder-Assistant")
+GITHUB_TOKEN = _setting("GITHUB_TOKEN", "")
 CV_BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/results/cvs"
 
 # === KEYWORDS DE CLASIFICACIÓN (FUENTE ÚNICA DE VERDAD) ===
