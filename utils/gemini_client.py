@@ -240,12 +240,13 @@ class GeminiClient:
         
         last_error = None
         # Los límites RPM/TPM pueden tardar más de un minuto en recuperarse.
-        max_attempts = max(max_retries, 6)
+        max_attempts = max(max_retries, 4)
         for attempt in range(max_attempts):
             try:
                 response = self.model.generate_content(
                     prompt,
-                    generation_config=generation_config
+                    generation_config=generation_config,
+                    request_options={"timeout": 90},
                 )
                 text = response.text
                 # Validar que el JSON es parseable y completo
@@ -254,7 +255,7 @@ class GeminiClient:
                 return text
             except ResourceExhausted:
                 last_error = "429 RESOURCE_EXHAUSTED (límite del proyecto)"
-                wait_time = min(15 * (2 ** attempt), 120)
+                wait_time = min(15 * (2 ** attempt), 60)
                 print(
                     f"\n[Gemini] 429 temporal (RPM/TPM/RPD o capacidad del proyecto). "
                     f"Manteniendo la misma key; reintentando en {wait_time}s "
