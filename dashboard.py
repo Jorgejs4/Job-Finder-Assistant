@@ -234,6 +234,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                 desc = job.get("description", "") or job.get("title", "")
 
                 wait_for_gemini()
+                st.write("  ⏳ Enviando evaluación de compatibilidad a Gemini...")
                 match_result = gemini.match_offer(
                     cv_text=cv_text,
                     offer_title=job["title"],
@@ -241,8 +242,10 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     experience_hint=0,
                     language=language,
                 )
+                st.write(f"  ✅ Compatibilidad recibida: {match_result.match_score}%")
 
                 wait_for_gemini()
+                st.write("  ⏳ Calculando salario, experiencia y consejos...")
                 details = gemini.match_details(
                     cv_text=cv_text,
                     offer_title=job["title"],
@@ -250,6 +253,7 @@ def reanalyze_jobs_with_gemini(jobs_list: list) -> dict:
                     match_result=match_result,
                     language=language,
                 )
+                st.write("  ✅ Detalles recibidos")
 
                 job["work_mode"] = match_result.work_mode
                 wm = config.reclassify_work_mode(job)
