@@ -64,21 +64,30 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
+        # Serializa los commits de progreso y evita carreras entre el proceso
+        # periódico y el commit final. Se trabaja siempre sobre origin/main.
+        commit_progress() {
+          (
+            flock -x 9
+            git fetch origin main
+            git reset origin/main
+            git add results/data.json results/cvs/ 2>/dev/null || true
+            if ! git diff --cached --quiet; then
+              git commit -m "📊 Analysis progress [skip ci]" || true
+              git push origin HEAD:main || true
+            fi
+          ) 9>/tmp/job-finder-git-sync.lock
+        }
+
         # Background job: commit results every 5 min so dashboard shows progress
         (
           while true; do
             sleep 300
-            if [ -f results/data.json ]; then
-              git add results/data.json results/cvs/ 2>/dev/null || true
-              if ! git diff --cached --quiet; then
-                git commit -m "📊 Analysis progress [skip ci]" || true
-                git pull --rebase origin main || true
-                git push origin main || true
-              fi
-            fi
+            commit_progress
           done
         ) &
         COMMIT_PID=$!
+        trap 'kill $COMMIT_PID 2>/dev/null || true' EXIT
 
         docker run --rm \
           -e PYTHONUNBUFFERED=1 \
@@ -101,16 +110,20 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+        commit_progress() {
+          (
+            flock -x 9
+            git fetch origin main
+            git reset origin/main
+            git add results/data.json results/cvs/ 2>/dev/null || true
+            if ! git diff --cached --quiet; then
+              git commit -m "🧠 Analysis complete [skip ci]" || true
+              git push origin HEAD:main || true
+            fi
+          ) 9>/tmp/job-finder-git-sync.lock
+        }
         if [ -f results/data.json ]; then
-          git add results/data.json results/cvs/ 2>/dev/null || true
-          if [ -f results/feedback.json ]; then git add results/feedback.json; fi
-          if git diff --cached --quiet; then
-            echo "No changes to data.json"
-          else
-            git commit -m "🧠 Gemini analysis complete [skip ci]"
-            git pull --rebase origin main || true
-            git push --force-with-lease origin main
-          fi
+          commit_progress
         else
           echo "data.json not found, skipping commit"
         fi

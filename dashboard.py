@@ -11,6 +11,7 @@ from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
 import pandas as pd
 import statistics
@@ -28,6 +29,10 @@ st.set_page_config(
     page_icon="🔍",
     layout="wide",
 )
+
+# Actions publica avances periódicamente; recargar permite mostrarlos sin
+# depender de una actualización manual del navegador.
+st_autorefresh(interval=30_000, key="dashboard_auto_refresh")
 
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
 db = Database()
