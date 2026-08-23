@@ -117,7 +117,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: scraper-full-results-${{ github.run_id }}
-        path: results/
+        path: |
+          results/data.json
+          results/feedback.json
         retention-days: 90
     - name: Commit data.json
       if: always()
@@ -125,7 +127,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         if [ -f results/data.json ]; then
-          git add results/data.json results/cvs/
+         git add results/data.json
           if [ -f results/feedback.json ]; then git add results/feedback.json; fi
           if git diff --cached --quiet; then
             echo "No changes to data.json"

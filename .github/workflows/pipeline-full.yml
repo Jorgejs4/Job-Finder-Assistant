@@ -130,7 +130,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: pipeline-full-results-${{ github.run_id }}
-        path: results/
+        path: |
+          results/data.json
+          results/feedback.json
         retention-days: 90
     - name: Commit data.json tras scrape
       if: always()
@@ -138,7 +140,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         if [ -f results/data.json ]; then
-          git add results/data.json results/cvs/
+          git add results/data.json
           if [ -f results/feedback.json ]; then git add results/feedback.json; fi
           if ! git diff --cached --quiet; then
             git commit -m "Scrape full complete [skip ci]"
@@ -200,7 +202,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         if [ -f results/data.json ]; then
-          git add results/data.json results/cvs/
+          git add results/data.json
           if [ -f results/feedback.json ]; then git add results/feedback.json; fi
           if ! git diff --cached --quiet; then
             git commit -m "Analysis full complete [skip ci]"

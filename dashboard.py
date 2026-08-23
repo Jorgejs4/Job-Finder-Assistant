@@ -15,11 +15,18 @@ from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
 import pandas as pd
 import statistics
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.database import Database
 from utils.feedback_manager import FeedbackManager
 import utils.github_sync as github_sync
 import config
+from utils.auth import current_user, render_login, resolve_supabase_user_id
+from utils.supabase_client import create_server_client, is_supabase_configured
+from utils.tenant_repository import TenantRepository, UserProfile
+from utils.tenant_dashboard import TenantDashboardDB, TenantFeedbackManager
+from utils.cv_storage import CVStorage, CVStorageError
+from utils.workflow_config import WorkflowConfig
+from utils.workflow_dispatch import WorkflowDispatchError, dispatch_workflow
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
@@ -35,11 +42,55 @@ st.set_page_config(
 st_autorefresh(interval=30_000, key="dashboard_auto_refresh")
 
 RESULTS_DIR = os.path.join(Path(__file__).resolve().parent, "results")
-db = Database()
+
+# Supabase mode is tenant-isolated. SQLite remains available only for legacy
+# local data when Supabase has not been configured.
+TENANT_MODE = is_supabase_configured()
+tenant_user = None
+tenant_repo = None
+tenant_profile = None
+workflow_settings = WorkflowConfig()
+if TENANT_MODE:
+    if not render_login():
+        st.stop()
+    tenant_user = current_user()
+    try:
+        tenant_client = create_server_client()
+        tenant_id = resolve_supabase_user_id(tenant_user, tenant_client)
+        tenant_repo = TenantRepository(tenant_client, tenant_id)
+        tenant_profile = tenant_repo.get_profile()
+        if tenant_profile is None:
+            tenant_profile = UserProfile(
+                id=tenant_id,
+                email=tenant_user.email,
+                full_name=tenant_user.name,
+                avatar_url=tenant_user.picture,
+                google_subject=tenant_user.user_id,
+            )
+        else:
+            tenant_profile = tenant_profile.model_copy(update={
+                "email": tenant_user.email or tenant_profile.email,
+                "full_name": tenant_user.name or tenant_profile.full_name,
+                "avatar_url": tenant_user.picture or tenant_profile.avatar_url,
+                "google_subject": tenant_user.user_id,
+            })
+        tenant_profile = tenant_repo.upsert_profile(tenant_profile)
+        workflow_settings = WorkflowConfig.from_mapping(
+            (tenant_profile.preferences or {}).get("workflow", {})
+        )
+        db = TenantDashboardDB(tenant_repo)
+        feedback_mgr = TenantFeedbackManager(tenant_repo)
+    except Exception as exc:
+        st.error(f"No se pudo inicializar tu cuenta aislada: {exc}")
+        st.stop()
+else:
+    db = Database()
 
 
 def _sync_remote_data_to_db():
     """Import the latest Actions results before reading jobs from SQLite."""
+    if TENANT_MODE:
+        return
     now = time.time()
     last_sync = st.session_state.get("remote_data_sync_at", 0.0)
     if now - last_sync < 30:
@@ -145,8 +196,9 @@ def _invalidate_cache(sync: bool = True):
     _cached_get_all_jobs.clear()
     _cached_get_runs.clear()
     _cached_get_history.clear()
-    db.export_data_json()
-    _sync_to_github()
+    if not TENANT_MODE:
+        db.export_data_json()
+        _sync_to_github()
 
 
 def apply_archive_rules_to_all() -> dict:
@@ -198,6 +250,8 @@ def apply_archive_rules_to_all() -> dict:
 
 
 def _sync_to_github():
+    if TENANT_MODE:
+        return
     json_path = os.path.join(RESULTS_DIR, "data.json")
     def _bg():
         ok = github_sync.commit_data_json(json_path)
@@ -415,7 +469,8 @@ def reset_pagination(key_prefix: str):
 
 all_jobs = _cached_get_all_jobs()
 runs = _cached_get_runs()
-feedback_mgr = FeedbackManager()
+if not TENANT_MODE:
+    feedback_mgr = FeedbackManager()
 
 st.title("🔍 Job Scraper Dashboard")
 st.caption(f"💼 {len(all_jobs)} ofertas | Ultima carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
@@ -431,8 +486,151 @@ tab_mis_ofertas, tab_sin_analizar, tab_archivadas, tab_pipeline, tab_stats, tab_
 )
 
 with st.sidebar:
+    if TENANT_MODE:
+        st.subheader("Cuenta")
+        st.caption(tenant_user.email or tenant_user.name or "Usuario autenticado")
+        if st.button("Cerrar sesión", use_container_width=True):
+            from utils.auth import logout
+            logout()
+
+        with st.expander("Mi CV", expanded=not bool(tenant_profile.cv_path)):
+            if tenant_profile.cv_path:
+                st.caption("CV configurado. Súbelo de nuevo para reemplazarlo.")
+            uploaded_cv = st.file_uploader(
+                "Subir CV", type=["pdf", "docx", "txt"], key="tenant_cv_upload"
+            )
+            if uploaded_cv and st.button("Guardar CV", key="save_tenant_cv", use_container_width=True):
+                try:
+                    cv_bytes = uploaded_cv.getvalue()
+                    cv_path = CVStorage(tenant_repo.client).upload_cv(
+                        tenant_repo.user_id, cv_bytes, uploaded_cv.name,
+                        content_type=uploaded_cv.type,
+                    )
+                    profile_update = tenant_profile.model_copy(update={
+                        "cv_path": cv_path,
+                        "cv_hash": hashlib.sha256(cv_bytes).hexdigest(),
+                    })
+                    tenant_profile = tenant_repo.upsert_profile(profile_update)
+                    st.success("CV guardado de forma privada.")
+                    st.rerun()
+                except CVStorageError as exc:
+                    st.error(str(exc))
+
+        with st.expander("Configuración de workflows", expanded=False):
+            st.caption("Estos parámetros se aplican solo a tu cuenta y a tu CV.")
+            with st.form("tenant_workflow_settings"):
+                locations_text = st.text_input(
+                    "Ubicaciones",
+                    value=", ".join(workflow_settings.locations),
+                    help="Separadas por comas. Ejemplo: Sevilla, Remoto",
+                )
+                years = st.number_input(
+                    "Años de experiencia", min_value=0, max_value=60,
+                    value=workflow_settings.years_of_experience, step=1,
+                )
+                min_salary = st.number_input(
+                    "Salario mínimo", min_value=0, max_value=2_000_000,
+                    value=workflow_settings.min_salary or 0, step=1000,
+                )
+                max_jobs = st.number_input(
+                    "Máximo de ofertas por scraper", min_value=1, max_value=2000,
+                    value=workflow_settings.max_jobs_per_scraper, step=10,
+                )
+                max_gemini = st.number_input(
+                    "Máximo de ofertas para IA (0 = todas)", min_value=0, max_value=2000,
+                    value=workflow_settings.max_gemini_jobs, step=10,
+                )
+                workers = st.number_input(
+                    "Workers Gemini", min_value=1, max_value=20,
+                    value=workflow_settings.workers, step=1,
+                )
+                reanalysis_limit = st.number_input(
+                    "Límite de reanálisis (0 = todos)", min_value=0, max_value=2000,
+                    value=workflow_settings.reanalysis_limit, step=10,
+                )
+                reanalysis_workers = st.number_input(
+                    "Workers de reanálisis", min_value=1, max_value=20,
+                    value=workflow_settings.reanalysis_workers, step=1,
+                )
+                jobspy_sites_text = st.text_input(
+                    "Fuentes JobSpy",
+                    value=", ".join(workflow_settings.jobspy_sites),
+                    help="Separadas por comas. Ejemplo: indeed, glassdoor, google",
+                )
+                rate_limit = st.number_input(
+                    "Segundos mínimos entre llamadas Gemini", min_value=0.0, max_value=600.0,
+                    value=workflow_settings.rate_limit_seconds, step=0.5,
+                )
+                schedule_time = st.text_input(
+                    "Hora diaria de inicio (UTC)", value=workflow_settings.schedule_time,
+                )
+                frequency_hours = st.number_input(
+                    "Frecuencia del scraping (horas)", min_value=1, max_value=168,
+                    value=workflow_settings.frequency_hours, step=1,
+                )
+                use_jobspy = st.checkbox("Usar JobSpy", value=workflow_settings.use_jobspy)
+                headless = st.checkbox("Usar scrapers headless", value=workflow_settings.headless)
+                save_settings = st.form_submit_button("Guardar configuración", use_container_width=True)
+
+            if save_settings:
+                try:
+                    new_settings = WorkflowConfig.model_validate({
+                        "locations": [item.strip() for item in locations_text.split(",")],
+                        "years_of_experience": int(years),
+                        "min_salary": int(min_salary) or None,
+                        "max_jobs_per_scraper": int(max_jobs),
+                        "max_gemini_jobs": int(max_gemini),
+                        "workers": int(workers),
+                        "reanalysis_limit": int(reanalysis_limit),
+                        "reanalysis_workers": int(reanalysis_workers),
+                        "jobspy_sites": [item.strip() for item in jobspy_sites_text.split(",")],
+                        "rate_limit_seconds": float(rate_limit),
+                        "schedule_time": schedule_time,
+                        "frequency_hours": int(frequency_hours),
+                        "use_jobspy": use_jobspy,
+                        "headless": headless,
+                    })
+                    preferences = dict(tenant_profile.preferences or {})
+                    preferences["workflow"] = new_settings.model_dump()
+                    tenant_profile = tenant_repo.upsert_profile(
+                        tenant_profile.model_copy(update={"preferences": preferences})
+                    )
+                    next_run = datetime.now(timezone.utc).isoformat()
+                    tenant_repo.upsert_schedule(
+                        new_settings.model_dump(), next_run, enabled=True
+                    )
+                    st.success("Configuración guardada para tu cuenta.")
+                    st.rerun()
+                except ValueError as exc:
+                    st.error(f"Configuración no válida: {exc}")
+
+            st.divider()
+            if st.button("Ejecutar scraping ahora", use_container_width=True):
+                try:
+                    dispatch_workflow(
+                        tenant_repo.user_id,
+                        workflow_settings,
+                        repository=config.GITHUB_REPO,
+                        workflow="tenant-scrape.yml",
+                    )
+                    st.success("Workflow de scraping iniciado.")
+                except WorkflowDispatchError as exc:
+                    st.error(str(exc))
+            if st.button("Reanalizar mis ofertas", use_container_width=True):
+                try:
+                    reanalysis = workflow_settings.model_copy(update={"reanalyze": True})
+                    dispatch_workflow(
+                        tenant_repo.user_id,
+                        reanalysis,
+                        repository=config.GITHUB_REPO,
+                        workflow="tenant-reanalyze.yml",
+                    )
+                    st.success("Workflow de reanálisis iniciado.")
+                except WorkflowDispatchError as exc:
+                    st.error(str(exc))
+
     pending = st.session_state.get("pending_changes", 0)
-    if config.GITHUB_TOKEN:
+    if config.GITHUB_TOKEN and not TENANT_MODE:
         if pending > 0:
             if st.button(f"Guardar cambios en GitHub ({pending} pendiente(s))", use_container_width=True):
                 _sync_to_github()

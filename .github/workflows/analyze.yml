@@ -71,7 +71,7 @@ jobs:
             flock -x 9
             git fetch origin main
             git reset origin/main
-            git add results/data.json results/cvs/ 2>/dev/null || true
+            git add results/data.json 2>/dev/null || true
             if ! git diff --cached --quiet; then
               git commit -m "📊 Analysis progress [skip ci]" || true
               git push origin HEAD:main || true
@@ -115,7 +115,7 @@ jobs:
             flock -x 9
             git fetch origin main
             git reset origin/main
-            git add results/data.json results/cvs/ 2>/dev/null || true
+            git add results/data.json 2>/dev/null || true
             if ! git diff --cached --quiet; then
               git commit -m "🧠 Analysis complete [skip ci]" || true
               git push origin HEAD:main || true

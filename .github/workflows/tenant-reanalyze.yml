@@ -1,0 +1,37 @@
+name: Tenant reanalyze
+
+on:
+  workflow_dispatch:
+    inputs:
+      user_id:
+        description: Supabase auth user UUID
+        required: true
+        type: string
+      config_json:
+        description: JSON validado por el servidor
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      TENANT_USER_ID: ${{ inputs.user_id }}
+      TENANT_CONFIG_JSON: ${{ inputs.config_json }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Reanalyze tenant jobs
+        run: python -m worker.tenant_worker

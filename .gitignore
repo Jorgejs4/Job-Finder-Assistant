@@ -2,6 +2,7 @@
 .env
 env
 *.env
+cv.pdf
 
 # Secretos y archivos temporales locales
 GEMINI_API_KEYS = *.txt
@@ -43,7 +44,6 @@ build/
 # Resultados de ejecuciones (generados automáticamente)
 results/*
 !results/data.json
-!results/cvs/
 !results/feedback.json
 
 # Streamlit

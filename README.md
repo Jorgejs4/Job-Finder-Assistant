@@ -62,6 +62,10 @@ Funciona **100% gratis** con **GitHub Actions** (dos veces al día), o de forma 
 
 Sigue la guía en `configuracion_credenciales.md` para crear tu base de datos de Notion y obtener la API key de Gemini.
 
+La aplicación incluye un modo multiusuario basado en Supabase, Google OIDC, RLS y CVs privados. Cada cuenta puede configurar desde el dashboard los parámetros de scraping y reanálisis; esos valores se envían validados a sus propios workflows. La configuración está documentada en `docs/supabase_multitenant.md`.
+
+La configuración y ejecución por usuario usa `WorkflowConfig`, `TenantWorker` y los workflows `tenant-scrape.yml`/`tenant-reanalyze.yml`; esta ruta no modifica `results/data.json` ni publica CVs en GitHub.
+
 ### API Key de Jooble (opcional)
 
 Jooble es un agregador de empleo. Para mejores resultados:
@@ -303,7 +307,7 @@ El workflow se ejecuta **dos veces al día (9:00 y 21:00 hora española)**:
 7. **CV generation** → Genera HTML + PDF con foto y prompt de 10 reglas
 8. **Notion sync** → Sube ofertas + cartas + CVs
 9. **Email** → Resumen HTML con top ofertas y comparación con ejecución anterior
-10. **Commit** → Actualiza `results/data.json` y `results/cvs/` en el repositorio
+10. **Commit** → Actualiza `results/data.json` y feedback; los CVs nuevos deben usar Supabase Storage privado (ver `docs/supabase_multitenant.md`)
 
 Si Gemini devuelve 429 (cuota agotada), el programa **intenta rotar a la siguiente API key** automáticamente. Si se agotan TODAS las keys, PARA inmediatamente y envía email de aviso.
 
@@ -347,7 +351,7 @@ Cada ejecución acumula datos en `results/data.json` (único archivo, máx. 100 
 | `runs[].scraper_stats` | Ofertas por plataforma, estado OK/fallido |
 | `runs[].jobs` | Todas las ofertas encontradas con match, salario, stack, cover_letter, custom_cv_url... |
 | `runs[].errors` | Errores durante la ejecución |
-| `results/cvs/` | CVs generados (HTML + PDF + foto) |
+| `results/cvs/` | CVs históricos del flujo anterior; no se deben añadir CVs nuevos |
 | `results/feedback.json` | Feedback pendiente de procesar |
 
 ---

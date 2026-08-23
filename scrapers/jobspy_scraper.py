@@ -9,6 +9,11 @@ import config
 class JobSpyScraper(BaseScraper):
     """Scrapes extra job boards and converts them to the app's common schema."""
 
+    def __init__(self, *, sites: List[str] | None = None, max_jobs: int | None = None):
+        super().__init__()
+        self.sites = sites
+        self.max_jobs = max_jobs
+
     def scrape_jobs(self, search_query: str, locations: List[str]) -> List[Dict[str, Any]]:
         try:
             from jobspy import scrape_jobs
@@ -17,7 +22,7 @@ class JobSpyScraper(BaseScraper):
                 "JobSpy no está instalado. Ejecuta: pip install python-jobspy"
             ) from exc
 
-        sites = [s.strip() for s in config.JOBSPY_SITES.split(",") if s.strip()]
+        sites = self.sites or [s.strip() for s in config.JOBSPY_SITES.split(",") if s.strip()]
         search_locations = locations or ["Spain"]
         jobs: List[Dict[str, Any]] = []
 
@@ -42,7 +47,7 @@ class JobSpyScraper(BaseScraper):
                 "site_name": location_sites,
                 "search_term": search_query,
                 "location": location_value,
-                "results_wanted": config.MAX_JOBS_PER_SCRAPER,
+                "results_wanted": self.max_jobs or config.MAX_JOBS_PER_SCRAPER,
                 # Indeed does not allow hours_old together with is_remote.
                 "hours_old": None if is_remote else config.JOBSPY_HOURS_OLD,
                 "country_indeed": config.JOBSPY_COUNTRY_INDEED,
