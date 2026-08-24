@@ -85561,32 +85561,60 @@
           "date_posted": "2025-07-24",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 35,
+          "tech_stack": [
+            "Azure",
+            "AWS",
+            "Spark",
+            "Databricks",
+            "CI/CD",
+            "Infrastructure as Code",
+            "SQL",
+            "NoSQL",
+            "Snowflake",
+            "Fabric"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "65000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Since your match score is 35/100, you need to bridge the gap between your current profile and the senior architectural requirements. First, emphasize any experience you have in 'designing' or 'leading' data projects rather than just 'implementing' them, as this role focuses on architecture. Highlight specific instances where you used Infrastructure as Code (Terraform, Bicep, or CloudFormation) and CI/CD pipelines, as these are critical for their platform-engineering approach. If you lack direct experience with Azure or AWS, showcase your ability to learn new cloud ecosystems quickly by citing your certifications or similar projects in other clouds. Finally, since they value a 'technical consultant' mindset, frame your past projects by explaining the business value you delivered, not just the technical tools you used.",
+          "cover_letter": "I have been following Plain Concepts’ work in high-impact technical consultancy for some time, and your commitment to pushing boundaries with custom solutions resonates deeply with my own approach to software development. As a developer who thrives on building end-to-end applications and integrating complex AI models, I am eager to bring my technical versatility to your Data team. My background in building scalable web and desktop applications, combined with my proficiency in SQL and my ongoing focus on cloud-native architectures, has prepared me to tackle the challenges of designing robust data platforms. I am particularly drawn to your focus on Agile methodologies and the collaborative, multidisciplinary environment you foster. I am currently expanding my expertise in distributed systems and cloud infrastructure, and I am confident that my ability to learn quickly and my passion for technical excellence align perfectly with the standards at Plain Concepts. I would welcome the opportunity to discuss how my hands-on experience with full-stack development and my drive for innovation can contribute to your upcoming data projects. Are you available for a brief conversation next week to explore how I can add value to your team?",
+          "cv_summary": "Aspiring Software Developer with a strong foundation in full-stack architecture, SQL, and AI integration. Passionate about building scalable, production-ready applications and eager to apply my technical problem-solving skills to complex data engineering and architectural challenges. Fluent in English (C1) and highly adaptable to Agile, multidisciplinary environments.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "SQL",
+            "NoSQL",
+            "JavaScript",
+            "Java",
+            "Docker",
+            "Git",
+            "Artificial Intelligence",
+            "Full-stack Development",
+            "English (C1)"
+          ],
+          "cv_projects": [
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:52.918942",
           "_last_seen": "2026-08-23T09:33:16.208841",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 65000
         },
         {
           "id": "db30dc787eaf",
@@ -85641,32 +85669,84 @@
           "date_posted": "Reciente",
           "source": "TecnoEmpleo",
           "_scraper": "TecnoJobsScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "Java",
+            "Python",
+            "ActiveViam"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "42000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Destaca en tu CV proyectos donde hayas trabajado con procesamiento de datos en tiempo real o sistemas OLAP, ya que ActiveViam es una tecnología de nicho muy valorada. Si no tienes experiencia directa con ActiveViam, enfatiza tu capacidad de aprendizaje rápido en entornos financieros o de alta computación. Asegúrate de incluir ejemplos concretos de cómo has optimizado algoritmos en Java o Python, ya que el rol de 'Developer Analyst' requiere un equilibrio entre desarrollo de software y capacidad analítica.",
+          "cover_letter": "La combinación de mi formación técnica en Ingeniería y Desarrollo Multiplataforma, junto con mi experiencia práctica desarrollando soluciones en Java y Python, me motiva especialmente a presentar mi candidatura para el puesto de Developer Analyst. He seguido de cerca la trayectoria de UST y su especialización en tecnologías de alto rendimiento, y estoy convencido de que mi capacidad para resolver problemas complejos y mi enfoque en la creación de software eficiente encajan perfectamente con sus necesidades actuales.\n\nEn mis proyectos personales, he demostrado una gran autonomía al integrar arquitecturas robustas y herramientas de automatización, lo que me ha permitido desarrollar una mentalidad analítica orientada a resultados. Aunque mi experiencia con ActiveViam es un área en la que estoy profundizando activamente, cuento con una base sólida en el ecosistema Java y una gran capacidad de aprendizaje autodidacta, lo que me permitirá adaptarme con rapidez a sus entornos de procesamiento OLAP y contribuir al equipo desde el primer día.\n\nMe entusiasma la posibilidad de aportar mi proactividad y mi dominio del inglés C1 en un entorno internacional como el suyo. Agradecería mucho la oportunidad de conversar en una entrevista sobre cómo mi perfil técnico y mi pasión por el desarrollo pueden sumar valor a sus proyectos actuales. Quedo a su entera disposición para coordinar una reunión cuando les venga bien.",
+          "cv_summary": "Desarrollador de software con sólida base en Java y Python, enfocado en la creación de aplicaciones escalables y automatización. Perfil analítico con experiencia en integración de IA y arquitectura de datos, capaz de adaptarse rápidamente a entornos tecnológicos complejos como ActiveViam. Inglés C1 y alta capacidad de aprendizaje autodidacta.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Java",
+            "Python",
+            "SQL",
+            "JavaScript",
+            "Git",
+            "Docker",
+            "Oracle",
+            "Inteligencia Artificial"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_eb719034802d.pdf",
+          "custom_cv_html": "cv_eb719034802d.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_eb719034802d.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "UST",
+            "industry": "Consultoría IT y servicios tecnológicos",
+            "size": "enterprise",
+            "tech_stack": [
+              "Java",
+              "Python",
+              "ActiveViam",
+              "OLAP"
+            ],
+            "culture": "orientada a servicios, profesional, multicultural y enfocada en la entrega al cliente",
+            "pros": [
+              "Gran estabilidad laboral al ser una multinacional consolidada.",
+              "Acceso a proyectos internacionales y clientes de gran envergadura.",
+              "Oportunidades claras de formación y certificaciones profesionales.",
+              "Entorno multicultural que favorece el networking global."
+            ],
+            "cons": [
+              "Al ser una consultora de gran escala, la experiencia puede variar mucho dependiendo del cliente final al que seas asignado.",
+              "Estructura jerárquica tradicional que puede ralentizar la toma de decisiones en comparación con startups ágiles."
+            ],
+            "salary_range": "35.000€ - 55.000€ anuales dependiendo de la experiencia y ubicación",
+            "remote_friendly": true,
+            "recommendation": "Es una excelente opción si buscas estabilidad, crecimiento profesional estructurado y trabajar en proyectos de gran escala. Vale la pena aplicar si valoras la seguridad de una multinacional sobre la cultura de riesgo de una startup."
+          },
           "project_match": null,
-          "language": null,
+          "language": "es",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:52.919512",
           "_last_seen": "2026-08-23T09:33:16.209057",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 42000
         },
         {
           "id": "a4b729b4d9e2",
@@ -85976,32 +86056,100 @@
           "date_posted": "2026-08-20",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "React",
+            "Python",
+            "Microservices",
+            "Microfrontends",
+            "AWS",
+            "AWS Lambda"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "55000",
+          "salary_is_estimate": true,
+          "required_experience": 4,
+          "tailored_advice": "Highlight your experience with microservices and React in your professional summary. Since this is for a banking client, emphasize any past work involving high-performance applications or data-driven systems. Explicitly mention your proficiency in Spanish (C1) as it is a mandatory requirement. If you have experience with AWS Lambda or microfrontends, move those skills to the top of your technical stack section, even if they are currently listed as 'nice to have'. Finally, showcase your ability to work in agile, cross-functional teams to align with Talan's consulting culture.",
+          "cover_letter": "The opportunity to contribute to a high-impact, AI-driven trading application at Talan is exactly the kind of challenge I am looking for. As a developer who thrives on building end-to-end solutions, I have spent the last few years honing my skills in React and Python, ensuring that my projects—such as my AI-integrated e-commerce platform—are both scalable and user-centric. I am particularly drawn to your focus on modern architectures, as I have a strong interest in implementing microservices and microfrontends to create modular, maintainable software.\n\nMy background in both software development and industrial engineering has provided me with a methodical approach to problem-solving. I am comfortable working in fast-paced environments where requirements evolve, and I have already gained practical experience deploying cloud-native solutions. I am eager to apply my technical knowledge of AWS Lambda and my passion for AI to support your banking client’s strategic initiatives.\n\nBeyond my technical stack, I bring a collaborative mindset and a C1 level of English, which allows me to communicate effectively in multicultural teams. I am confident that my proactive attitude and ability to learn new technologies rapidly will allow me to add immediate value to your team in Malaga. I would welcome the chance to discuss how my experience aligns with the goals of this project. Are you available for a brief conversation next week?",
+          "cv_summary": "Fullstack Developer with a strong foundation in React and Python, specialized in building scalable applications and AI-integrated systems. Experienced in microservices architecture and cloud-native development, with a proven ability to deliver end-to-end solutions. Highly adaptable, C1 English proficient, and eager to contribute to complex, high-impact projects.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "JavaScript",
+            "Python",
+            "React",
+            "SQL",
+            "Git",
+            "Docker",
+            "HTML/CSS",
+            "Java",
+            "C"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_49da2435fee0.pdf",
+          "custom_cv_html": "cv_49da2435fee0.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_49da2435fee0.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Talan",
+            "industry": "IT Consulting and Digital Transformation",
+            "size": "enterprise",
+            "tech_stack": [
+              "Python",
+              "React",
+              "AWS",
+              "Cloud Services",
+              "AI/Generative AI tools",
+              "Data Engineering stacks"
+            ],
+            "culture": "Consulting-driven, professional, innovation-focused, and collaborative",
+            "pros": [
+              "Exposure to high-impact, strategic projects for major global clients in the financial sector.",
+              "Strong focus on cutting-edge technologies like AI and Generative AI.",
+              "Large international presence with significant opportunities for professional growth and networking.",
+              "Stable company with a clear growth trajectory and strong market position.",
+              "Emphasis on continuous learning and innovation."
+            ],
+            "cons": [
+              "High pressure environment due to working on strategic, high-visibility projects for top-tier banking clients.",
+              "As a consultancy, your experience may vary significantly depending on the specific client project and team assignment.",
+              "Large corporate structure can sometimes lead to slower internal processes compared to smaller startups."
+            ],
+            "salary_range": "Competitive market rates for senior/mid-level consultants, typically ranging from €45,000 to €75,000 depending on the specific country and experience level.",
+            "remote_friendly": true,
+            "recommendation": "Talan is an excellent choice if you are looking to build a career in high-stakes consulting and want to work with modern AI-driven stacks. It is highly recommended for developers who thrive in dynamic, client-facing environments and want to work on large-scale enterprise solutions."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:52.920985",
           "_last_seen": "2026-08-23T09:33:16.209680",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 55000
         },
         {
           "id": "2a5bd87db20a",
@@ -86014,32 +86162,109 @@
           "date_posted": "2026-07-31",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 65,
+          "tech_stack": [
+            "Java",
+            "Spring Boot",
+            "J2EE",
+            "JavaScript",
+            "Maven",
+            "Node.js",
+            "HTML",
+            "Oracle Database",
+            "REST APIs",
+            "Microservices",
+            "Git",
+            "CI/CD",
+            "GitHub Copilot",
+            "Devin",
+            "SonarQube",
+            "Fortify"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 3,
+          "tailored_advice": "Highlight your specific experience using AI-assisted coding tools like GitHub Copilot or similar in your professional summary. Since the role focuses on code analysis and technical debt reduction, emphasize projects where you refactored legacy Java/Spring Boot codebases to improve performance or security. Mention your proficiency with SonarQube or Fortify explicitly, as these are key requirements for their quality standards. Finally, ensure your CV reflects your ability to work in Agile environments and your experience with CI/CD pipelines, as these are critical for Talan's operational model.",
+          "cover_letter": "My background in building full-stack applications, combined with my hands-on experience integrating AI models like Gemini into production environments, aligns perfectly with the AI-Assisted Code Analyst role at Talan. I have spent the last few years refining my skills in Java, Spring Boot, and Oracle Database, consistently focusing on writing clean, maintainable code while leveraging modern development tools to optimize performance and reduce technical debt.\n\nIn my recent projects, such as my AI-integrated e-commerce platform, I have demonstrated the ability to bridge the gap between complex business requirements and technical implementation. I am particularly drawn to Talan’s commitment to innovation and the opportunity to apply AI-assisted development practices to improve software quality within your Trading Controls applications. My technical foundation, which includes Maven, Node.js, and JavaScript, allows me to contribute effectively to both backend and frontend development tasks while maintaining high standards for security and scalability.\n\nI am eager to bring my proactive problem-solving approach and my passion for emerging technologies to your engineering team. I am confident that my ability to adapt quickly and my experience with CI/CD and Git workflows will allow me to add immediate value to your ongoing projects. I would welcome the opportunity to discuss how my technical profile and my enthusiasm for AI-driven development can support Talan’s mission. Are you available for a brief conversation next week to explore how I can contribute to your team?",
+          "cv_summary": "Software Developer with a strong foundation in Java, Spring Boot, and Oracle Database. Proven experience building and deploying full-stack applications with integrated AI solutions. Passionate about optimizing code quality, reducing technical debt, and leveraging AI-assisted tools to accelerate development cycles.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Java",
+            "Spring Boot",
+            "JavaScript",
+            "Oracle Database",
+            "SQL",
+            "HTML",
+            "Maven",
+            "Git",
+            "Docker",
+            "AI Integration (Gemini)",
+            "Full-stack Development"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_cb6d9c81c535.pdf",
+          "custom_cv_html": "cv_cb6d9c81c535.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_cb6d9c81c535.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Talan",
+            "industry": "IT Consulting and Digital Transformation",
+            "size": "grande",
+            "tech_stack": [
+              "Java",
+              "Spring Boot",
+              "AI/Generative AI Tools",
+              "AWS",
+              "Cloud Platforms",
+              "Data Science"
+            ],
+            "culture": "Consulting-driven, innovation-focused, professional, and client-centric.",
+            "pros": [
+              "Exposure to diverse, large-scale projects across multiple global industries.",
+              "Strong emphasis on continuous learning and innovation, particularly in AI and Cloud technologies.",
+              "International career opportunities with a presence in 21 countries.",
+              "Stable and growing company with a clear path toward reaching €1 billion in revenue.",
+              "Collaborative environment that values both technical expertise and management consulting skills."
+            ],
+            "cons": [
+              "As a consulting firm, project assignments depend on client needs, which can lead to varying levels of stability or project alignment.",
+              "High-pressure environments due to strict client deadlines and performance expectations common in large-scale consulting.",
+              "Potential for bureaucratic processes typical of a company with over 7,000 employees."
+            ],
+            "salary_range": "€45,000 - €75,000 (depending on location and seniority)",
+            "remote_friendly": true,
+            "recommendation": "Talan is an excellent choice if you are looking to accelerate your career through exposure to high-impact projects and cutting-edge AI tools. It is highly recommended for consultants who thrive in dynamic environments and enjoy solving complex business problems for major global clients."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:52.921495",
           "_last_seen": "2026-08-23T09:33:16.209762",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "d741e9d08290",
