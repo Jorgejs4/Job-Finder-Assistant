@@ -82,6 +82,9 @@ if TENANT_MODE:
         feedback_mgr = TenantFeedbackManager(tenant_repo)
     except Exception as exc:
         st.error(f"No se pudo inicializar tu cuenta aislada: {exc}")
+        if st.button("Cerrar sesión", key="tenant_init_logout"):
+            from utils.auth import logout
+            logout()
         st.stop()
 else:
     db = Database()

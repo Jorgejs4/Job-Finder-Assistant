@@ -140,6 +140,26 @@ def resolve_supabase_user_id(user: AuthUser, client: Any) -> str:
         return str(rows[0]["id"])
 
     try:
+        # The auth user may have been created successfully during a previous
+        # request whose profile write failed. Reuse it instead of creating a
+        # duplicate account.
+        existing_users = client.auth.admin.list_users()
+        users = getattr(existing_users, "users", None)
+        if users is None:
+            users = getattr(existing_users, "data", existing_users)
+        if isinstance(users, dict):
+            users = users.get("users", [])
+        for existing in users or []:
+            existing_email = getattr(existing, "email", None)
+            if existing_email is None and isinstance(existing, dict):
+                existing_email = existing.get("email")
+            if str(existing_email or "").lower() == user.email.lower():
+                existing_id = getattr(existing, "id", None)
+                if existing_id is None and isinstance(existing, dict):
+                    existing_id = existing.get("id")
+                if existing_id:
+                    return str(existing_id)
+
         created = client.auth.admin.create_user(
             {
                 "email": user.email,
