@@ -119,8 +119,8 @@ def _sync_remote_data_to_db():
         # Keep the dashboard usable with its local copy if GitHub is temporarily unavailable.
         print(f"[Dashboard] No se pudo sincronizar data.json desde GitHub: {exc}")
 
-# Migración automática desde data.json si la DB está vacía
-if db.get_job_count() == 0:
+# Migración automática legacy solo para el dashboard SQLite.
+if not TENANT_MODE and db.get_job_count() == 0:
     json_path = os.path.join(RESULTS_DIR, "data.json")
     if os.path.exists(json_path):
         result = db.migrate_from_json(json_path)
