@@ -97,7 +97,9 @@ def current_user() -> AuthUser | None:
 def login() -> None:
     if not is_auth_configured():
         raise AuthConfigurationError(auth_configuration_message())
-    _streamlit().login("google")
+    # With one OIDC provider Streamlit reads client_id/client_secret from
+    # [auth]. Passing "google" would require a separate [auth.google] block.
+    _streamlit().login()
 
 
 def logout() -> None:
