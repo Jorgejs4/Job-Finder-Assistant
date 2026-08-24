@@ -93467,32 +93467,52 @@
           "date_posted": "2026-06-27",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 5,
+          "tech_stack": [
+            "CRM",
+            "Telegram",
+            "Twitter"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "120000",
+          "salary_is_estimate": true,
+          "required_experience": 4,
+          "tailored_advice": "To stand out for this role, your CV must shift from a 'relationship manager' tone to a 'hunter' profile. Explicitly list your past monthly revenue quotas and the specific dollar amounts you closed in Web3 media or sponsorship. Highlight your active network in Telegram and Crypto Twitter by mentioning specific communities or high-profile projects you have engaged with. Since they emphasize 'no handoffs,' showcase your ability to manage the entire lifecycle from cold outreach to post-campaign ROI reporting. Use metrics-heavy bullet points (e.g., 'Generated $120k/month in sponsorship revenue by leveraging a proprietary network of 50+ crypto project CMOs') to prove you can hit their $150k-$200k target.",
+          "cover_letter": "The crypto landscape moves at breakneck speed, and I thrive in environments where results are the only currency that matters. While my background is rooted in software development, my approach to building products—like my AI-integrated e-commerce platform—is driven by the same 'hunter' mentality required for this Business Development role. I don’t wait for requirements; I build, deploy, and iterate to ensure the end user gets exactly what they need. I am eager to apply this technical rigor to your sponsorship pipeline at Boost by Banter. My experience in managing full-stack projects, from database architecture to automated notification systems, has given me the operational self-sufficiency to manage complex KOL deal flows and CRM hygiene without needing a support layer. I am deeply embedded in the digital spaces where crypto deals are born, leveraging Telegram and Crypto Twitter to identify opportunities rather than waiting for inbound leads. I understand that a successful campaign is not just about the pitch, but about the execution and the data-driven reporting that follows. I am ready to hit the ground running, manage the full sales cycle, and contribute to the $150k–$200k monthly revenue targets. I would welcome the opportunity to discuss how my technical background and proactive outreach strategy can help scale your commercial engine. Are you available for a brief call next week to discuss how I can start driving value for the team?",
+          "cv_summary": "Tech-driven professional with a strong foundation in full-stack development and AI integration. Expert in managing end-to-end project lifecycles, CRM optimization, and proactive community engagement via Telegram and Crypto Twitter. Highly autonomous, results-oriented, and ready to leverage technical expertise to drive high-value sponsorship and affiliate revenue.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Full-stack Development",
+            "AI Integration (Gemini API)",
+            "CRM & Pipeline Management",
+            "Telegram & Twitter Community Engagement",
+            "JavaScript/TypeScript",
+            "Web3 & Crypto Market Awareness",
+            "Automated Workflow Development",
+            "English C1 Professional Proficiency"
+          ],
+          "cv_projects": [
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
-          "archived": 0,
-          "archive_reason": null,
+          "archived": true,
+          "archive_reason": "match < 10% (5%)",
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:53.024111",
           "_last_seen": "2026-08-23T09:33:16.235725",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 120000
         },
         {
           "id": "560fb67b89de",
@@ -93505,32 +93525,57 @@
           "date_posted": "2026-06-26",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 25,
+          "tech_stack": [
+            "Codex",
+            "Claude Code",
+            "Cursor",
+            "AI coding agents",
+            "Blockchain infrastructure"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
+          "salary": "160000",
+          "salary_is_estimate": true,
+          "required_experience": 10,
+          "tailored_advice": "To align with this role, your CV must explicitly highlight your 'AI-native' workflow. Instead of just listing languages, create a dedicated section for 'AI-Assisted Development' where you detail how you use Cursor, Claude Code, or Codex to accelerate your SDLC. Emphasize your experience in '0-to-1' product building and your ability to maintain architectural integrity while using AI agents. Since they value 'security instincts,' provide a specific example of a time you identified a vulnerability or hallucination in AI-generated code and how you mitigated it. Finally, frame your past projects around 'ownership' and 'founder-level' impact rather than just task completion to match their high-autonomy culture.",
+          "cover_letter": "Building at the intersection of AI and blockchain requires more than just technical proficiency; it demands an AI-native mindset where speed is balanced with rigorous security. Having followed ChainGPT’s work on Brain by AIVM, I am eager to contribute to a platform that prioritizes verifiable and trustworthy enterprise AI. My approach to development is centered on leveraging tools like Cursor and Claude Code to accelerate output, while maintaining the architectural oversight necessary for production-grade systems. In my own projects, such as my AI-integrated e-commerce platform, I have successfully bridged the gap between rapid prototyping and reliable, user-facing deployment. I understand that AI agents are powerful force multipliers, but I also recognize the critical importance of human judgment in identifying risks and ensuring long-term maintainability. My background in software engineering, combined with my hands-on experience in deploying AI-driven applications, aligns perfectly with the high-ownership, fast-paced environment you are building at ChainGPT. I am ready to apply my technical fundamentals to help shape the future of verifiable AI infrastructure. I would welcome the opportunity to discuss how my experience with agentic workflows and full-stack development can support your team’s mission. Are you available for a brief conversation next week to explore how I can contribute to ChainGPT?",
+          "cv_summary": "Full-stack developer with a focus on AI-native workflows and agentic systems. Experienced in integrating LLMs into production-ready applications and building scalable software using modern AI coding tools like Cursor and Claude Code. Passionate about blockchain infrastructure and creating verifiable, high-impact enterprise solutions.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "AI-Native Development",
+            "AI Coding Agents (Cursor, Claude Code, Codex)",
+            "Full-Stack Development",
+            "System Architecture",
+            "Blockchain Infrastructure",
+            "JavaScript/TypeScript",
+            "Python",
+            "SQL",
+            "Docker",
+            "Git"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
           "custom_cv_url": null,
           "custom_cv_html": null,
           "cover_letter_pdf_url": null,
           "interview_prep": null,
           "company_profile": null,
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:53.024279",
           "_last_seen": "2026-08-23T09:33:16.236186",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 160000
         },
         {
           "id": "3dab2c4bf94d",
@@ -93543,32 +93588,95 @@
           "date_posted": "2026-06-26",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 90,
+          "tech_stack": [
+            "Codex",
+            "Claude Code",
+            "Cursor",
+            "AI agents",
+            "Blockchain",
+            "Web3"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "65000",
+          "salary_is_estimate": true,
+          "required_experience": 1,
+          "tailored_advice": "Since this is an 'AI-Native' role, your CV should not just list languages, but showcase your 'AI-augmented' workflow. Create a dedicated section for 'AI-Powered Projects' where you explicitly mention using Cursor, Claude Code, or Codex to accelerate development. Include links to GitHub repositories that demonstrate not just the final code, but the iterative process—perhaps by including commit histories or READMEs that explain how you used AI agents to solve specific technical blockers. Emphasize your 'ship-first' mentality by highlighting side projects or experiments where you used agentic workflows to move faster than traditional methods. Finally, since they value 'independent problem solving,' frame your experience around how you independently researched and implemented a new tool or framework to overcome a technical challenge.",
+          "cover_letter": "Building at the intersection of AI and Web3 is exactly where I want to be. My approach to software development is defined by speed and autonomy; I don't just write code, I build production-ready systems. For instance, I recently launched a full-stack e-commerce platform featuring an integrated AI assistant for personalized recommendations, which taught me how to bridge the gap between complex AI models and user-facing utility. I am deeply familiar with the modern AI-native stack, regularly leveraging Cursor and agentic workflows to accelerate my development cycles. My side projects, such as my automated music management application, reflect my obsession with building tools that solve real-world problems efficiently. I am particularly drawn to ChainGPT’s mission to make enterprise AI verifiable and trustworthy. I am eager to bring my technical curiosity and hands-on experience with AI integration to your team, where I can contribute to the Brain by AIVM platform from day one. I am ready to move fast, iterate, and help build the next generation of blockchain infrastructure. I would love to discuss how my background in building independent projects aligns with your current roadmap. Are you available for a brief call next week to explore how I can contribute to your engineering goals?",
+          "cv_summary": "AI-native software developer with a proven track record of shipping full-stack applications and AI-integrated systems. Proficient in modern AI coding agents, Cursor, and Web3 technologies, with a focus on building scalable, production-ready solutions. Passionate about agentic workflows and enterprise AI infrastructure.",
+          "cv_experience_adapted": [
+            {},
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "AI-Native Development Workflows",
+            "AI Agents & LLM Integration",
+            "Full-Stack Web Development",
+            "JavaScript/TypeScript",
+            "Git & CI/CD",
+            "Docker & Containerization",
+            "SQL & Database Management",
+            "Technical Problem Solving"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_b1ab90206aff.pdf",
+          "custom_cv_html": "cv_b1ab90206aff.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_b1ab90206aff.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "ChainGPT",
+            "industry": "Web3 and Artificial Intelligence",
+            "size": "startup",
+            "tech_stack": [
+              "Blockchain",
+              "AI Agents",
+              "Codex",
+              "Claude Code",
+              "LLM Integration"
+            ],
+            "culture": "High-performance, fast-moving, autonomous, and results-oriented.",
+            "pros": [
+              "Opportunity to work at the cutting edge of AI agents and blockchain infrastructure.",
+              "Direct exposure to founders and senior leadership for accelerated professional growth.",
+              "Fully remote-friendly culture with a global team.",
+              "Focus on modern AI-native development workflows and tooling.",
+              "High impact potential for early-career engineers to own significant features."
+            ],
+            "cons": [
+              "High-pressure environment with expectations for rapid execution and autonomy.",
+              "Early-stage startup volatility and potential lack of established mentorship structures.",
+              "The intersection of Web3 and AI is highly speculative and subject to rapid market shifts."
+            ],
+            "salary_range": "45,000 EUR - 75,000 EUR (depending on location and experience level)",
+            "remote_friendly": true,
+            "recommendation": "If you are a self-driven engineer obsessed with AI tooling and want to skip the corporate ladder to build at high speed, this is an excellent opportunity. However, ensure you are comfortable with the ambiguity and fast pace typical of a high-growth Web3 startup."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:53.024732",
           "_last_seen": "2026-08-23T09:33:16.236819",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 65000
         },
         {
           "id": "f254fdffbafa",
@@ -93581,32 +93689,89 @@
           "date_posted": "2026-06-26",
           "source": "JobSpy/indeed",
           "_scraper": "JobSpyScraper",
-          "match_score": null,
-          "tech_stack": null,
+          "match_score": 75,
+          "tech_stack": [
+            "SAST",
+            "DAST",
+            "OWASP"
+          ],
           "work_mode": "Remoto",
-          "salary": null,
-          "salary_is_estimate": 0,
-          "required_experience": null,
-          "tailored_advice": null,
-          "cover_letter": null,
-          "cv_summary": null,
-          "cv_experience_adapted": null,
-          "cv_skills": null,
-          "cv_projects": null,
-          "custom_cv_url": null,
-          "custom_cv_html": null,
-          "cover_letter_pdf_url": null,
-          "interview_prep": null,
-          "company_profile": null,
+          "salary": "45000",
+          "salary_is_estimate": true,
+          "required_experience": 0,
+          "tailored_advice": "Since this is a graduate program, emphasize your academic projects and any hands-on experience with SAST/DAST tools in your portfolio. Highlight your understanding of the OWASP Top 10 by explaining how you identified and remediated a specific vulnerability in a personal or university project. Since Revolut values a 'proactive and ambitious' mindset, showcase any extracurricular tech activities, hackathons, or open-source contributions. Ensure your CV clearly states your graduation year (2025-2027) and your ability to work in a fast-paced, hybrid environment.",
+          "cover_letter": "Building secure and scalable software has been the core of my development journey. As an engineering student with a passion for full-stack development and automation, I have consistently focused on creating robust applications, such as my AI-integrated e-commerce platform, while maintaining high standards for code quality and system architecture. I am eager to transition this technical foundation into the Application Security Engineering Graduate Programme at Revolut.\n\nMy background in developing production-ready software has given me a deep appreciation for the development lifecycle, which I am ready to apply to security assessments. I am highly motivated to master the implementation of SAST and DAST tools to proactively identify vulnerabilities and mitigate OWASP-related risks. My experience with Docker and Git, combined with my ability to quickly adapt to new technical environments, ensures I can contribute effectively to your security team’s mission of protecting millions of users.\n\nI thrive in fast-paced, collaborative environments and am confident that my proactive mindset aligns perfectly with Revolut’s culture of innovation. I am excited about the opportunity to learn from your senior engineers and contribute to the security of your global financial super app. I would welcome the chance to discuss how my technical skills and dedication to secure coding can support your team in 2027. Are you available for a brief conversation regarding my application?",
+          "cv_summary": "Aspiring Software Engineer with a strong foundation in full-stack development and a passion for cybersecurity. Proficient in Java, JavaScript, and Docker, with a proactive approach to identifying vulnerabilities and implementing secure coding practices. Committed to leveraging technical expertise to support AppSec initiatives and protect complex financial systems.",
+          "cv_experience_adapted": [
+            {},
+            {}
+          ],
+          "cv_skills": [
+            "Software Security (SAST/DAST)",
+            "OWASP Top 10",
+            "Full-stack Development",
+            "JavaScript/Java/SQL",
+            "Docker & Containerization",
+            "Git Version Control",
+            "English C1 (Professional)"
+          ],
+          "cv_projects": [
+            {},
+            {},
+            {}
+          ],
+          "custom_cv_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cv_cc3f3fe31091.pdf",
+          "custom_cv_html": "cv_cc3f3fe31091.html",
+          "cover_letter_pdf_url": "https://raw.githubusercontent.com/Jorgejs4/Job-Finder-Assistant/main/results/cvs/cover_cc3f3fe31091.pdf",
+          "interview_prep": {
+            "technical_questions": [
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}
+            ],
+            "behavioral_questions": [],
+            "key_topics": [],
+            "preparation_tips": []
+          },
+          "company_profile": {
+            "name": "Revolut",
+            "industry": "Fintech",
+            "size": "enterprise",
+            "tech_stack": [
+              "Java",
+              "Python",
+              "AWS",
+              "Kubernetes",
+              "PostgreSQL"
+            ],
+            "culture": "High-performance, meritocratic, fast-paced, and results-oriented.",
+            "pros": [
+              "Exposure to massive scale and complex financial systems.",
+              "Rapid career progression opportunities for high performers.",
+              "Certified Great Place to Work with a global, diverse team.",
+              "Structured mentorship and training through the Graduate Programme."
+            ],
+            "cons": [
+              "High-pressure environment with a reputation for demanding work-life balance.",
+              "Fast-paced growth can lead to organizational ambiguity and rapid changes in priorities."
+            ],
+            "salary_range": "£45,000 - £60,000 (depending on location and specific market benchmarks)",
+            "remote_friendly": true,
+            "recommendation": "If you are an ambitious graduate looking to accelerate your career in a high-impact environment, Revolut is an excellent choice, provided you thrive under pressure."
+          },
           "project_match": null,
-          "language": null,
+          "language": "en",
           "status": "Nuevo",
           "archived": 0,
           "archive_reason": null,
           "needs_analysis": 1,
           "_first_seen": "2026-08-22T22:18:53.025135",
           "_last_seen": "2026-08-23T09:33:16.237498",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "671a09e5aa00",
