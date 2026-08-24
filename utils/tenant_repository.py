@@ -141,7 +141,9 @@ class TenantRepository:
 
     def upsert_profile(self, profile: UserProfile | dict[str, Any]) -> UserProfile:
         model = profile if isinstance(profile, UserProfile) else UserProfile.model_validate(profile)
-        payload = self._owned_payload(model)
+        payload = model.model_dump(exclude_none=True)
+        # user_profiles is keyed by id, unlike tenant-owned child tables.
+        payload.pop("user_id", None)
         payload["id"] = self.user_id
         rows = self._execute(self.client.table("user_profiles").upsert(payload, on_conflict="id"), "guardar perfil")
         return self._one(rows, UserProfile) or UserProfile.model_validate(payload)
