@@ -641,6 +641,12 @@ with st.sidebar:
                     st.success("Workflow de reanálisis iniciado.")
                 except WorkflowDispatchError as exc:
                     st.error(str(exc))
+    else:
+        st.warning("Modo multiusuario no activo")
+        st.caption(
+            "Configura SUPABASE_URL y SUPABASE_ANON_KEY en Streamlit Secrets "
+            "y reinicia la app para habilitar CV, scraping y programación por cuenta."
+        )
 
     pending = st.session_state.get("pending_changes", 0)
     if config.GITHUB_TOKEN and not TENANT_MODE:

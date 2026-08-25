@@ -119,6 +119,17 @@ class TenantRepository:
         except Exception as exc:
             raise TenantRepositoryError(f"Error Supabase en {operation}: {exc}") from exc
 
+    def _execute_paged(self, query: Any, operation: str, page_size: int = 500) -> list[dict[str, Any]]:
+        """Read all rows despite Supabase/PostgREST's default 1000-row limit."""
+        rows: list[dict[str, Any]] = []
+        start = 0
+        while True:
+            page = self._execute(query.range(start, start + page_size - 1), operation)
+            rows.extend(page)
+            if len(page) < page_size:
+                return rows
+            start += page_size
+
     def _owned_payload(self, model: BaseModel) -> dict[str, Any]:
         payload = model.model_dump(exclude_none=True)
         payload.pop("user_id", None)
@@ -167,7 +178,7 @@ class TenantRepository:
             query = query.eq("status", status)
         if not include_archived:
             query = query.eq("archived", False)
-        return [Job.model_validate(row) for row in self._execute(query, "listar jobs")]
+        return [Job.model_validate(row) for row in self._execute_paged(query, "listar jobs")]
 
     def get_job(self, job_id: str) -> Job | None:
         rows = self._execute(self._query("jobs").eq("id", str(job_id)), "leer job")
@@ -275,7 +286,7 @@ class TenantRepository:
         return self._one(rows, JobRun) or JobRun.model_validate(payload)
 
     def list_runs(self) -> list[JobRun]:
-        return [JobRun.model_validate(row) for row in self._execute(self._query("job_runs"), "listar ejecuciones")]
+        return [JobRun.model_validate(row) for row in self._execute_paged(self._query("job_runs"), "listar ejecuciones")]
 
     def get_run(self, run_id: str) -> JobRun | None:
         rows = self._execute(self._query("job_runs").eq("id", str(run_id)), "leer ejecución")
