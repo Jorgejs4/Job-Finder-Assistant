@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import uuid
+import subprocess
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -47,10 +48,20 @@ def is_test_job(job: dict[str, Any]) -> bool:
     return bool(re.search(r"test(scraper| job)?", values, re.IGNORECASE))
 
 
-def load_legacy() -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    if not DATA_PATH.exists():
-        raise SystemExit(f"No existe {DATA_PATH}")
-    data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+def load_legacy(source_ref: str | None = None) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    if source_ref:
+        try:
+            raw = subprocess.check_output(
+                ["git", "show", f"{source_ref}:results/data.json"],
+                cwd=ROOT,
+            )
+            data = json.loads(raw.decode("utf-8"))
+        except (subprocess.CalledProcessError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise SystemExit(f"No se pudo leer results/data.json desde Git ({source_ref}): {exc}") from exc
+    else:
+        if not DATA_PATH.exists():
+            raise SystemExit(f"No existe {DATA_PATH}")
+        data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     jobs: dict[str, dict[str, Any]] = {}
     for run in data.get("runs", []):
         for job in run.get("jobs", []):
@@ -112,13 +123,13 @@ def upsert_batches(client: Any, table: str, rows: list[dict[str, Any]], conflict
             client.table(table).upsert(batch, on_conflict=conflict).execute()
 
 
-def migrate(user_id: str, *, upload_artifacts: bool = True) -> dict[str, int]:
+def migrate(user_id: str, *, upload_artifacts: bool = True, source_ref: str | None = None) -> dict[str, int]:
     try:
         user_uuid = uuid.UUID(user_id)
     except ValueError as exc:
         raise SystemExit("--user-id debe ser un UUID de Supabase auth.users") from exc
     user_id = str(user_uuid)
-    data, jobs_by_url = load_legacy()
+    data, jobs_by_url = load_legacy(source_ref)
     client = create_server_client()
     repo = TenantRepository(client, user_id)
     profile = repo.get_profile() or UserProfile(id=user_id)
@@ -191,15 +202,20 @@ def main() -> None:
     parser.add_argument("--user-id", default=os.getenv("MIGRATION_USER_ID"), help="UUID de auth.users")
     parser.add_argument("--skip-artifacts", action="store_true", help="No subir el CV original")
     parser.add_argument("--dry-run", action="store_true", help="Solo contar y validar datos locales")
+    parser.add_argument("--source-ref", help="Commit/tag de Git desde el que leer results/data.json")
     args = parser.parse_args()
     if args.dry_run:
-        data, jobs = load_legacy()
+        data, jobs = load_legacy(args.source_ref)
         runs = [run for run in data.get("runs", []) if run.get("run_id") and run.get("run_id") != "_orphan"]
         print(json.dumps({"jobs": len(jobs), "runs": len(runs)}, indent=2))
         return
     if not args.user_id:
         parser.error("falta --user-id o MIGRATION_USER_ID")
-    print(json.dumps(migrate(args.user_id, upload_artifacts=not args.skip_artifacts), indent=2))
+    print(json.dumps(migrate(
+        args.user_id,
+        upload_artifacts=not args.skip_artifacts,
+        source_ref=args.source_ref,
+    ), indent=2))
 
 
 if __name__ == "__main__":
