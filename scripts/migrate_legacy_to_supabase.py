@@ -128,7 +128,9 @@ def migrate(user_id: str, *, upload_artifacts: bool = True) -> dict[str, int]:
 
     jobs = [job_payload(user_id, url, job) for url, job in jobs_by_url.items()]
     upsert_batches(client, "jobs", jobs, "user_id,canonical_url")
-    id_by_url = {url: job["id"] for url, job in jobs_by_url.items()}
+    # run_jobs.job_id must reference the UUID generated for the migrated job,
+    # not the legacy short/hash id that may exist inside data.json.
+    id_by_url = {url: payload["id"] for url, payload in zip(jobs_by_url, jobs)}
 
     runs = []
     run_jobs = []
