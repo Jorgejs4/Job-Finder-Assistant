@@ -281,6 +281,13 @@ class TenantRepository:
         rows = self._execute(self._query("job_runs").eq("id", str(run_id)), "leer ejecución")
         return self._one(rows, JobRun)
 
+    def list_run_job_ids(self, run_id: str) -> list[str]:
+        rows = self._execute(
+            self._query("run_jobs").select("job_id").eq("run_id", str(run_id)),
+            "listar ofertas de ejecución",
+        )
+        return [str(row.get("job_id")) for row in rows if row.get("job_id")]
+
     def finish_run(self, run_id: str, *, status: str, stats: dict[str, Any] | None = None, errors: list[Any] | None = None) -> JobRun:
         payload: dict[str, Any] = {
             "status": status,

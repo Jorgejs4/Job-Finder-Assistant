@@ -63,6 +63,16 @@ class TenantDashboardDB:
     def get_job_count(self) -> int:
         return len(self.repository.list_jobs())
 
+    def get_job_by_id(self, job_id: str) -> dict[str, Any] | None:
+        job = self.repository.get_job(job_id)
+        return _job_dict(job) if job else None
+
+    def get_run_job_ids(self, run_id: str) -> list[str]:
+        """Return jobs linked to a tenant run for legacy dashboard views."""
+        if not run_id:
+            return []
+        return self.repository.list_run_job_ids(run_id)
+
     def update_job_status(self, job_id: str, status: str) -> bool:
         self.repository.update_job(job_id, {"status": status})
         return True
