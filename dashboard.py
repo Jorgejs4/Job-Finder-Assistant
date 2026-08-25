@@ -478,11 +478,21 @@ if not TENANT_MODE:
 st.title("🔍 Job Scraper Dashboard")
 st.caption(f"💼 {len(all_jobs)} ofertas | Ultima carga: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
-if not runs:
-    st.warning("No hay ejecuciones registradas. Ejecuta `python main.py` primero.")
+if not runs and not all_jobs:
+    if TENANT_MODE:
+        st.info("Todavía no hay datos en esta cuenta. Ejecuta el workflow de scraping desde Pipeline.")
+    else:
+        st.warning("No hay ejecuciones registradas. Ejecuta `python main.py` primero.")
     st.stop()
 
-latest = runs[0]
+# Puede haber ofertas en la cuenta antes de registrar la primera ejecución.
+latest = runs[0] if runs else {
+    "run_id": "",
+    "timestamp": "",
+    "scraper_stats": {},
+    "errors": [],
+    "profile_skills": [],
+}
 
 tab_mis_ofertas, tab_sin_analizar, tab_archivadas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
     ["💼 Mis Ofertas", "📋 Sin analizar", "📦 Ofertas archivadas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
