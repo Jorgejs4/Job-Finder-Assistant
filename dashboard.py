@@ -455,14 +455,12 @@ def paginate(items: list, key_prefix: str):
     current = min(st.session_state[state_key], pages)
     shown = current * PAGE_SIZE
 
-    for j in items[:shown]:
-        yield j
-
     if shown < total:
         remaining = total - shown
         if st.button(f"Mostrar mas ({remaining} restantes)", key=f"btn_{key_prefix}", use_container_width=True):
             st.session_state[state_key] = current + 1
             st.rerun()
+    return items[:shown]
 
 
 def reset_pagination(key_prefix: str):
@@ -1738,10 +1736,14 @@ with tab_ejecuciones:
 
     latest = runs[0] if runs else {}
     stats = latest.get("scraper_stats", {})
-    total_found = sum(s.get("found", 0) for s in stats.values())
-    scrapers_ok = sum(1 for s in stats.values() if not s.get("failed") and s.get("found", 0) > 0)
-    scrapers_zero = sum(1 for s in stats.values() if s.get("failed") and not s.get("error"))
-    scrapers_fail = sum(1 for s in stats.values() if s.get("failed") and s.get("error"))
+    # Legacy runs store per-scraper dictionaries; tenant runs store aggregate
+    # counters (found/analyzed/cached). Support both formats.
+    tenant_stats = isinstance(stats.get("found"), (int, float))
+    stat_rows = ({"tenant": {"found": stats.get("found", 0), "failed": bool(latest.get("errors")), "error": "; ".join(latest.get("errors", []))}} if tenant_stats else stats)
+    total_found = int(stats.get("found", 0)) if tenant_stats else sum(s.get("found", 0) for s in stats.values())
+    scrapers_ok = 1 if tenant_stats and total_found else (sum(1 for s in stats.values() if not s.get("failed") and s.get("found", 0) > 0) if not tenant_stats else 0)
+    scrapers_zero = 0 if tenant_stats else sum(1 for s in stats.values() if s.get("failed") and not s.get("error"))
+    scrapers_fail = len(latest.get("errors", [])) if tenant_stats else sum(1 for s in stats.values() if s.get("failed") and s.get("error"))
     added = latest.get("_total_added", 0)
     analyzed = latest.get("_analyzed_by_gemini", 0)
     added_to_notion = latest.get("_analyzed_count", 0)
@@ -1763,7 +1765,7 @@ with tab_ejecuciones:
 
     st.markdown("#### Scrapers")
     scraper_data = []
-    for name, s in stats.items():
+    for name, s in stat_rows.items():
         found = s.get("found", 0)
         failed = s.get("failed", False)
         error = s.get("error", "")
