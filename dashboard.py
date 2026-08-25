@@ -506,7 +506,7 @@ with st.sidebar:
             from utils.auth import logout
             logout()
 
-        with st.expander("Mi CV", expanded=not bool(tenant_profile.cv_path)):
+        with st.expander("📄 Mi CV", expanded=True):
             if tenant_profile.cv_path:
                 st.caption("CV configurado. Súbelo de nuevo para reemplazarlo.")
             uploaded_cv = st.file_uploader(
@@ -529,7 +529,7 @@ with st.sidebar:
                 except CVStorageError as exc:
                     st.error(str(exc))
 
-        with st.expander("Configuración de workflows", expanded=False):
+        with st.expander("⚙️ Configuración y automatización", expanded=True):
             st.caption("Estos parámetros se aplican solo a tu cuenta y a tu CV.")
             with st.form("tenant_workflow_settings"):
                 locations_text = st.text_input(
@@ -618,7 +618,7 @@ with st.sidebar:
                     st.error(f"Configuración no válida: {exc}")
 
             st.divider()
-            if st.button("Ejecutar scraping ahora", use_container_width=True):
+            if st.button("🔎 Buscar nuevos trabajos ahora", use_container_width=True, type="primary"):
                 try:
                     dispatch_workflow(
                         tenant_repo.user_id,
@@ -626,10 +626,10 @@ with st.sidebar:
                         repository=config.GITHUB_REPO,
                         workflow="tenant-scrape.yml",
                     )
-                    st.success("Workflow de scraping iniciado.")
+                    st.success("Búsqueda de nuevos trabajos iniciada para tu cuenta.")
                 except WorkflowDispatchError as exc:
                     st.error(str(exc))
-            if st.button("Reanalizar mis ofertas", use_container_width=True):
+            if st.button("🧠 Reanalizar mis ofertas", use_container_width=True):
                 try:
                     reanalysis = workflow_settings.model_copy(update={"reanalyze": True})
                     dispatch_workflow(
