@@ -63802,9 +63802,9 @@
           "tech_stack": [],
           "work_mode": "Presencial",
           "salary": "45000",
-          "salary_is_estimate": 0,
+          "salary_is_estimate": true,
           "required_experience": 2,
-          "tailored_advice": "Since the job description is empty, focus your CV on demonstrating versatility and adaptability. Highlight your core technical skills and any past experience that shows you can quickly learn new tools. Ensure your LinkedIn profile is up-to-date and clearly states your professional goals to attract recruiters at Quartz.",
+          "tailored_advice": "Since the job description is empty, focus your CV on demonstrating versatility and adaptability. Highlight core competencies relevant to the industry, quantify your achievements with metrics, and ensure your LinkedIn profile is fully optimized to attract recruiters. Research the company's current projects to tailor your cover letter once more details are available.",
           "cover_letter": "Building software that bridges the gap between complex logic and user-friendly interfaces is what drives me. My recent work on 'El Grano de Oro' demonstrates my ability to integrate AI models like Gemini into production-ready web applications, creating personalized experiences that go beyond standard development. I thrive on solving technical challenges, whether it is building desktop automation tools with local synchronization or architecting full-stack solutions from the ground up.\n\nMy background in Industrial Engineering and Multiplatform Application Development has provided me with a rigorous analytical mindset. I am comfortable working with JavaScript, Java, and SQL, and I am always looking for ways to leverage tools like Docker to streamline deployment. Having achieved a C1 level in English, I am fully prepared to collaborate in international environments and contribute to your team's success from day one.\n\nI am particularly drawn to the work being done at Quartz and would welcome the opportunity to discuss how my hands-on experience with AI integration and full-stack development can add value to your current projects. Are you available for a brief conversation next week to explore how I can contribute to your team?",
           "cv_summary": "Full-stack developer with a focus on AI integration and scalable web solutions. Proven experience deploying production-ready applications using JavaScript, Java, and SQL. Combines a strong analytical background in Industrial Engineering with a C1 English proficiency, ready to tackle complex technical challenges in international environments.",
           "cv_experience_adapted": [
@@ -63823,12 +63823,13 @@
           "project_match": null,
           "language": "en",
           "status": "Nuevo",
-          "archived": 0,
+          "archived": true,
           "archive_reason": "match < 10% (0%)",
           "needs_analysis": 0,
           "_first_seen": "2026-08-24T19:36:59.726789",
           "_last_seen": "2026-08-24T19:42:39.139131",
-          "_last_run_id": null
+          "_last_run_id": null,
+          "estimated_salary": 45000
         },
         {
           "id": "bc4d4a8c153a",
