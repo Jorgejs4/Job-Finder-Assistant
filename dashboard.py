@@ -655,8 +655,10 @@ with st.sidebar:
                 _sync_to_github()
         else:
             st.caption("Sincronizado con GitHub")
+    elif TENANT_MODE:
+        st.caption("✅ Cuenta aislada: tus cambios se guardan en Supabase")
     else:
-        st.caption("GITHUB_TOKEN no configurado - los cambios se pierden al reiniciar")
+        st.caption("⚠️ GITHUB_TOKEN no configurado: los cambios locales se perderán al reiniciar")
 
     if config.USER_PORTFOLIO_URL or config.USER_CERTIFICATIONS or config.USER_GITHUB:
         st.subheader("📋 Mi Perfil")
