@@ -741,6 +741,7 @@ with tab_mis_ofertas:
         st.info("No hay ofertas disponibles.")
     else:
         st.subheader(f"💼 {len(mis_ofertas)} ofertas disponibles")
+        st.caption(f"Mostrando 20 inicialmente · {len(mis_ofertas)} en total. Usa el botón de paginación al final de la lista.")
 
         with st.expander("🔍 Filtros avanzados", expanded=True):
             filter_opts = extract_filter_options(mis_ofertas)

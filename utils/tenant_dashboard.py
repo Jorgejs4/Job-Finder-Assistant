@@ -96,7 +96,22 @@ class TenantDashboardDB:
         return None
 
     def get_history(self) -> list[dict[str, Any]]:
-        return []
+        history = []
+        for run in self.get_all_runs():
+            stats = run.get("scraper_stats") or {}
+            history.append({
+                "run_id": run.get("run_id", ""),
+                "timestamp": run.get("timestamp", ""),
+                "total_found": sum(
+                    item.get("found", 0) for item in stats.values()
+                    if isinstance(item, dict)
+                ),
+                "analyzed": stats.get("analyzed", 0),
+                "cached": stats.get("cached", 0),
+                "errors": len(run.get("errors") or []),
+                "status": run.get("status", ""),
+            })
+        return history
 
 
 class TenantFeedbackManager:
