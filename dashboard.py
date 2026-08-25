@@ -508,9 +508,23 @@ with st.sidebar:
 
         with st.expander("📄 Mi CV", expanded=True):
             if tenant_profile.cv_path:
-                st.caption("CV configurado. Súbelo de nuevo para reemplazarlo.")
+                cv_preferences = tenant_profile.preferences or {}
+                cv_filename = cv_preferences.get("cv_filename") or "CV configurado"
+                st.success(f"CV actual: **{cv_filename}**")
+                try:
+                    current_cv_url = CVStorage(tenant_repo.client).signed_url(
+                        tenant_repo.user_id, tenant_profile.cv_path, expires_in=3600
+                    )
+                    st.link_button("📥 Descargar CV actual", current_cv_url, use_container_width=True)
+                except CVStorageError as exc:
+                    st.caption(f"No se pudo generar el enlace del CV actual: {exc}")
+                st.caption("Puedes subir otro archivo para reemplazarlo.")
+                upload_label = "Añadir o reemplazar CV"
+            else:
+                st.info("No hay ningún CV configurado todavía.")
+                upload_label = "Subir CV"
             uploaded_cv = st.file_uploader(
-                "Subir CV", type=["pdf", "docx", "txt"], key="tenant_cv_upload"
+                upload_label, type=["pdf", "docx", "txt"], key="tenant_cv_upload"
             )
             if uploaded_cv and st.button("Guardar CV", key="save_tenant_cv", use_container_width=True):
                 try:
@@ -519,9 +533,12 @@ with st.sidebar:
                         tenant_repo.user_id, cv_bytes, uploaded_cv.name,
                         content_type=uploaded_cv.type,
                     )
+                    preferences = dict(tenant_profile.preferences or {})
+                    preferences["cv_filename"] = uploaded_cv.name
                     profile_update = tenant_profile.model_copy(update={
                         "cv_path": cv_path,
                         "cv_hash": hashlib.sha256(cv_bytes).hexdigest(),
+                        "preferences": preferences,
                     })
                     tenant_profile = tenant_repo.upsert_profile(profile_update)
                     st.success("CV guardado de forma privada.")
