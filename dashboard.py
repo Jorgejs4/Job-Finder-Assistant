@@ -1455,6 +1455,26 @@ with tab_archivadas:
 
 with tab_pipeline:
     st.subheader("🔄 Pipeline de Aplicaciones")
+    if TENANT_MODE:
+        st.info("Las ejecuciones se realizan solo para tu cuenta y utilizan tu CV y configuración.")
+        p1, p2 = st.columns(2)
+        with p1:
+            if st.button("🔎 Lanzar búsqueda ahora", type="primary", use_container_width=True, key="pipeline_scrape_now"):
+                try:
+                    dispatch_workflow(tenant_repo.user_id, workflow_settings,
+                                      repository=config.GITHUB_REPO, workflow="tenant-scrape.yml")
+                    st.success("Búsqueda iniciada. Puedes seguirla en GitHub Actions.")
+                except WorkflowDispatchError as exc:
+                    st.error(str(exc))
+        with p2:
+            if st.button("🧠 Lanzar reanálisis ahora", use_container_width=True, key="pipeline_reanalyze_now"):
+                try:
+                    dispatch_workflow(tenant_repo.user_id,
+                                      workflow_settings.model_copy(update={"reanalyze": True}),
+                                      repository=config.GITHUB_REPO, workflow="tenant-reanalyze.yml")
+                    st.success("Reanálisis iniciado. Puedes seguirlo en GitHub Actions.")
+                except WorkflowDispatchError as exc:
+                    st.error(str(exc))
 
     status_counts = {}
     for status in config.APPLICATION_STATUSES:
