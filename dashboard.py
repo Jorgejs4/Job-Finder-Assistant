@@ -685,6 +685,18 @@ with st.sidebar:
                     st.success("Workflow de reanálisis iniciado.")
                 except WorkflowDispatchError as exc:
                     st.error(str(exc))
+            if st.button(
+                "🔄 Refiltrar por ubicación + modalidad",
+                use_container_width=True,
+                help="Reclasifica la modalidad y archiva/desarchiva las ofertas según tu ubicación configurada.",
+            ):
+                result = apply_archive_rules_to_all()
+                _invalidate_cache(sync=False)
+                st.success(
+                    f"Refiltrado completado: {result['archived']} archivadas, "
+                    f"{result['unarchived']} desarchivadas y {result['kept']} mantenidas."
+                )
+                st.rerun()
     else:
         st.warning("Modo multiusuario no activo")
         st.caption(
