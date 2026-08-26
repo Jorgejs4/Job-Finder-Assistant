@@ -455,10 +455,12 @@ def paginate(items: list, key_prefix: str):
     current = min(st.session_state[state_key], pages)
     shown = current * PAGE_SIZE
 
-    # Es un generador para que el código posterior al `yield` se ejecute
-    # cuando termina el `for`: así el botón queda después de la última oferta
-    # y no antes de la primera.
-    yield from items[:shown]
+    return items[:shown], total, shown, current
+
+
+def render_more_button(total: int, shown: int, current: int, key_prefix: str):
+    """Renderiza la paginación después de que se hayan pintado las ofertas."""
+    state_key = f"page_{key_prefix}"
     if shown < total:
         remaining = total - shown
         if st.button(
@@ -846,7 +848,8 @@ with tab_mis_ofertas:
 
         st.write(f"**{len(filtered)}** ofertas tras filtros")
 
-        for j in paginate(filtered, "mis_ofertas"):
+        visible_jobs, visible_total, visible_count, visible_page = paginate(filtered, "mis_ofertas")
+        for j in visible_jobs:
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             match = j.get("match_score", 0)
@@ -1101,6 +1104,8 @@ with tab_mis_ofertas:
                         elif submitted:
                             st.warning("Escribe algo antes de enviar.")
 
+        render_more_button(visible_total, visible_count, visible_page, "mis_ofertas")
+
         if filtered:
             if st.button("📥 Exportar CSV"):
                 csv_data = pd.DataFrame(filtered)
@@ -1229,7 +1234,8 @@ with tab_sin_analizar:
             if q in f"{j.get('title', '')} {j.get('company', '')} {j.get('location', '')}".lower()
         ]
 
-    for j in paginate(filtered_unanalyzed, "sin_analizar"):
+    visible_jobs, visible_total, visible_count, visible_page = paginate(filtered_unanalyzed, "sin_analizar")
+    for j in visible_jobs:
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             source = j.get("source", "N/A")
@@ -1247,6 +1253,7 @@ with tab_sin_analizar:
                         st.text(j["description"][:2000])
                 if link:
                     st.link_button("🔗 Ver oferta original", link)
+    render_more_button(visible_total, visible_count, visible_page, "sin_analizar")
 
 
 with tab_archivadas:
@@ -1290,7 +1297,8 @@ with tab_archivadas:
                 if config.normalize_work_mode(j.get("work_mode", "N/A")) in filter_mode_arch
             ]
 
-        for j in paginate(filtered_archived, "archivadas"):
+        visible_jobs, visible_total, visible_count, visible_page = paginate(filtered_archived, "archivadas")
+        for j in visible_jobs:
             title = j.get("title", "N/A")
             company = j.get("company", "N/A")
             match = j.get("match_score", 0)
@@ -1474,6 +1482,8 @@ with tab_archivadas:
                         else:
                             st.info("Preview HTML no disponible")
                     st.link_button("Descargar CV en PDF", cv_url)
+
+        render_more_button(visible_total, visible_count, visible_page, "archivadas")
 
 
 with tab_pipeline:
