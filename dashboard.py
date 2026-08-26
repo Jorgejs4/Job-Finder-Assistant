@@ -451,8 +451,11 @@ def paginate(items: list, key_prefix: str):
         st.session_state[state_key] = 1
 
     total = len(items)
-    pages = (total + PAGE_SIZE - 1) // PAGE_SIZE
-    current = min(st.session_state[state_key], pages)
+    pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
+    # Session state survives reruns. If a previous filter had no rows, an
+    # old page value of 0 must not make a newly populated tab render empty.
+    current = max(1, min(int(st.session_state[state_key]), pages))
+    st.session_state[state_key] = current
     shown = current * PAGE_SIZE
 
     return items[:shown], total, shown, current
@@ -1160,6 +1163,10 @@ with tab_sin_analizar:
             st.divider()
 
     unanalyzed_jobs = [j for j in all_jobs if j.get("needs_analysis")]
+
+    if unanalyzed_jobs:
+        st.subheader(f"📋 {len(unanalyzed_jobs)} ofertas sin analizar")
+        st.caption("Mostrando 20 inicialmente · usa el botón al final para cargar más.")
 
     has_gemini = bool(config.GEMINI_API_KEYS)
 
