@@ -163,9 +163,24 @@ def main() -> None:
     from scrapers.jobfluent_scraper import JobfluentScraper
 
     worker_profile = TenantRepository(client, user_id).get_profile()
-    if not worker_profile or not worker_profile.cv_path:
-        raise SystemExit("El usuario no tiene un CV configurado.")
-    cv_text = load_cv(worker_profile.cv_path)
+    # Las primeras versiones guardaban el path dentro de preferences; las
+    # actuales lo guardan en cv_path. Mantener ambos formatos permite que un
+    # CV visible en el dashboard siga siendo utilizable por Actions después
+    # de la migración multiusuario.
+    profile_cv_path = worker_profile.cv_path if worker_profile else None
+    if not profile_cv_path and worker_profile:
+        profile_cv_path = (worker_profile.preferences or {}).get("cv_path")
+    if not worker_profile:
+        raise SystemExit(f"No existe user_profiles para TENANT_USER_ID={user_id}.")
+    if not profile_cv_path:
+        raise SystemExit(
+            "El perfil existe pero no tiene cv_path. Comprueba que GitHub Actions "
+            "usa el mismo SUPABASE_URL que Streamlit y que el CV se guardó en la cuenta actual."
+        )
+    print(f"[CV] Perfil encontrado; descargando CV configurado ({PurePosixPath(str(profile_cv_path)).suffix.lower()})")
+    cv_text = load_cv(str(profile_cv_path))
+    if not cv_text.strip():
+        raise SystemExit("El CV se descargó, pero no contiene texto extraíble.")
 
     def analyze(job: Job, _settings: WorkflowConfig) -> dict[str, Any]:
         result = gemini.match_offer(
