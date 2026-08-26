@@ -56,6 +56,9 @@ create table if not exists public.jobs (
 
 alter table public.jobs add column if not exists source_job_id text;
 alter table public.jobs add column if not exists experience_hint integer not null default 0;
+alter table public.jobs add column if not exists salary_raw text;
+alter table public.jobs add column if not exists salary_min numeric;
+alter table public.jobs add column if not exists salary_max numeric;
 alter table public.jobs add column if not exists missing_streak integer not null default 0;
 alter table public.jobs add column if not exists sync_status text not null default 'active';
 alter table public.jobs add column if not exists invalidated_at timestamptz;
