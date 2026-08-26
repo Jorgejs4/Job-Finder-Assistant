@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import time
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -114,10 +115,21 @@ class TenantRepository:
         return list(data)
 
     def _execute(self, query: Any, operation: str) -> list[dict[str, Any]]:
-        try:
-            return self._data(query.execute())
-        except Exception as exc:
-            raise TenantRepositoryError(f"Error Supabase en {operation}: {exc}") from exc
+        for attempt in range(3):
+            try:
+                return self._data(query.execute())
+            except Exception as exc:
+                # PostgREST can briefly reject a valid service-role JWT when
+                # the runner clock is a few seconds behind Supabase. Retry
+                # the same request before failing the whole tenant run.
+                code = str(getattr(exc, "code", "") or "")
+                detail = str(exc)
+                if code == "PGRST303" or "JWT issued at future" in detail:
+                    if attempt < 2:
+                        time.sleep(3 * (attempt + 1))
+                        continue
+                raise TenantRepositoryError(f"Error Supabase en {operation}: {exc}") from exc
+        raise TenantRepositoryError(f"Error Supabase en {operation}: no se pudo completar la petición")
 
     def _execute_paged(self, query: Any, operation: str, page_size: int = 500) -> list[dict[str, Any]]:
         """Read all rows despite Supabase/PostgREST's default 1000-row limit."""
