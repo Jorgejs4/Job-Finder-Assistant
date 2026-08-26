@@ -18,6 +18,44 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, default=str).encode()).hexdigest()
 
 
+# Gemini suele devolver los puestos en inglés aunque el CV esté en español.
+# Los scrapers reciben el texto literalmente, así que sin estos alias una
+# cuenta configurada en Sevilla terminaba buscando solo "Software Engineer".
+_ROLE_ALIASES_ES = {
+    "software engineer": "ingeniero de software",
+    "software developer": "desarrollador de software",
+    "application developer": "desarrollador de aplicaciones",
+    "data analyst": "analista de datos",
+    "systems engineer": "ingeniero de sistemas",
+    "backend developer": "desarrollador backend",
+    "frontend developer": "desarrollador frontend",
+    "full stack developer": "desarrollador full stack",
+    "data engineer": "ingeniero de datos",
+    "data scientist": "científico de datos",
+    "devops engineer": "ingeniero devops",
+    "cloud engineer": "ingeniero cloud",
+    "qa engineer": "ingeniero de calidad",
+    "python developer": "desarrollador python",
+    "java developer": "desarrollador java",
+    "javascript developer": "desarrollador javascript",
+}
+
+
+def _expand_search_roles(roles: Iterable[str]) -> list[str]:
+    """Return original roles plus Spanish aliases, without duplicates."""
+    expanded: list[str] = []
+    seen: set[str] = set()
+    for role in roles:
+        value = " ".join(str(role or "").split()).strip()
+        if not value:
+            continue
+        for candidate in (value, _ROLE_ALIASES_ES.get(value.casefold())):
+            if candidate and candidate.casefold() not in seen:
+                seen.add(candidate.casefold())
+                expanded.append(candidate)
+    return expanded or ["software developer", "desarrollador de software"]
+
+
 class TenantWorker:
     def __init__(
         self,
@@ -196,6 +234,8 @@ def main() -> None:
             roles = gemini.analyze_cv(cv_text).recommended_roles[:4] or roles
         except Exception as exc:
             print(f"[Perfil] No se pudieron extraer roles: {exc}")
+    roles = _expand_search_roles(roles)
+    print(f"[Perfil] Consultas de puestos ({len(roles)}): {', '.join(roles)}")
 
     scraper_classes = [
         InfoJobsScraper, LinkedInScraper, RemotiveScraper,
