@@ -124,8 +124,14 @@ class TenantRepository:
         rows: list[dict[str, Any]] = []
         start = 0
         while True:
-            page = self._execute(query.range(start, start + page_size - 1), operation)
+            # Lightweight test doubles and compatible clients may not expose
+            # PostgREST's range() helper; their execute() result is already
+            # bounded, so use it directly.
+            page_query = query.range(start, start + page_size - 1) if hasattr(query, "range") else query
+            page = self._execute(page_query, operation)
             rows.extend(page)
+            if not hasattr(query, "range"):
+                return rows
             if len(page) < page_size:
                 return rows
             start += page_size
@@ -187,6 +193,23 @@ class TenantRepository:
     def upsert_job(self, job: Job | dict[str, Any]) -> Job:
         model = job if isinstance(job, Job) else Job.model_validate(job)
         payload = self._owned_payload(model)
+        # Scrapers can enrich a listing with source-specific fields
+        # (salary_raw, salary_min, is_remote, experience_hint, etc.). Keep
+        # those fields in raw_data instead of sending arbitrary JSON keys to
+        # PostgREST: a new scraper field must never break the whole workflow
+        # because the SQL schema has not been altered yet.
+        job_columns = {
+            "user_id", "canonical_url", "source", "source_job_id", "title",
+            "company", "location", "description", "date_posted", "status",
+            "archived", "archive_reason", "content_hash", "analysis_hash",
+            "analysis", "raw_data", "missing_streak", "sync_status",
+            "invalidated_at", "invalid_reason",
+        }
+        raw_data = dict(payload.get("raw_data") or {})
+        for key in list(payload):
+            if key not in job_columns:
+                raw_data.setdefault(key, payload.pop(key))
+        payload["raw_data"] = raw_data
         # The natural key owns the upsert. Never let an incoming primary key
         # target a row that belongs to another tenant.
         payload.pop("id", None)
