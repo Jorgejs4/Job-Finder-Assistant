@@ -1703,28 +1703,38 @@ with tab_stats:
             for run in reversed(runs):
                 run_ts = run.get("timestamp", "")[:10]
                 salary_info = run.get("scraper_stats", {})
-                trends_job_ids = db.get_run_job_ids(run.get("run_id", ""))
-                salaries = []
-                remote_count = 0
-                tech_counts = defaultdict(int)
-                for jid in trends_job_ids:
-                    job = db.get_job_by_id(jid)
-                    if job:
-                        s = parse_salary(job.get("salary"))
-                        if s:
-                            salaries.append(s)
-                        if config.normalize_work_mode(job.get("work_mode", "")) == "Remoto":
-                            remote_count += 1
-                        for t in (job.get("tech_stack") or []):
-                            tech_counts[t] += 1
-
-                avg_salary = sum(salaries) // len(salaries) if salaries else 0
-                remote_pct = (remote_count / len(trends_job_ids) * 100) if trends_job_ids else 0
-                top3 = [t for t, _ in sorted(tech_counts.items(), key=lambda x: x[1], reverse=True)[:3]]
+                if TENANT_MODE:
+                    # Tenant runs already persist aggregate counters. Do not
+                    # issue one Supabase request per job and per run here:
+                    # that N+1 pattern made the dashboard extremely slow and
+                    # could abort rendering when an old run had bad links.
+                    trends_job_count = int(salary_info.get("found", 0) or 0)
+                    avg_salary = 0
+                    remote_pct = 0
+                    top3 = []
+                else:
+                    trends_job_ids = db.get_run_job_ids(run.get("run_id", ""))
+                    salaries = []
+                    remote_count = 0
+                    tech_counts = defaultdict(int)
+                    for jid in trends_job_ids:
+                        job = db.get_job_by_id(jid)
+                        if job:
+                            s = parse_salary(job.get("salary"))
+                            if s:
+                                salaries.append(s)
+                            if config.normalize_work_mode(job.get("work_mode", "")) == "Remoto":
+                                remote_count += 1
+                            for t in (job.get("tech_stack") or []):
+                                tech_counts[t] += 1
+                    trends_job_count = len(trends_job_ids)
+                    avg_salary = sum(salaries) // len(salaries) if salaries else 0
+                    remote_pct = (remote_count / trends_job_count * 100) if trends_job_count else 0
+                    top3 = [t for t, _ in sorted(tech_counts.items(), key=lambda x: x[1], reverse=True)[:3]]
 
                 trend_data.append({
                     "Fecha": run_ts,
-                    "Ofertas": len(trends_job_ids),
+                    "Ofertas": trends_job_count,
                     "Salario Promedio (E)": avg_salary,
                     "% Remoto": round(remote_pct, 1),
                     "Top Techs": ", ".join(top3) if top3 else "N/A",
