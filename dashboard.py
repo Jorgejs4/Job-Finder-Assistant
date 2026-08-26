@@ -442,7 +442,9 @@ def parse_salary(val):
         return None
 
 
-PAGE_SIZE = 20
+# Keep each rerun light on Streamlit Cloud. The total count remains visible
+# and the user can progressively load more cards with the button below.
+PAGE_SIZE = 10
 
 
 def paginate(items: list, key_prefix: str):
