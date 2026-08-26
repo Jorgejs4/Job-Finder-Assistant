@@ -501,8 +501,23 @@ latest = runs[0] if runs else {
     "profile_skills": [],
 }
 
+# Calculate the tenant buckets once, before creating the tabs. Apart from
+# making the state visible to the user, putting the counts in the tab labels
+# avoids the impression that a tab is empty while Streamlit is still loading
+# its panel.
+available_count = sum(1 for job in all_jobs if not job.get("archived") and not job.get("needs_analysis"))
+unanalyzed_count = sum(1 for job in all_jobs if job.get("needs_analysis"))
+archived_count = sum(1 for job in all_jobs if job.get("archived"))
+
 tab_mis_ofertas, tab_sin_analizar, tab_archivadas, tab_pipeline, tab_stats, tab_ejecuciones = st.tabs(
-    ["💼 Mis Ofertas", "📋 Sin analizar", "📦 Ofertas archivadas", "🔄 Pipeline", "📊 Estadísticas", "📈 Ejecuciones"]
+    [
+        f"💼 Mis Ofertas ({available_count})",
+        f"📋 Sin analizar ({unanalyzed_count})",
+        f"📦 Ofertas archivadas ({archived_count})",
+        "🔄 Pipeline",
+        "📊 Estadísticas",
+        f"📈 Ejecuciones ({len(runs)})",
+    ]
 )
 
 with st.sidebar:
