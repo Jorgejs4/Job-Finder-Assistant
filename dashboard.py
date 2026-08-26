@@ -177,17 +177,17 @@ def ics_followup_content(title: str, company: str, link: str, days: int) -> tupl
     return content.encode("utf-8"), filename
 
 
-@st.cache_data(ttl=30, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def _cached_get_all_jobs():
     return db.get_all_jobs()
 
 
-@st.cache_data(ttl=30, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def _cached_get_runs():
     return db.get_all_runs()
 
 
-@st.cache_data(ttl=30, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def _cached_get_history():
     return db.get_history()
 

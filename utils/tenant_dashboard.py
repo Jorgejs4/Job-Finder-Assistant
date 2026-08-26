@@ -9,7 +9,20 @@ from utils.tenant_repository import Feedback, TenantRepository
 
 
 def _job_dict(job) -> dict[str, Any]:
-    raw = dict(job.raw_data or {})
+    # raw_data contains the full scraper payload and often repeats title,
+    # description and URL already stored in typed columns. Keeping only the
+    # fields consumed by the dashboard substantially reduces every rerun's
+    # memory footprint for large tenants.
+    raw_source = dict(job.raw_data or {})
+    raw = {
+        key: value for key, value in raw_source.items()
+        if key in {
+            "salary", "salary_raw", "salary_min", "salary_max",
+            "salary_is_estimate", "work_mode", "is_remote", "tech_stack",
+            "required_experience", "experience_hint", "language",
+            "date_posted", "source_job_id", "image_url", "all_links",
+        }
+    }
     raw.update(job.analysis or {})
     raw.update(
         {
