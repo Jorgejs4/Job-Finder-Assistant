@@ -54,7 +54,15 @@ def dispatch_workflow(
             json={"ref": ref, "inputs": inputs},
         )
         if response.status_code not in (201, 204):
-            raise WorkflowDispatchError(f"GitHub rechazó el workflow ({response.status_code})")
+            # GitHub devuelve aquí la causa accionable (permisos, workflow
+            # inexistente, rama incorrecta, inputs inválidos, etc.).
+            detail = response.text.strip()
+            if len(detail) > 500:
+                detail = detail[:500] + "..."
+            raise WorkflowDispatchError(
+                f"GitHub rechazó el workflow ({response.status_code})"
+                + (f": {detail}" if detail else "")
+            )
     except httpx.HTTPError as exc:
         raise WorkflowDispatchError(f"No se pudo despachar el workflow: {exc}") from exc
     finally:

@@ -455,12 +455,19 @@ def paginate(items: list, key_prefix: str):
     current = min(st.session_state[state_key], pages)
     shown = current * PAGE_SIZE
 
+    # Es un generador para que el código posterior al `yield` se ejecute
+    # cuando termina el `for`: así el botón queda después de la última oferta
+    # y no antes de la primera.
+    yield from items[:shown]
     if shown < total:
         remaining = total - shown
-        if st.button(f"Mostrar mas ({remaining} restantes)", key=f"btn_{key_prefix}", use_container_width=True):
+        if st.button(
+            f"Mostrar más ({remaining} restantes)",
+            key=f"btn_{key_prefix}",
+            use_container_width=True,
+        ):
             st.session_state[state_key] = current + 1
             st.rerun()
-    return items[:shown]
 
 
 def reset_pagination(key_prefix: str):
