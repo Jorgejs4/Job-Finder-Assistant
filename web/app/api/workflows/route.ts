@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   const body = await request.json().catch(() => ({})) as { workflow?: string; config_json?: string };
-  const workflow = body.workflow === "tenant-reanalyze.yml" ? body.workflow : "tenant-scrape.yml";
+  const workflow = body.workflow === "tenant-reanalyze.yml" ? body.workflow : body.workflow === "tenant-reconcile.yml" ? "refilter.yml" : "tenant-scrape.yml";
   const token = process.env.GITHUB_TOKEN;
   const repo = process.env.GITHUB_REPO;
   if (!token || !repo) return NextResponse.json({ error: "GitHub Actions no configurado en el servidor" }, { status: 503 });
