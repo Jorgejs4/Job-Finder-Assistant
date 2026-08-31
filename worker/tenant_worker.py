@@ -221,11 +221,32 @@ def main() -> None:
         raise SystemExit("El CV se descargó, pero no contiene texto extraíble.")
 
     def analyze(job: Job, _settings: WorkflowConfig) -> dict[str, Any]:
-        result = gemini.match_offer(
-            cv_text, job.title, job.description or "",
-            settings.years_of_experience,
-        )
-        return result.model_dump()
+        desc = job.description or job.title
+        result = gemini.match_offer(cv_text, job.title, desc, settings.years_of_experience)
+        out = result.model_dump()
+        try:
+            custom = gemini.customize_cv_text(cv_text, job.title, desc, result, language="es")
+            out.update({"cover_letter": custom.cover_letter, "cv_summary": custom.cv_summary})
+            data = gemini.customize_cv_data(cv_text, job.title, desc, result, language="es")
+            out.update({"cv_experience_adapted": data.cv_experience_adapted, "cv_skills": data.cv_skills, "cv_projects": data.cv_projects})
+        except Exception as exc:
+            print(f"[CV] No se pudo personalizar: {exc}")
+        try:
+            prep = gemini.generate_interview_prep(cv_text, job.title, job.company, ", ".join(out.get("tech_stack", [])), desc, language="es")
+            out["interview_prep"] = prep.model_dump()
+        except Exception as exc:
+            print(f"[Entrevista] No se pudo generar: {exc}")
+        try:
+            company = gemini.research_company(job.company, job.title, desc, language="es")
+            out["company_profile"] = company.model_dump()
+        except Exception as exc:
+            print(f"[Empresa] No se pudo investigar: {exc}")
+        try:
+            projects = gemini.match_projects(cv_text, job.title, desc, language="es")
+            out["project_match"] = projects.model_dump()
+        except Exception as exc:
+            print(f"[Proyectos] No se pudo calcular: {exc}")
+        return out
     roles = ["software developer"]
     if worker_profile and worker_profile.preferences.get("roles"):
         roles = worker_profile.preferences["roles"][:4]
