@@ -14,6 +14,13 @@ class GetOnBoardScraper(BaseScraper):
     BASE_URL = "https://www.getonbrd.com/jobs/programming"
     MAX_RESULTS = config.MAX_JOBS_PER_SCRAPER
 
+    def _detail_description(self, url: str, fallback: str) -> str:
+        html = self._fetch(url) or self.get_html(url)
+        if not html: return fallback
+        soup = BeautifulSoup(html, "html.parser")
+        node = soup.select_one(".job-description, .description, [class*='description'], main")
+        return node.get_text("\n", strip=True)[:12000] if node else fallback
+
     def _fetch(self, url: str) -> str:
         """Fetch con curl_cffi."""
         try:
@@ -61,12 +68,13 @@ class GetOnBoardScraper(BaseScraper):
             if not href.startswith("http"):
                 href = "https://www.getonbrd.com" + href
 
+            description = self._detail_description(href, title)
             return {
                 "title": title,
                 "company": company or "No especificada",
                 "location": location or "LATAM",
                 "link": href,
-                "description": title,
+                "description": description,
                 "date_posted": "Reciente",
                 "source": "GetOnBoard",
             }

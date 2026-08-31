@@ -6,6 +6,14 @@ import config
 
 
 class LinkedInScraper(BaseScraper):
+    def _description(self, url: str, fallback: str) -> str:
+        html = self.get_html(url)
+        if not html: return fallback
+        soup = BeautifulSoup(html, "html.parser")
+        node = soup.select_one(".show-more-less-html__markup, .description__text, .decorated-job-posting__details")
+        if not node: return fallback
+        return node.get_text("\n", strip=True)[:12000]
+
     def scrape_jobs(self, search_query: str, locations: List[str]) -> List[Dict[str, Any]]:
         """
         Scrapea ofertas de LinkedIn usando su API pública guest.
@@ -59,12 +67,13 @@ class LinkedInScraper(BaseScraper):
                     date_tag = card.find("time", class_=re.compile("job-search-card__listdate"))
                     date_posted = date_tag.get("datetime") if date_tag else "Reciente"
 
+                    description = self._description(link, f"{title} en {company}")
                     jobs.append({
                         "title": title,
                         "company": company,
                         "location": location,
                         "link": link,
-                        "description": f"{title} en {company}",
+                        "description": description,
                         "date_posted": date_posted,
                         "source": "LinkedIn"
                     })
