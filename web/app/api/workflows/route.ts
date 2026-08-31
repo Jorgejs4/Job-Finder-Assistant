@@ -12,7 +12,8 @@ export async function POST(request: Request) {
   if (!token || !repo) return NextResponse.json({ error: "GitHub Actions no configurado en el servidor" }, { status: 503 });
   const profile = await supabase.from("user_profiles").select("preferences").eq("id", user.id).single();
   const config = body.config_json || JSON.stringify(profile.data?.preferences?.workflow || {});
-  const response = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`, { method: "POST", headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main", inputs: { user_id: user.id, config_json: config } }) });
+  const inputs = workflow === "refilter.yml" ? { city: profile.data?.preferences?.workflow?.locations?.[0] || "Sevilla", archive: "true" } : { user_id: user.id, config_json: config };
+  const response = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`, { method: "POST", headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main", inputs }) });
   if (!response.ok) return NextResponse.json({ error: `GitHub rechazó el workflow (${response.status})` }, { status: 502 });
   return NextResponse.json({ ok: true, workflow });
 }
