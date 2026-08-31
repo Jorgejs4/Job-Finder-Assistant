@@ -1,20 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "../../../lib/supabase-server";
-
-export async function GET(request: Request) {
-  const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-  const url = new URL(request.url);
-  const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 20), 1), 50);
-  const offset = Math.max(Number(url.searchParams.get("offset") || 0), 0);
-  const archived = url.searchParams.get("archived") === "true";
-  const search = (url.searchParams.get("search") || "").trim();
-  const status = url.searchParams.get("status");
-  let query = supabase.from("jobs").select("id,title,company,location,status,source,archived,description,date_posted,analysis,created_at", { count: "exact" }).eq("user_id", user.id).eq("archived", archived).order("created_at", { ascending: false }).range(offset, offset + limit - 1);
-  if (status) query = query.eq("status", status);
-  if (search) query = query.or(`title.ilike.%${search}%,company.ilike.%${search}%,location.ilike.%${search}%`);
-  const { data, count, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ jobs: data || [], total: count || 0, offset, limit });
-}
+function num(v:unknown){const n=Number(v);return Number.isFinite(n)?n:null}
+export async function GET(request:Request){const s=await supabaseServer();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({error:"No autenticado"},{status:401});const u=new URL(request.url),limit=Math.min(Math.max(Number(u.searchParams.get("limit")||20),1),50),offset=Math.max(Number(u.searchParams.get("offset")||0),0),archived=u.searchParams.get("archived")==="true",search=(u.searchParams.get("search")||"").toLowerCase().trim(),status=u.searchParams.get("status")||"Todos",mode=u.searchParams.get("mode")||"Todos",minMatch=num(u.searchParams.get("minMatch"))??0,minSalary=num(u.searchParams.get("minSalary"))??0,maxSalary=num(u.searchParams.get("maxSalary"))??Number.MAX_SAFE_INTEGER,sort=u.searchParams.get("sort")||"match";
+ const {data,error}=await s.from("jobs").select("id,title,company,location,status,source,archived,description,date_posted,analysis,raw_data,created_at").eq("user_id",user.id).eq("archived",archived).order("created_at",{ascending:false});if(error)return NextResponse.json({error:error.message},{status:400});
+ let rows=(data||[]).map((j:any)=>{const x={...(j.raw_data||{}),...(j.analysis||{})};return {...j,match_score:Number(x.match_score)||0,salary_num:Number(String(x.salary||x.salary_min||0).replace(/[^0-9.]/g,""))||0,work_mode:x.work_mode||"No especificado",tech_stack:x.tech_stack||[]}}).filter((j:any)=>(!search||`${j.title} ${j.company} ${j.location}`.toLowerCase().includes(search))&&(status==="Todos"||j.status===status)&&(mode==="Todos"||j.work_mode===mode)&&j.match_score>=minMatch&&j.salary_num>=minSalary&&j.salary_num<=maxSalary);rows.sort((a:any,b:any)=>sort==="salary_desc"?b.salary_num-a.salary_num:sort==="salary_asc"?a.salary_num-b.salary_num:sort==="date"?String(b.created_at).localeCompare(String(a.created_at)):b.match_score-a.match_score);return NextResponse.json({jobs:rows.slice(offset,offset+limit),total:rows.length,offset,limit});}
