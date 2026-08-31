@@ -30,6 +30,7 @@ class WorkflowConfig(BaseModel):
     reanalyze: bool = False
     reanalysis_limit: int = Field(default=0, ge=0, le=2_000)
     reanalysis_workers: int = Field(default=1, ge=1, le=20)
+    force_missing_documents: bool = False
 
     @field_validator("locations", "jobspy_sites")
     @classmethod

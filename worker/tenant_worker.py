@@ -107,7 +107,8 @@ class TenantWorker:
             for job in saved:
                 content_hash = _hash({"title": job.title, "company": job.company, "description": job.description, "url": job.canonical_url})
                 analysis_hash = settings.analysis_hash()
-                if job.content_hash == content_hash and job.analysis_hash == analysis_hash and job.analysis:
+                missing_documents = not (job.analysis or {}).get("cover_letter") or not (job.analysis or {}).get("custom_cv_url")
+                if not settings.force_missing_documents and job.content_hash == content_hash and job.analysis_hash == analysis_hash and job.analysis:
                     cached += 1
                     continue
                 hit = self.repo.find_cached_analysis(content_hash, analysis_hash)
