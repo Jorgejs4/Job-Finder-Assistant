@@ -370,11 +370,9 @@ job_scraper_ai/
 ├── cv.pdf                     # Tu CV original (para extraer foto + texto)
 ├── templates/
 │   └── cv_template.html       # Template HTML del CV (Jinja2)
-├── scrapers/                  # 9 scrapers de plataformas
+├── scrapers/                  # Scrapers de plataformas activos
 │   ├── infojobs_scraper.py
 │   ├── linkedin_scraper.py
-│   ├── indeed_scraper.py
-│   ├── remoteok_scraper.py
 │   ├── remotive_scraper.py
 │   ├── tecnobs_scraper.py
 │   ├── jobfluent_scraper.py
