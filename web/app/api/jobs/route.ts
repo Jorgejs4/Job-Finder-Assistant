@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const unanalyzed = p.get("unanalyzed") === "true";
   const search = (p.get("search") || "").trim().replace(/[,()]/g, " ");
   let query = s.from("jobs")
-    .select("id,title,company,canonical_url,location,status,source,description,date_posted,analysis,raw_data,created_at,archived", { count: "exact" })
+    .select("id,title,company,canonical_url,location,status,source,description,date_posted,analysis,created_at,archived", { count: "exact" })
     .eq("user_id", user.id)
     .eq("archived", archived)
     .order("created_at", { ascending: false })
