@@ -6,6 +6,8 @@ cv.pdf
 
 # Secretos y archivos temporales locales
 GEMINI_API_KEYS = *.txt
+GEMINI_API_KEYS*.txt
+GEMINI_API_KEYS*.json
 .tmp_jobspy/
 check_leaked.py
 install.cmd
